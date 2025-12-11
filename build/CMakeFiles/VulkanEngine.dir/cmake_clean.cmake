@@ -1,0 +1,41 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/VulkanEngine.dir/src/engine_app.cpp.o"
+  "CMakeFiles/VulkanEngine.dir/src/engine_app.cpp.o.d"
+  "CMakeFiles/VulkanEngine.dir/src/engine_buffer.cpp.o"
+  "CMakeFiles/VulkanEngine.dir/src/engine_buffer.cpp.o.d"
+  "CMakeFiles/VulkanEngine.dir/src/engine_camera.cpp.o"
+  "CMakeFiles/VulkanEngine.dir/src/engine_camera.cpp.o.d"
+  "CMakeFiles/VulkanEngine.dir/src/engine_descriptor.cpp.o"
+  "CMakeFiles/VulkanEngine.dir/src/engine_descriptor.cpp.o.d"
+  "CMakeFiles/VulkanEngine.dir/src/engine_device.cpp.o"
+  "CMakeFiles/VulkanEngine.dir/src/engine_device.cpp.o.d"
+  "CMakeFiles/VulkanEngine.dir/src/engine_game_object.cpp.o"
+  "CMakeFiles/VulkanEngine.dir/src/engine_game_object.cpp.o.d"
+  "CMakeFiles/VulkanEngine.dir/src/engine_keyboardmovement.cpp.o"
+  "CMakeFiles/VulkanEngine.dir/src/engine_keyboardmovement.cpp.o.d"
+  "CMakeFiles/VulkanEngine.dir/src/engine_model.cpp.o"
+  "CMakeFiles/VulkanEngine.dir/src/engine_model.cpp.o.d"
+  "CMakeFiles/VulkanEngine.dir/src/engine_pipeline.cpp.o"
+  "CMakeFiles/VulkanEngine.dir/src/engine_pipeline.cpp.o.d"
+  "CMakeFiles/VulkanEngine.dir/src/engine_renderer.cpp.o"
+  "CMakeFiles/VulkanEngine.dir/src/engine_renderer.cpp.o.d"
+  "CMakeFiles/VulkanEngine.dir/src/engine_swapchain.cpp.o"
+  "CMakeFiles/VulkanEngine.dir/src/engine_swapchain.cpp.o.d"
+  "CMakeFiles/VulkanEngine.dir/src/engine_texture.cpp.o"
+  "CMakeFiles/VulkanEngine.dir/src/engine_texture.cpp.o.d"
+  "CMakeFiles/VulkanEngine.dir/src/engine_window.cpp.o"
+  "CMakeFiles/VulkanEngine.dir/src/engine_window.cpp.o.d"
+  "CMakeFiles/VulkanEngine.dir/src/main.cpp.o"
+  "CMakeFiles/VulkanEngine.dir/src/main.cpp.o.d"
+  "CMakeFiles/VulkanEngine.dir/src/point_light_system.cpp.o"
+  "CMakeFiles/VulkanEngine.dir/src/point_light_system.cpp.o.d"
+  "CMakeFiles/VulkanEngine.dir/src/simple_render_system.cpp.o"
+  "CMakeFiles/VulkanEngine.dir/src/simple_render_system.cpp.o.d"
+  "VulkanEngine"
+  "VulkanEngine.pdb"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/VulkanEngine.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()
