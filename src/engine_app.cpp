@@ -1,26 +1,41 @@
 #include "engine_app.hpp"
+#include "SDL3/SDL_events.h"
+#include "SDL3/SDL_keycode.h"
 #include "engine_buffer.hpp"
 #include "engine_camera.hpp"
 #include "engine_keyboardmovement.hpp"
+#include "engine_texture.hpp"
+#include "engine_ui.hpp"
+#include "glm/ext/scalar_constants.hpp"
+#include "glm/fwd.hpp"
+#include "imgui.h"
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_vulkan.h"
 #include "point_light_system.hpp"
 #include "simple_render_system.hpp"
+#include "src/engine_descriptor.hpp"
+#include "src/engine_game_object.hpp"
+#include "src/engine_model.hpp"
+#include "src/engine_ui.hpp"
+#include "vulkan/vulkan_core.h"
+#include <memory>
+
+#include <iostream>
+#include <vector>
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
-#include <array>
 #include <cassert>
 #include <chrono>
-#include <iostream>
-#include <stdexcept>
 
 namespace GameEngine {
 
 EngineApp::EngineApp() {
   globalPool = EngineDescriptorPool::Builder(geDevice)
-                   .setMaxSets(EngineSwapChain::MAX_FRAMES_IN_FLIGHT)
+                   .setMaxSets(MAX_DESCRIPTOR_SET)
                    .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                                 EngineSwapChain::MAX_FRAMES_IN_FLIGHT)
                    .build();
@@ -31,7 +46,6 @@ EngineApp::EngineApp() {
 EngineApp::~EngineApp() {}
 
 void EngineApp::run() {
-
   std::vector<std::unique_ptr<EngineBuffer>> uboBuffers(
       EngineSwapChain::MAX_FRAMES_IN_FLIGHT);
   for (int i = 0; i < uboBuffers.size(); i++) {
@@ -56,6 +70,8 @@ void EngineApp::run() {
         .build(globalDescriptorSets[i]);
   }
 
+  EngineUI ui{geRenderer};
+
   SimpleRenderSystem simpleRenderSystem{
       geDevice, geRenderer.getSwapChainRenderPass(),
       globalSetLayout->getDescriptorSetLayout()};
@@ -64,19 +80,19 @@ void EngineApp::run() {
                                     geRenderer.getSwapChainRenderPass(),
                                     globalSetLayout->getDescriptorSetLayout()};
 
-  EngineCamera camera{geWindow.getGLFWWindow()};
+  EngineCamera camera{};
   camera.setViewDirection(glm::vec3(0.0f), glm::vec3(0.f, 0.f, 1.f));
 
   auto viewerObject = GameObject::createGameObject();
   viewerObject.transform.translation.z = -2.5f;
-  KeyboardMovementController cameraController{};
+  EngineController cameraController{};
 
   auto currentTime = std::chrono::high_resolution_clock::now();
 
-  while (!geWindow.shouldClose()) {
-    glfwPollEvents();
-    cameraController.shouldQuit(geWindow.getGLFWWindow());
+  bool shouldQuit = false;
+  SDL_Event e;
 
+  while (!shouldQuit) {
     auto newTime = std::chrono::high_resolution_clock::now();
     float frameTime =
         std::chrono::duration<float, std::chrono::seconds::period>(newTime -
@@ -84,8 +100,38 @@ void EngineApp::run() {
             .count();
     currentTime = newTime;
 
-    cameraController.moveInXYZPlane(geWindow.getGLFWWindow(), frameTime,
-                                    viewerObject);
+    // fps counter
+    float fps = 1.f / frameTime;
+
+    // TODO: might be worth moving this into it's own method. if you're gonna
+    // process all events here, should be moved out, maybe to
+    // KeyboardMovementController?
+
+    while (SDL_PollEvent(&e) != 0) {
+      if (e.type == SDL_EVENT_QUIT) {
+        shouldQuit = true;
+      }
+
+      if (e.type == SDL_EVENT_KEY_DOWN) {
+        if (e.key.key == SDLK_ESCAPE) {
+          shouldQuit = true;
+        }
+      }
+
+      if (e.type == SDL_EVENT_MOUSE_MOTION) {
+        cameraController.handleMouseMovements(e, frameTime, viewerObject);
+      }
+
+      if (e.type == SDL_EVENT_WINDOW_RESIZED) {
+        geWindow.setWindowResizedFlag();
+      }
+
+      ImGui_ImplSDL3_ProcessEvent(&e);
+    }
+
+    // TODOEND
+
+    cameraController.moveInXYZPlane(frameTime, viewerObject);
     camera.setViewYXZ(viewerObject.transform.translation,
                       viewerObject.transform.rotation);
 
@@ -114,6 +160,11 @@ void EngineApp::run() {
       geRenderer.beginSwapChainRenderPass(commandBuffer);
       simpleRenderSystem.renderGameObjects(frameInfo);
       pointLightSystem.render(frameInfo);
+
+      ui.newFrame();
+      ui.render(commandBuffer);
+      ui.endFrame();
+
       geRenderer.endSwapChainRenderPass(commandBuffer);
       geRenderer.endFrame();
     }
@@ -123,6 +174,7 @@ void EngineApp::run() {
 }
 
 void EngineApp::loadGameObjects() {
+  /**
   std::shared_ptr<EngineModel> geModel =
       EngineModel::createModelFromFile(geDevice, "models/flat_vase.obj");
   auto flatVase = GameObject::createGameObject();
@@ -139,20 +191,42 @@ void EngineApp::loadGameObjects() {
   smoothVase.transform.scale = {3.f, 1.5f, 3.f};
   geObjects.emplace(smoothVase.getID(), std::move(smoothVase));
 
+
   geModel = EngineModel::createModelFromFile(geDevice, "models/quad.obj");
   auto floor = GameObject::createGameObject();
   floor.model = geModel;
   floor.transform.translation = {0.f, .5f, 0.f};
   floor.transform.scale = {3.f, 1.f, 3.f};
   geObjects.emplace(floor.getID(), std::move(floor));
+  */
 
-  std::vector<glm::vec3> lightColors{
-      {1.f, .1f, .1f}, {.1f, .1f, 1.f}, {.1f, 1.f, .1f},
-      {1.f, 1.f, .1f}, {.1f, 1.f, 1.f}, {1.f, 1.f, 1.f} //
-  };
+  std::shared_ptr<EngineModel> geModel = EngineModel::createModelFromFile(
+      geDevice, "models/Residential_Buildings_001.obj");
+  auto building = GameObject::createGameObject();
+  building.model = geModel;
+  building.transform.translation = {0.f, 0.f, 15.f};
+  building.transform.scale = {0.5f, 0.5f, 0.5f};
+  building.transform.rotation = {0.f, 1.5f * glm::pi<float>(),
+                                 glm::pi<float>()};
+  geObjects.emplace(building.getID(), std::move(building));
+
+  geModel = EngineModel::createModelFromFile(
+      geDevice, "models/Residential_Buildings_002.obj");
+  auto building_2 = GameObject::createGameObject();
+  building_2.model = geModel;
+  building_2.transform.translation = {15.f, 0.f, 0.f};
+  building_2.transform.scale = {0.5f, 0.5f, 0.5f};
+  building_2.transform.rotation = {0.0f, 0.f, glm::pi<float>()};
+  geObjects.emplace(building_2.getID(), std::move(building_2));
+
+  // std::vector<glm::vec3> lightColors{
+  //     {1.f, .1f, .1f}, {.1f, .1f, 1.f}, {.1f, 1.f, .1f},
+  //     {1.f, 1.f, .1f}, {.1f, 1.f, 1.f}, {1.f, 1.f, 1.f} //
+  // };
+  std::vector<glm::vec3> lightColors = {{1.f, 1.f, 1.f}};
 
   for (int i = 0; i < lightColors.size(); i++) {
-    auto pointLight = GameObject::makePointLight(0.2f);
+    auto pointLight = GameObject::makePointLight(12.f);
     pointLight.color = lightColors[i];
 
     auto rotateLight = glm::rotate(
@@ -161,6 +235,7 @@ void EngineApp::loadGameObjects() {
 
     pointLight.transform.translation =
         glm::vec3(rotateLight * glm::vec4(-1.f, -1.f, -1.f, 1.f));
+
     geObjects.emplace(pointLight.getID(), std::move(pointLight));
   }
 }

@@ -1,5 +1,12 @@
 #include "engine_model.hpp"
 #include "lib/utils.hpp"
+#include "src/engine_buffer.hpp"
+#include "src/engine_device.hpp"
+#include "vulkan/vulkan_core.h"
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <string>
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "lib/tiny_obj_loader.h"
@@ -8,11 +15,8 @@
 
 #include <cassert>
 #include <cstring>
+#include <iostream>
 #include <unordered_map>
-
-#ifndef ENGINE_DIR
-#define ENGINE_DIR "../"
-#endif
 
 namespace std {
 template <>
@@ -51,8 +55,7 @@ void EngineModel::createVertexBuffers(const std::vector<Vertex> &vertices) {
       vertexSize,
       vertexCount,
       VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+      VMA_MEMORY_USAGE_CPU_ONLY,
   };
 
   stagingBuffer.map();
@@ -60,8 +63,9 @@ void EngineModel::createVertexBuffers(const std::vector<Vertex> &vertices) {
 
   vertexBuffer = std::make_unique<EngineBuffer>(
       geDevice, vertexSize, vertexCount,
-      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+          VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+      VMA_MEMORY_USAGE_GPU_ONLY);
 
   geDevice.copyBuffer(stagingBuffer.getBuffer(), vertexBuffer->getBuffer(),
                       bufferSize);
@@ -83,8 +87,7 @@ void EngineModel::createIndexBuffers(const std::vector<uint32_t> &indices) {
       indexSize,
       indexCount,
       VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+      VMA_MEMORY_USAGE_CPU_ONLY,
   };
 
   stagingBuffer.map();
@@ -93,10 +96,51 @@ void EngineModel::createIndexBuffers(const std::vector<uint32_t> &indices) {
   indexBuffer = std::make_unique<EngineBuffer>(
       geDevice, indexSize, indexCount,
       VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+      VMA_MEMORY_USAGE_GPU_ONLY);
 
   geDevice.copyBuffer(stagingBuffer.getBuffer(), indexBuffer->getBuffer(),
                       bufferSize);
+}
+
+void EngineModel::createBuffer(std::span<uint32_t> indices,
+                               std::span<Vertex> vertices) {
+  const size_t vertexBufferSize = vertices.size() * sizeof(Vertex);
+  const size_t indexBufferSize = indices.size() * sizeof(uint32_t);
+
+  vertexBuffer = std::make_unique<EngineBuffer>(
+      geDevice, vertexBufferSize, 1,
+      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+          VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+      VMA_MEMORY_USAGE_GPU_ONLY);
+
+  VkBufferDeviceAddressInfo deviceAddressInfo{};
+  deviceAddressInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+  deviceAddressInfo.buffer = vertexBuffer->getBuffer();
+  vertexBufferAddress =
+      vkGetBufferDeviceAddress(geDevice.device(), &deviceAddressInfo);
+
+  indexBuffer = std::make_unique<EngineBuffer>(
+      geDevice, indexBufferSize, 1,
+      VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+      VMA_MEMORY_USAGE_GPU_ONLY);
+
+  EngineBuffer stagingBuffer{
+      geDevice,
+      vertexBufferSize + indexBufferSize,
+      1,
+      VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+      VMA_MEMORY_USAGE_CPU_ONLY,
+  };
+
+  stagingBuffer.map(); // = stagingBuffer.getAllocation()->GetMappedData();
+  stagingBuffer.writeToBuffer((void *)vertices.data(), vertexBufferSize);
+  stagingBuffer.writeToBuffer((void *)indices.data(), indexBufferSize,
+                              vertexBufferSize);
+
+  geDevice.copyBuffer(stagingBuffer.getBuffer(), vertexBuffer->getBuffer(),
+                      vertexBufferSize);
+  geDevice.copyBuffer(stagingBuffer.getBuffer(), indexBuffer->getBuffer(),
+                      indexBufferSize);
 }
 
 void EngineModel::draw(VkCommandBuffer commandBuffer) {
@@ -155,21 +199,22 @@ EngineModel::createModelFromFile(EngineDevice &device,
 }
 
 void EngineModel::Builder::loadModel(const std::string &filePath) {
-  std::string enginePath = ENGINE_DIR + filePath;
   tinyobj::attrib_t attrib;
   std::vector<tinyobj::shape_t> shapes;
   std::vector<tinyobj::material_t> materials;
   std::string warn, err;
 
+  std::string mtl_basePath = "./models/";
+
   if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
-                        enginePath.c_str())) {
+                        filePath.c_str(), mtl_basePath.c_str())) {
     throw std::runtime_error(warn + err);
   }
 
+  std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+
   vertices.clear();
   indices.clear();
-
-  std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 
   for (const auto &shape : shapes) {
     for (const auto &index : shape.mesh.indices) {

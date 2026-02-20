@@ -1,7 +1,5 @@
 #pragma once
 
-#include "engine_window.hpp"
-
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
@@ -10,7 +8,7 @@ namespace GameEngine {
 
 class EngineCamera {
 public:
-  EngineCamera(GLFWwindow *window);
+  EngineCamera();
   ~EngineCamera();
 
   void setOrthographicProjection(float left, float right, float top,
@@ -28,11 +26,6 @@ public:
   const glm::mat4 &getView() const { return viewMatrix; }
   const glm::mat4 &getInverseView() const { return invViewMatrix; }
 
-  static void mouseCallback(GLFWwindow *window, double xposIn, double yposIn);
-
-  void ProcessMouseMovement(float xoffset, float yoffset,
-                            GLboolean constrainPitch = true);
-
 private:
   glm::mat4 projectionMatrix{1.f};
   glm::mat4 viewMatrix{1.f};
@@ -44,6 +37,7 @@ private:
   // euler angles
   float Yaw;
   float Pitch;
+
   // camera options
   float MovementSpeed;
   float MouseSensitivity;

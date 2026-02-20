@@ -1,14 +1,10 @@
 #include "engine_pipeline.hpp"
 
-#include "engine_model.hpp"
+#include "src/engine_model.hpp"
 
 #include <cassert>
 #include <fstream>
 #include <stdexcept>
-
-#ifndef ENGINE_DIR
-#define ENGINE_DIR "../"
-#endif
 
 namespace GameEngine {
 
@@ -210,11 +206,10 @@ void GraphicsPipeline::defaultPipelineConfigInfo(
 }
 
 std::vector<char> GraphicsPipeline::readFile(const std::string &fileName) {
-  std::string enginePath = ENGINE_DIR + fileName;
-  std::ifstream file(enginePath, std::ios::ate | std::ios::binary);
+  std::ifstream file(fileName, std::ios::ate | std::ios::binary);
 
   if (!file.is_open()) {
-    throw std::runtime_error("failed to open file: " + enginePath);
+    throw std::runtime_error("failed to open file: " + fileName);
   }
 
   size_t fileSize = (size_t)file.tellg();

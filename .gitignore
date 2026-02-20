@@ -1,0 +1,8 @@
+compile_commands.json
+CMakeFiles/
+TODO.md
+tasks.md
+.DS_Store
+build/
+.cache
+CMakeCache.txt

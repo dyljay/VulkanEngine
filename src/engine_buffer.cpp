@@ -1,55 +1,56 @@
 #include "engine_buffer.hpp"
- 
+#include "src/engine_device.hpp"
+
 // std
 #include <cassert>
 #include <cstring>
- 
+
 namespace GameEngine {
- 
+
 /**
- * Returns the minimum instance size required to be compatible with devices minOffsetAlignment
+ * Returns the minimum instance size required to be compatible with devices
+ * minOffsetAlignment
  *
  * @param instanceSize The size of an instance
- * @param minOffsetAlignment The minimum required alignment, in bytes, for the offset member (eg
- * minUniformBufferOffsetAlignment)
+ * @param minOffsetAlignment The minimum required alignment, in bytes, for the
+ * offset member (eg minUniformBufferOffsetAlignment)
  *
  * @return VkResult of the buffer mapping call
  */
-VkDeviceSize EngineBuffer::getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment) {
+VkDeviceSize EngineBuffer::getAlignment(VkDeviceSize instanceSize,
+                                        VkDeviceSize minOffsetAlignment) {
   if (minOffsetAlignment > 0) {
     return (instanceSize + minOffsetAlignment - 1) & ~(minOffsetAlignment - 1);
   }
   return instanceSize;
 }
- 
-EngineBuffer::EngineBuffer(
-    EngineDevice &device,
-    VkDeviceSize instanceSize,
-    uint32_t instanceCount,
-    VkBufferUsageFlags usageFlags,
-    VkMemoryPropertyFlags memoryPropertyFlags,
-    VkDeviceSize minOffsetAlignment)
-    : lveDevice{device},
-      instanceSize{instanceSize},
-      instanceCount{instanceCount},
-      usageFlags{usageFlags},
-      memoryPropertyFlags{memoryPropertyFlags} {
+
+EngineBuffer::EngineBuffer(EngineDevice &device, VkDeviceSize instanceSize,
+                           uint32_t instanceCount,
+                           VkBufferUsageFlags usageFlags,
+                           VmaMemoryUsage memoryUsage,
+                           VkDeviceSize minOffsetAlignment)
+    : lveDevice{device}, instanceSize{instanceSize},
+      instanceCount{instanceCount}, usageFlags{usageFlags},
+      memoryUsage{memoryUsage} {
   alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
   bufferSize = alignmentSize * instanceCount;
-  device.createBuffer(bufferSize, usageFlags, memoryPropertyFlags, buffer, memory);
+  device.createBuffer(bufferSize, usageFlags, memoryUsage, buffer, allocation_,
+                      allocInfo);
 }
- 
+
 EngineBuffer::~EngineBuffer() {
   unmap();
   vkDestroyBuffer(lveDevice.device(), buffer, nullptr);
   vkFreeMemory(lveDevice.device(), memory, nullptr);
 }
- 
+
 /**
- * Map a memory range of this buffer. If successful, mapped points to the specified buffer range.
+ * Map a memory range of this buffer. If successful, mapped points to the
+ * specified buffer range.
  *
- * @param size (Optional) Size of the memory range to map. Pass VK_WHOLE_SIZE to map the complete
- * buffer range.
+ * @param size (Optional) Size of the memory range to map. Pass VK_WHOLE_SIZE to
+ * map the complete buffer range.
  * @param offset (Optional) Byte offset from beginning
  *
  * @return VkResult of the buffer mapping call
@@ -58,7 +59,7 @@ VkResult EngineBuffer::map(VkDeviceSize size, VkDeviceSize offset) {
   assert(buffer && memory && "Called map on buffer before create");
   return vkMapMemory(lveDevice.device(), memory, offset, size, 0, &mapped);
 }
- 
+
 /**
  * Unmap a mapped memory range
  *
@@ -70,19 +71,21 @@ void EngineBuffer::unmap() {
     mapped = nullptr;
   }
 }
- 
+
 /**
- * Copies the specified data to the mapped buffer. Default value writes whole buffer range
+ * Copies the specified data to the mapped buffer. Default value writes whole
+ * buffer range
  *
  * @param data Pointer to the data to copy
- * @param size (Optional) Size of the data to copy. Pass VK_WHOLE_SIZE to flush the complete buffer
- * range.
+ * @param size (Optional) Size of the data to copy. Pass VK_WHOLE_SIZE to flush
+ * the complete buffer range.
  * @param offset (Optional) Byte offset from beginning of mapped region
  *
  */
-void EngineBuffer::writeToBuffer(void *data, VkDeviceSize size, VkDeviceSize offset) {
+void EngineBuffer::writeToBuffer(void *data, VkDeviceSize size,
+                                 VkDeviceSize offset) {
   assert(mapped && "Cannot copy to unmapped buffer");
- 
+
   if (size == VK_WHOLE_SIZE) {
     memcpy(mapped, data, bufferSize);
   } else {
@@ -91,14 +94,14 @@ void EngineBuffer::writeToBuffer(void *data, VkDeviceSize size, VkDeviceSize off
     memcpy(memOffset, data, size);
   }
 }
- 
+
 /**
  * Flush a memory range of the buffer to make it visible to the device
  *
  * @note Only required for non-coherent memory
  *
- * @param size (Optional) Size of the memory range to flush. Pass VK_WHOLE_SIZE to flush the
- * complete buffer range.
+ * @param size (Optional) Size of the memory range to flush. Pass VK_WHOLE_SIZE
+ * to flush the complete buffer range.
  * @param offset (Optional) Byte offset from beginning
  *
  * @return VkResult of the flush call
@@ -111,14 +114,14 @@ VkResult EngineBuffer::flush(VkDeviceSize size, VkDeviceSize offset) {
   mappedRange.size = size;
   return vkFlushMappedMemoryRanges(lveDevice.device(), 1, &mappedRange);
 }
- 
+
 /**
  * Invalidate a memory range of the buffer to make it visible to the host
  *
  * @note Only required for non-coherent memory
  *
- * @param size (Optional) Size of the memory range to invalidate. Pass VK_WHOLE_SIZE to invalidate
- * the complete buffer range.
+ * @param size (Optional) Size of the memory range to invalidate. Pass
+ * VK_WHOLE_SIZE to invalidate the complete buffer range.
  * @param offset (Optional) Byte offset from beginning
  *
  * @return VkResult of the invalidate call
@@ -131,7 +134,7 @@ VkResult EngineBuffer::invalidate(VkDeviceSize size, VkDeviceSize offset) {
   mappedRange.size = size;
   return vkInvalidateMappedMemoryRanges(lveDevice.device(), 1, &mappedRange);
 }
- 
+
 /**
  * Create a buffer info descriptor
  *
@@ -140,16 +143,18 @@ VkResult EngineBuffer::invalidate(VkDeviceSize size, VkDeviceSize offset) {
  *
  * @return VkDescriptorBufferInfo of specified offset and range
  */
-VkDescriptorBufferInfo EngineBuffer::descriptorInfo(VkDeviceSize size, VkDeviceSize offset) {
+VkDescriptorBufferInfo EngineBuffer::descriptorInfo(VkDeviceSize size,
+                                                    VkDeviceSize offset) {
   return VkDescriptorBufferInfo{
       buffer,
       offset,
       size,
   };
 }
- 
+
 /**
- * Copies "instanceSize" bytes of data to the mapped buffer at an offset of index * alignmentSize
+ * Copies "instanceSize" bytes of data to the mapped buffer at an offset of
+ * index * alignmentSize
  *
  * @param data Pointer to the data to copy
  * @param index Used in offset calculation
@@ -158,15 +163,18 @@ VkDescriptorBufferInfo EngineBuffer::descriptorInfo(VkDeviceSize size, VkDeviceS
 void EngineBuffer::writeToIndex(void *data, int index) {
   writeToBuffer(data, instanceSize, index * alignmentSize);
 }
- 
+
 /**
- *  Flush the memory range at index * alignmentSize of the buffer to make it visible to the device
+ *  Flush the memory range at index * alignmentSize of the buffer to make it
+ * visible to the device
  *
  * @param index Used in offset calculation
  *
  */
-VkResult EngineBuffer::flushIndex(int index) { return flush(alignmentSize, index * alignmentSize); }
- 
+VkResult EngineBuffer::flushIndex(int index) {
+  return flush(alignmentSize, index * alignmentSize);
+}
+
 /**
  * Create a buffer info descriptor
  *
@@ -177,7 +185,7 @@ VkResult EngineBuffer::flushIndex(int index) { return flush(alignmentSize, index
 VkDescriptorBufferInfo EngineBuffer::descriptorInfoForIndex(int index) {
   return descriptorInfo(alignmentSize, index * alignmentSize);
 }
- 
+
 /**
  * Invalidate a memory range of the buffer to make it visible to the host
  *
@@ -190,5 +198,5 @@ VkDescriptorBufferInfo EngineBuffer::descriptorInfoForIndex(int index) {
 VkResult EngineBuffer::invalidateIndex(int index) {
   return invalidate(alignmentSize, index * alignmentSize);
 }
- 
-}  // namespace lve
+
+} // namespace GameEngine

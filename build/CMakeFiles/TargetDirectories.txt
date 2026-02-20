@@ -1,3 +1,0 @@
-/Users/dylanjayasundera/Code/VulkanTesting/VulkanTesting/build/CMakeFiles/VulkanEngine.dir
-/Users/dylanjayasundera/Code/VulkanTesting/VulkanTesting/build/CMakeFiles/edit_cache.dir
-/Users/dylanjayasundera/Code/VulkanTesting/VulkanTesting/build/CMakeFiles/rebuild_cache.dir

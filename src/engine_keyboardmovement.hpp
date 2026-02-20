@@ -1,33 +1,32 @@
 #pragma once
 
+#include "SDL3/SDL_events.h"
 #include "engine_game_object.hpp"
-#include "engine_window.hpp"
 
 namespace GameEngine {
 
-class KeyboardMovementController {
-    
-public:
-    struct KeyMappings {
-        int moveLeft = GLFW_KEY_A;
-        int moveRight = GLFW_KEY_D;
-        int moveForward = GLFW_KEY_W;
-        int moveBackward = GLFW_KEY_S;
-        int moveUp = GLFW_KEY_E;
-        int moveDown = GLFW_KEY_Q;
-        int lookLeft = GLFW_KEY_LEFT;
-        int lookRight = GLFW_KEY_RIGHT;
-        int lookUp = GLFW_KEY_UP;
-        int lookDown = GLFW_KEY_DOWN;
-    };
-    
-    void moveInXYZPlane(GLFWwindow* window, float dt, GameObject& gameObject);
-    void shouldQuit(GLFWwindow* window);
-    
-    KeyMappings keys{};
-    float moveSpeed{3.f};
-    float lookSpeed{1.5f};
-    
-};
-}
+class EngineController {
 
+public:
+  // scan codes used to index into keyboard state array to see if the key is
+  // pressed
+  struct KeyStates {
+    int moveLeft = SDLK_A;
+    int moveRight = SDLK_D;
+    int moveForward = SDLK_W;
+    int moveBackward = SDLK_S;
+    int moveUp = SDLK_E;
+    int moveDown = SDLK_Q;
+  };
+
+  void moveInXYZPlane(float dt, GameObject &gameObject);
+
+  void handleMouseMovements(SDL_Event &e, float dt, GameObject &gameObject);
+
+  KeyStates keys{};
+  float moveSpeed{3.f};
+  float lookSpeed{1.5f};
+  float sensitivity{1.f / 200.f};
+};
+
+} // namespace GameEngine

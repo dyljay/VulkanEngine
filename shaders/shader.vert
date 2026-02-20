@@ -1,4 +1,5 @@
 #version 450
+#extension GL_EXT_buffer_reference : require
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 color;
@@ -22,6 +23,17 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
     PointLight pointLights[10];
     int numActiveLights;
 } ubo;
+
+struct Vertex {
+  vec3 position;
+  vec3 color;
+  vec3 normal;
+  vec2 uv;
+};
+
+layout(buffer_reference, std430) readonly buffer VertexBuffer{
+  Vertex vertices[];
+};
 
 layout(push_constant) uniform Push {
     mat4 modelMatrix;

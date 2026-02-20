@@ -2,7 +2,6 @@
 
 #include <cstdlib>
 #include <iostream>
-#include <stdexcept>
 
 int main() {
   GameEngine::EngineApp app{};
