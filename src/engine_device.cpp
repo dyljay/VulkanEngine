@@ -468,10 +468,9 @@ void EngineDevice::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
   vmaAllocInfo.usage = memoryUsage;
   vmaAllocInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
-  if (vmaCreateBuffer(allocator_, &bufferInfo, &vmaAllocInfo, &buffer,
-                      &allocation, &allocInfo)) {
-    throw std::runtime_error("failed to create buffer!");
-  }
+  vmaCreateBuffer(allocator_, &bufferInfo, &vmaAllocInfo, &buffer, &allocation,
+                  &allocInfo);
+
   /*
   if (vkCreateBuffer(device_, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
     throw std::runtime_error("failed to create vertex buffer!");
