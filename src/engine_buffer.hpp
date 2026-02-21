@@ -9,7 +9,7 @@ class EngineBuffer {
 public:
   EngineBuffer(EngineDevice &device, VkDeviceSize instanceSize,
                uint32_t instanceCount, VkBufferUsageFlags usageFlags,
-               VmaMemoryUsage memoryUsage, VkDeviceSize minOffsetAlignment = 0);
+               VmaMemoryUsage memoryUsage, VkDeviceSize minOffsetAlignment = 1);
   ~EngineBuffer();
 
   EngineBuffer(const EngineBuffer &) = delete;
