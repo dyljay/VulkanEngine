@@ -1,6 +1,9 @@
 #include "engine_buffer.hpp"
 #include "src/engine_device.hpp"
 
+#define VMA_IMPLEMENTATION
+#include "lib/vk_mem_alloc.h"
+
 // std
 #include <cassert>
 #include <cstring>
@@ -53,11 +56,11 @@ EngineBuffer::~EngineBuffer() {
  * map the complete buffer range.
  * @param offset (Optional) Byte offset from beginning
  *
- * @return VkResult of the buffer mapping call
  */
-VkResult EngineBuffer::map(VkDeviceSize size, VkDeviceSize offset) {
+void EngineBuffer::map(VkDeviceSize size, VkDeviceSize offset) {
   assert(buffer && memory && "Called map on buffer before create");
-  return vkMapMemory(lveDevice.device(), memory, offset, size, 0, &mapped);
+  // return vkMapMemory(lveDevice.device(), memory, offset, size, 0, &mapped);
+  mapped = allocation_->GetMappedData();
 }
 
 /**

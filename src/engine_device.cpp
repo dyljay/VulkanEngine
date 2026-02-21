@@ -3,6 +3,7 @@
 #include "vulkan/vulkan_core.h"
 
 // std headers
+#include <cstddef>
 #include <cstring>
 #include <iostream>
 #include <set>
@@ -226,7 +227,6 @@ void EngineDevice::createAllocator() {
   allocatorInfo.device = device_;
   allocatorInfo.instance = instance_;
   allocatorInfo.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
-  vmaCreateAllocator(&allocatorInfo, &allocator_);
 }
 
 void EngineDevice::createSurface() {

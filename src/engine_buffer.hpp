@@ -15,7 +15,7 @@ public:
   EngineBuffer(const EngineBuffer &) = delete;
   EngineBuffer &operator=(const EngineBuffer &) = delete;
 
-  VkResult map(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
+  void map(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
   void unmap();
 
   void writeToBuffer(void *data, VkDeviceSize size = VK_WHOLE_SIZE,

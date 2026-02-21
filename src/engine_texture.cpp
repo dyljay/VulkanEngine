@@ -1,4 +1,5 @@
 #include "engine_buffer.hpp"
+#include "src/engine_device.hpp"
 #include "vulkan/vulkan_core.h"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -40,6 +41,7 @@ void EngineTexture::createTextureImage(const std::string &filePath) {
     throw std::runtime_error("failed to load texture image!");
   }
 
+  /*
   EngineBuffer stagingBuffer{
       geDevice,
       imageSize,
@@ -48,6 +50,11 @@ void EngineTexture::createTextureImage(const std::string &filePath) {
       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
   };
+  */
+  // FIXME: update the VMA_MEMORY_USAGE_AUTO flag to be more appropriate
+  EngineBuffer stagingBuffer{geDevice, imageSize, 1,
+                             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                             VMA_MEMORY_USAGE_AUTO};
 
   stagingBuffer.map();
   stagingBuffer.writeToBuffer((void *)pixels);

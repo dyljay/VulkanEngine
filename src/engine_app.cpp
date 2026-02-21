@@ -14,6 +14,7 @@
 #include "point_light_system.hpp"
 #include "simple_render_system.hpp"
 #include "src/engine_descriptor.hpp"
+#include "src/engine_device.hpp"
 #include "src/engine_game_object.hpp"
 #include "src/engine_model.hpp"
 #include "src/engine_ui.hpp"
@@ -51,7 +52,7 @@ void EngineApp::run() {
   for (int i = 0; i < uboBuffers.size(); i++) {
     uboBuffers[i] = std::make_unique<EngineBuffer>(
         geDevice, sizeof(GlobalUbo), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+        VMA_MEMORY_USAGE_AUTO);
     uboBuffers[i]->map();
   }
 

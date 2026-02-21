@@ -3,7 +3,6 @@
 #include "engine_window.hpp"
 #include "vulkan/vulkan_core.h"
 
-#define VMA_IMPLEMENTATION
 #include "lib/vk_mem_alloc.h"
 
 // std lib headers
