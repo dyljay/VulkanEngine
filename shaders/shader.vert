@@ -35,7 +35,7 @@ layout(buffer_reference, std430) readonly buffer VertexBuffer{
   Vertex vertices[];
 };
 
-layout(push_constant) uniform Push {
+layout( push_constant ) uniform Push {
     mat4 modelMatrix;
     mat4 normalMatrix;
 } push;
