@@ -8,9 +8,7 @@
 #include "engine_ui.hpp"
 #include "glm/ext/scalar_constants.hpp"
 #include "glm/fwd.hpp"
-#include "imgui.h"
 #include "imgui_impl_sdl3.h"
-#include "imgui_impl_vulkan.h"
 #include "point_light_system.hpp"
 #include "simple_render_system.hpp"
 #include "src/engine_descriptor.hpp"
@@ -21,7 +19,6 @@
 #include "vulkan/vulkan_core.h"
 #include <memory>
 
-#include <iostream>
 #include <vector>
 
 #define GLM_FORCE_RADIANS

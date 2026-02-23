@@ -81,7 +81,7 @@ void EngineDevice::createInstance() {
   appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
   appInfo.pEngineName = "No Engine";
   appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-  appInfo.apiVersion = VK_API_VERSION_1_0;
+  appInfo.apiVersion = VK_API_VERSION_1_4;
 
   VkInstanceCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -164,14 +164,6 @@ void EngineDevice::createLogicalDevice() {
   VkPhysicalDeviceFeatures deviceFeatures = {};
   deviceFeatures.samplerAnisotropy = VK_TRUE;
 
-  VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexing{};
-  descriptorIndexing.sType =
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
-  descriptorIndexing.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
-  descriptorIndexing.runtimeDescriptorArray = VK_TRUE;
-  descriptorIndexing.descriptorBindingVariableDescriptorCount = VK_TRUE;
-  descriptorIndexing.descriptorBindingPartiallyBound = VK_TRUE;
-
   VkDeviceCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
@@ -193,6 +185,20 @@ void EngineDevice::createLogicalDevice() {
   } else {
     createInfo.enabledLayerCount = 0;
   }
+
+  VkPhysicalDeviceBufferDeviceAddressFeatures bdaFeatures{};
+  bdaFeatures.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
+  bdaFeatures.bufferDeviceAddress = VK_TRUE;
+
+  VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexing{};
+  descriptorIndexing.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
+  descriptorIndexing.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+  descriptorIndexing.runtimeDescriptorArray = VK_TRUE;
+  descriptorIndexing.descriptorBindingVariableDescriptorCount = VK_TRUE;
+  descriptorIndexing.descriptorBindingPartiallyBound = VK_TRUE;
+  descriptorIndexing.pNext = &bdaFeatures;
 
   // adding descriptor indexing features struct to device create extension
   createInfo.pNext = &descriptorIndexing;

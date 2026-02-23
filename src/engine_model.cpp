@@ -15,7 +15,6 @@
 
 #include <cassert>
 #include <cstring>
-#include <iostream>
 #include <unordered_map>
 
 namespace std {
@@ -67,6 +66,10 @@ void EngineModel::createVertexBuffers(const std::vector<Vertex> &vertices) {
           VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
       VMA_MEMORY_USAGE_GPU_ONLY);
 
+  VkBufferDeviceAddressInfo deviceAddressInfo{};
+  deviceAddressInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+  deviceAddressInfo.buffer = vertexBuffer->getBuffer();
+
   geDevice.copyBuffer(stagingBuffer.getBuffer(), vertexBuffer->getBuffer(),
                       bufferSize);
 }
@@ -97,6 +100,10 @@ void EngineModel::createIndexBuffers(const std::vector<uint32_t> &indices) {
       geDevice, indexSize, indexCount,
       VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
       VMA_MEMORY_USAGE_GPU_ONLY);
+
+  VkBufferDeviceAddressInfo deviceAddressInfo{};
+  deviceAddressInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+  deviceAddressInfo.buffer = indexBuffer->getBuffer();
 
   geDevice.copyBuffer(stagingBuffer.getBuffer(), indexBuffer->getBuffer(),
                       bufferSize);
