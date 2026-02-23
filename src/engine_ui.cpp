@@ -73,7 +73,7 @@ void EngineUI::newFrame() {
   ImGui_ImplVulkan_NewFrame();
   ImGui_ImplSDL3_NewFrame();
   ImGui::NewFrame();
-  ImGui::ShowDemoWindow();
+  // ImGui::ShowDemoWindow();
 }
 
 void EngineUI::render(VkCommandBuffer commandBuffer) {

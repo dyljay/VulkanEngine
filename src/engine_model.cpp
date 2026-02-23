@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "lib/tiny_obj_loader.h"
@@ -37,6 +38,7 @@ namespace GameEngine {
 EngineModel::EngineModel(EngineDevice &device,
                          const EngineModel::Builder &builder)
     : geDevice{device} {
+  // createBuffer(builder.indices, builder.vertices);
   createVertexBuffers(builder.vertices);
   createIndexBuffers(builder.indices);
 }
@@ -69,6 +71,8 @@ void EngineModel::createVertexBuffers(const std::vector<Vertex> &vertices) {
   VkBufferDeviceAddressInfo deviceAddressInfo{};
   deviceAddressInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
   deviceAddressInfo.buffer = vertexBuffer->getBuffer();
+  vertexBufferAddress =
+      vkGetBufferDeviceAddress(geDevice.device(), &deviceAddressInfo);
 
   geDevice.copyBuffer(stagingBuffer.getBuffer(), vertexBuffer->getBuffer(),
                       bufferSize);
@@ -101,17 +105,20 @@ void EngineModel::createIndexBuffers(const std::vector<uint32_t> &indices) {
       VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
       VMA_MEMORY_USAGE_GPU_ONLY);
 
+  /*
   VkBufferDeviceAddressInfo deviceAddressInfo{};
   deviceAddressInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
   deviceAddressInfo.buffer = indexBuffer->getBuffer();
+  */
 
   geDevice.copyBuffer(stagingBuffer.getBuffer(), indexBuffer->getBuffer(),
                       bufferSize);
 }
 
-void EngineModel::createBuffer(std::span<uint32_t> indices,
-                               std::span<Vertex> vertices) {
+void EngineModel::createBuffer(std::vector<uint32_t> indices,
+                               std::vector<Vertex> vertices) {
   const size_t vertexBufferSize = vertices.size() * sizeof(Vertex);
+
   const size_t indexBufferSize = indices.size() * sizeof(uint32_t);
 
   vertexBuffer = std::make_unique<EngineBuffer>(
@@ -147,7 +154,7 @@ void EngineModel::createBuffer(std::span<uint32_t> indices,
   geDevice.copyBuffer(stagingBuffer.getBuffer(), vertexBuffer->getBuffer(),
                       vertexBufferSize);
   geDevice.copyBuffer(stagingBuffer.getBuffer(), indexBuffer->getBuffer(),
-                      indexBufferSize);
+                      indexBufferSize, vertexBufferSize);
 }
 
 void EngineModel::draw(VkCommandBuffer commandBuffer) {
@@ -161,7 +168,7 @@ void EngineModel::draw(VkCommandBuffer commandBuffer) {
 void EngineModel::bind(VkCommandBuffer commandBuffer) {
   VkBuffer buffers[] = {vertexBuffer->getBuffer()};
   VkDeviceSize offsets[] = {0};
-  vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
+  // vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
 
   if (hasIndexBuffer) {
     vkCmdBindIndexBuffer(commandBuffer, indexBuffer->getBuffer(), 0,

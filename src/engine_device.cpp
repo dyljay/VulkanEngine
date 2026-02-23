@@ -535,12 +535,12 @@ void EngineDevice::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
 }
 
 void EngineDevice::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer,
-                              VkDeviceSize size) {
+                              VkDeviceSize size, VkDeviceSize srcOffset) {
   VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
   VkBufferCopy copyRegion{};
-  copyRegion.srcOffset = 0; // Optional
-  copyRegion.dstOffset = 0; // Optional
+  copyRegion.srcOffset = srcOffset; // Optional
+  copyRegion.dstOffset = 0;         // Optional
   copyRegion.size = size;
   vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 

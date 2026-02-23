@@ -1,11 +1,11 @@
 #include "simple_render_system.hpp"
+#include "vulkan/vulkan_core.h"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
-#include <iostream>
 #include <stdexcept>
 
 namespace GameEngine {
@@ -13,6 +13,7 @@ namespace GameEngine {
 struct SimplePushConstantData {
   glm::mat4 modelMatrix{1.f};
   glm::mat4 normalMatrix{1.f};
+  VkDeviceAddress vertexBuffer;
 };
 
 SimpleRenderSystem::SimpleRenderSystem(EngineDevice &device,
@@ -77,6 +78,7 @@ void SimpleRenderSystem::renderGameObjects(FrameInfo &frameInfo) {
     SimplePushConstantData pushData{};
     pushData.modelMatrix = obj.transform.mat4();
     pushData.normalMatrix = obj.transform.normalMatrix();
+    pushData.vertexBuffer = obj.model->getVertexBufferAddress();
 
     vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
                        VK_SHADER_STAGE_VERTEX_BIT |

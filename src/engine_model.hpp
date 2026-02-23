@@ -52,10 +52,13 @@ public:
   void bind(VkCommandBuffer commandBuffer);
   void draw(VkCommandBuffer commandBuffer);
 
+  VkDeviceAddress getVertexBufferAddress() const { return vertexBufferAddress; }
+
 private:
   void createVertexBuffers(const std::vector<Vertex> &vertices);
   void createIndexBuffers(const std::vector<uint32_t> &indices);
-  void createBuffer(std::span<uint32_t> indices, std::span<Vertex> vertices);
+  void createBuffer(std::vector<uint32_t> indices,
+                    std::vector<Vertex> vertices);
 
   EngineDevice &geDevice;
 
