@@ -3,7 +3,10 @@
 #include "engine_window.hpp"
 #include "vulkan/vulkan_core.h"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnullability-completeness"
 #include "lib/vk_mem_alloc.h"
+#pragma clang diagnostic pop
 
 // std lib headers
 #include <vector>
@@ -114,11 +117,10 @@ private:
   const std::vector<const char *> validationLayers = {
       "VK_LAYER_KHRONOS_validation"};
   const std::vector<const char *> deviceExtensions = {
-      VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-      "VK_KHR_portability_subset",
+      VK_KHR_SWAPCHAIN_EXTENSION_NAME, "VK_KHR_portability_subset",
       VK_KHR_MAINTENANCE_3_EXTENSION_NAME,
       VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
-  };
+      VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME};
 };
 
 } // namespace GameEngine

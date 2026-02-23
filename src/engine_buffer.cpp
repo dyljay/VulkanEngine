@@ -2,7 +2,10 @@
 #include "src/engine_device.hpp"
 
 #define VMA_IMPLEMENTATION
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnullability-completeness"
 #include "lib/vk_mem_alloc.h"
+#pragma clang diagnostic pop
 
 // std
 #include <cassert>
@@ -111,12 +114,8 @@ void EngineBuffer::writeToBuffer(void *data, VkDeviceSize size,
  * @return VkResult of the flush call
  */
 VkResult EngineBuffer::flush(VkDeviceSize size, VkDeviceSize offset) {
-  VkMappedMemoryRange mappedRange = {};
-  mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-  mappedRange.memory = allocation_->GetMemory();
-  mappedRange.offset = offset;
-  mappedRange.size = size;
-  return vkFlushMappedMemoryRanges(lveDevice.device(), 1, &mappedRange);
+  return vmaFlushAllocation(lveDevice.getAllocator(), allocation_, offset,
+                            size);
 }
 
 /**
@@ -131,8 +130,12 @@ VkResult EngineBuffer::flush(VkDeviceSize size, VkDeviceSize offset) {
  * @return VkResult of the invalidate call
  */
 VkResult EngineBuffer::invalidate(VkDeviceSize size, VkDeviceSize offset) {
-  return vmaFlushAllocation(lveDevice.getAllocator(), allocation_, offset,
-                            size);
+  VkMappedMemoryRange mappedRange = {};
+  mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+  mappedRange.memory = memory;
+  mappedRange.offset = offset;
+  mappedRange.size = size;
+  return vkInvalidateMappedMemoryRanges(lveDevice.device(), 1, &mappedRange);
 }
 
 /**
