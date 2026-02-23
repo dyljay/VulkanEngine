@@ -44,8 +44,9 @@ EngineBuffer::EngineBuffer(EngineDevice &device, VkDeviceSize instanceSize,
 
 EngineBuffer::~EngineBuffer() {
   unmap();
-  vkDestroyBuffer(lveDevice.device(), buffer, nullptr);
-  vkFreeMemory(lveDevice.device(), memory, nullptr);
+  vmaDestroyBuffer(lveDevice.getAllocator(), buffer, allocation_);
+  // vkDestroyBuffer(lveDevice.device(), buffer, nullptr);
+  // vkFreeMemory(lveDevice.device(), memory, nullptr);
 }
 
 /**
@@ -58,9 +59,9 @@ EngineBuffer::~EngineBuffer() {
  *
  */
 void EngineBuffer::map(VkDeviceSize size, VkDeviceSize offset) {
-  assert(buffer && memory && "Called map on buffer before create");
-  // return vkMapMemory(lveDevice.device(), memory, offset, size, 0, &mapped);
-  mapped = allocation_->GetMappedData();
+  assert(buffer && allocation_->GetMemory() &&
+         "Called map on buffer before create");
+  vmaMapMemory(lveDevice.getAllocator(), allocation_, &mapped);
 }
 
 /**
@@ -70,7 +71,7 @@ void EngineBuffer::map(VkDeviceSize size, VkDeviceSize offset) {
  */
 void EngineBuffer::unmap() {
   if (mapped) {
-    vkUnmapMemory(lveDevice.device(), memory);
+    vmaUnmapMemory(lveDevice.getAllocator(), allocation_);
     mapped = nullptr;
   }
 }
@@ -112,7 +113,7 @@ void EngineBuffer::writeToBuffer(void *data, VkDeviceSize size,
 VkResult EngineBuffer::flush(VkDeviceSize size, VkDeviceSize offset) {
   VkMappedMemoryRange mappedRange = {};
   mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-  mappedRange.memory = memory;
+  mappedRange.memory = allocation_->GetMemory();
   mappedRange.offset = offset;
   mappedRange.size = size;
   return vkFlushMappedMemoryRanges(lveDevice.device(), 1, &mappedRange);
@@ -130,12 +131,8 @@ VkResult EngineBuffer::flush(VkDeviceSize size, VkDeviceSize offset) {
  * @return VkResult of the invalidate call
  */
 VkResult EngineBuffer::invalidate(VkDeviceSize size, VkDeviceSize offset) {
-  VkMappedMemoryRange mappedRange = {};
-  mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-  mappedRange.memory = memory;
-  mappedRange.offset = offset;
-  mappedRange.size = size;
-  return vkInvalidateMappedMemoryRanges(lveDevice.device(), 1, &mappedRange);
+  return vmaFlushAllocation(lveDevice.getAllocator(), allocation_, offset,
+                            size);
 }
 
 /**

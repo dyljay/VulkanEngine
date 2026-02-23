@@ -52,7 +52,7 @@ void EngineApp::run() {
   for (int i = 0; i < uboBuffers.size(); i++) {
     uboBuffers[i] = std::make_unique<EngineBuffer>(
         geDevice, sizeof(GlobalUbo), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-        VMA_MEMORY_USAGE_AUTO);
+        VMA_MEMORY_USAGE_CPU_ONLY);
     uboBuffers[i]->map();
   }
 

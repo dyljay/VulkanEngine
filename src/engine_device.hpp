@@ -48,6 +48,7 @@ public:
   VkQueue presentQueue() { return presentQueue_; }
   VkInstance instance() { return instance_; }
   VkPhysicalDevice getPhysicalDevice() { return physicalDevice; }
+  VmaAllocator getAllocator() { return allocator_; }
 
   SwapChainSupportDetails getSwapChainSupport() {
     return querySwapChainSupport(physicalDevice);

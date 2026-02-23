@@ -7,7 +7,7 @@ set -e
 mkdir -p build
 
 # configure
-cmake -S . -B build
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 
 # symlink the compile_commands
 ln -sf build/compile_commands.json compile_commands.json
