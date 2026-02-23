@@ -47,9 +47,8 @@ EngineBuffer::EngineBuffer(EngineDevice &device, VkDeviceSize instanceSize,
 
 EngineBuffer::~EngineBuffer() {
   unmap();
+  // handles both freeing memory and destroying buffer
   vmaDestroyBuffer(lveDevice.getAllocator(), buffer, allocation_);
-  // vkDestroyBuffer(lveDevice.device(), buffer, nullptr);
-  // vkFreeMemory(lveDevice.device(), memory, nullptr);
 }
 
 /**
@@ -130,12 +129,8 @@ VkResult EngineBuffer::flush(VkDeviceSize size, VkDeviceSize offset) {
  * @return VkResult of the invalidate call
  */
 VkResult EngineBuffer::invalidate(VkDeviceSize size, VkDeviceSize offset) {
-  VkMappedMemoryRange mappedRange = {};
-  mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-  mappedRange.memory = memory;
-  mappedRange.offset = offset;
-  mappedRange.size = size;
-  return vkInvalidateMappedMemoryRanges(lveDevice.device(), 1, &mappedRange);
+  return vmaInvalidateAllocation(lveDevice.getAllocator(), allocation_, offset,
+                                 size);
 }
 
 /**
