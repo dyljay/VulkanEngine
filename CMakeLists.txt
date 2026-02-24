@@ -22,7 +22,7 @@ set(VULKAN_LIB_DIR "/Users/dylanjayasundera/VulkanSDK/1.4.328.1/macOS/lib")
 
 # This assumes the SDL source is available in vendored/SDL
 add_subdirectory("${PROJECT_SOURCE_DIR}/lib/sdl/vendored/SDL" EXCLUDE_FROM_ALL)
-add_subdirectory("${PROJECT_SOURCE_DIR}/lib/fastgltf")
+add_subdirectory("${PROJECT_SOURCE_DIR}/lib/fastgltf/")
 
 # For macOS, you might need to add MoltenVK-specific configuration
 #if(APPLE)
@@ -57,6 +57,7 @@ message(STATUS "CREATING BUILD")
 target_include_directories(${PROJECT_NAME} PUBLIC
   ${PROJECT_SOURCE_DIR})
 
+
 target_include_directories(VulkanEngine PRIVATE ${VULKAN_INCLUDE_DIR})
 target_link_directories(VulkanEngine PRIVATE ${VULKAN_LIB_DIR})
 
@@ -78,5 +79,5 @@ target_include_directories(imgui PUBLIC
 
 target_link_libraries(imgui PUBLIC Vulkan::Vulkan SDL3::SDL3)
 
-target_link_libraries(${PROJECT_NAME} Vulkan::Vulkan imgui SDL3::SDL3)
+target_link_libraries(${PROJECT_NAME} Vulkan::Vulkan imgui SDL3::SDL3 fastgltf)
 

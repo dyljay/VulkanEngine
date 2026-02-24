@@ -6,3 +6,4 @@ tasks.md
 build/
 .cache
 CMakeCache.txt
+notes.txt

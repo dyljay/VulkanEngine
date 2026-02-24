@@ -196,9 +196,9 @@ void EngineApp::loadGameObjects() {
   floor.transform.translation = {0.f, .5f, 0.f};
   floor.transform.scale = {3.f, 1.f, 3.f};
   geObjects.emplace(floor.getID(), std::move(floor));
-  */
 
-  std::shared_ptr<EngineModel> geModel = EngineModel::createModelFromFile(
+
+  std::shared_ptr<EngineMesh> geModel = EngineMesh::createModelFromFile(
       geDevice, "models/Residential_Buildings_001.obj");
   auto building = GameObject::createGameObject();
   building.model = geModel;
@@ -216,7 +216,7 @@ void EngineApp::loadGameObjects() {
   building_2.transform.scale = {0.5f, 0.5f, 0.5f};
   building_2.transform.rotation = {0.0f, 0.f, glm::pi<float>()};
   geObjects.emplace(building_2.getID(), std::move(building_2));
-
+  */
   // std::vector<glm::vec3> lightColors{
   //     {1.f, .1f, .1f}, {.1f, .1f, 1.f}, {.1f, 1.f, .1f},
   //     {1.f, 1.f, .1f}, {.1f, 1.f, 1.f}, {1.f, 1.f, 1.f} //
