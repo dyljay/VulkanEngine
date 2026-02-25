@@ -5,9 +5,9 @@
 #include <cstdint>
 #include <memory>
 
-#include <fastgltf/core.hpp>
 #include <fastgltf/glm_element_traits.hpp>
 #include <fastgltf/tools.hpp>
+#include <fastgltf/types.hpp>
 
 namespace GameEngine {
 
@@ -18,7 +18,7 @@ struct GeoSurface {
 
 class EngineModel {
 public:
-  void loadModel(const std::string &filePath);
+  void loadModel(const std::filesystem::path filePath);
 
 private:
   std::vector<std::shared_ptr<EngineMesh>> meshes;
