@@ -13,7 +13,7 @@ void EngineController::moveInXYZPlane(float dt, GameObject &gameObject) {
   float yaw = gameObject.transform.rotation.y;
   const glm::vec3 forwardDir{sin(yaw), 0.f, cos(yaw)};
   const glm::vec3 rightDir{forwardDir.z, 0.f, -forwardDir.x};
-  const glm::vec3 upDir{0.f, -1.f, 0.f};
+  const glm::vec3 upDir{0.f, 1.f, 0.f};
 
   glm::vec3 moveDir{0.f};
   if (keyState[SDL_SCANCODE_W])
@@ -39,7 +39,7 @@ void EngineController::handleMouseMovements(SDL_Event &e, float dt,
                                             GameObject &gameObject) {
   // No normalization, so no need to check for zero
   gameObject.transform.rotation.y += e.motion.xrel * sensitivity;
-  gameObject.transform.rotation.x += -(e.motion.yrel * sensitivity);
+  gameObject.transform.rotation.x += (e.motion.yrel * sensitivity);
 
   gameObject.transform.rotation.x =
       glm::clamp(gameObject.transform.rotation.x, -1.5f, 1.5f);
