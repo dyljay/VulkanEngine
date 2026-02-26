@@ -226,47 +226,7 @@ void EngineApp::loadGameObjects() {
   flatVase.transform.translation = {0.35f, -.7f, -.4f};
   flatVase.transform.rotation = {glm::radians(90.f), glm::radians(180.f), 0.0f};
   geObjects.emplace(flatVase.getID(), std::move(flatVase));
-  /*
-  geModel =
-      EngineModel::createModelFromFile(geDevice, "models/smooth_vase.obj");
-  auto smoothVase = GameObject::createGameObject();
-  smoothVase.model = geModel;
-  smoothVase.transform.translation = {.5f, .5f, 0.f};
-  smoothVase.transform.scale = {3.f, 1.5f, 3.f};
-  geObjects.emplace(smoothVase.getID(), std::move(smoothVase));
 
-
-  geModel = EngineModel::createModelFromFile(geDevice, "models/quad.obj");
-  auto floor = GameObject::createGameObject();
-  floor.model = geModel;
-  floor.transform.translation = {0.f, .5f, 0.f};
-  floor.transform.scale = {3.f, 1.f, 3.f};
-  geObjects.emplace(floor.getID(), std::move(floor));
-
-
-  std::shared_ptr<EngineMesh> geModel = EngineMesh::createModelFromFile(
-      geDevice, "models/Residential_Buildings_001.obj");
-  auto building = GameObject::createGameObject();
-  building.model = geModel;
-  building.transform.translation = {0.f, 0.f, 15.f};
-  building.transform.scale = {0.5f, 0.5f, 0.5f};
-  building.transform.rotation = {0.f, 1.5f * glm::pi<float>(),
-                                 glm::pi<float>()};
-  geObjects.emplace(building.getID(), std::move(building));
-
-  geModel = EngineModel::createModelFromFile(
-      geDevice, "models/Residential_Buildings_002.obj");
-  auto building_2 = GameObject::createGameObject();
-  building_2.model = geModel;
-  building_2.transform.translation = {15.f, 0.f, 0.f};
-  building_2.transform.scale = {0.5f, 0.5f, 0.5f};
-  building_2.transform.rotation = {0.0f, 0.f, glm::pi<float>()};
-  geObjects.emplace(building_2.getID(), std::move(building_2));
-  */
-  // std::vector<glm::vec3> lightColors{
-  //     {1.f, .1f, .1f}, {.1f, .1f, 1.f}, {.1f, 1.f, .1f},
-  //     {1.f, 1.f, .1f}, {.1f, 1.f, 1.f}, {1.f, 1.f, 1.f} //
-  // };
   std::vector<glm::vec3> lightColors = {{0.8f, 0.2f, .7f}};
 
   for (int i = 0; i < lightColors.size(); i++) {
