@@ -73,8 +73,6 @@ void EngineUI::newFrame() {
   ImGui_ImplVulkan_NewFrame();
   ImGui_ImplSDL3_NewFrame();
   ImGui::NewFrame();
-
-  ImGui::SetNextWindowSize(ImVec2(400, 200), ImGuiCond_FirstUseEver);
 }
 
 void EngineUI::render(VkCommandBuffer commandBuffer) {
