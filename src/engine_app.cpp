@@ -182,15 +182,18 @@ void EngineApp::run() {
       pointLightSystem.render(frameInfo);
 
       // ui
-
+      // TODO: make this a bit cleaner - look into if there are better methods
+      // to doing the ui instead of all here in the loop
       ui.newFrame();
-      ImGui::Begin("Light Color");
-      ImGui::Text("RGB");
-      ImGui::SliderFloat("Red", &red, 0.0f, 1.0f);
-      ImGui::SliderFloat("Green", &green, 0.0f, 1.0f);
-      ImGui::SliderFloat("Blue", &blue, 0.0f, 1.0f);
-      ImGui::Text("Intensity");
-      ImGui::SliderFloat("Intensity", &intensity, 0.f, 10.f);
+
+      if (ImGui::Begin("Light Color")) {
+        ImGui::Text("RGB");
+        ImGui::SliderFloat("Red", &red, 0.0f, 1.0f);
+        ImGui::SliderFloat("Green", &green, 0.0f, 1.0f);
+        ImGui::SliderFloat("Blue", &blue, 0.0f, 1.0f);
+        ImGui::Text("Intensity");
+        ImGui::SliderFloat("Intensity", &intensity, 0.f, 10.f);
+      }
       ImGui::End();
       ui.render(commandBuffer);
       ui.endFrame();
