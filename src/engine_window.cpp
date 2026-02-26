@@ -34,6 +34,7 @@ void EngineWindow::initWindow() {
 
   isInitialized = true;
   SDL_SetWindowRelativeMouseMode(window, true);
+  SDL_WarpMouseInWindow(window, width / 2.f, height / 2.f);
 }
 
 void EngineWindow::createWindowSurface(VkInstance instance,

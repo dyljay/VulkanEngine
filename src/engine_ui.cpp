@@ -67,8 +67,6 @@ void EngineUI::initUI() {
   ImGui_ImplVulkan_Init(&initInfo);
 }
 
-// TODO: remove ImGui::ShowDemoWindow() and replace with actual UI
-// don't need to yet because don't really have an idea of what it needs
 void EngineUI::newFrame() {
   ImGui_ImplVulkan_NewFrame();
   ImGui_ImplSDL3_NewFrame();

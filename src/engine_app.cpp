@@ -184,27 +184,29 @@ void EngineApp::run() {
       // ui
       // TODO: make this a bit cleaner - look into if there are better methods
       // to doing the ui instead of all here in the loop
-      ui.newFrame();
+      if (userSeeMouse) {
+        ui.newFrame();
 
-      if (ImGui::Begin("Light Color")) {
-        ImGui::Text("RGB");
-        ImGui::SliderFloat("Red", &red, 0.0f, 1.0f);
-        ImGui::SliderFloat("Green", &green, 0.0f, 1.0f);
-        ImGui::SliderFloat("Blue", &blue, 0.0f, 1.0f);
-        ImGui::Text("Intensity");
-        ImGui::SliderFloat("Intensity", &intensity, 0.f, 10.f);
-      }
-      ImGui::End();
-      ui.render(commandBuffer);
-      ui.endFrame();
+        if (ImGui::Begin("Light Color")) {
+          ImGui::Text("RGB");
+          ImGui::SliderFloat("Red", &red, 0.0f, 1.0f);
+          ImGui::SliderFloat("Green", &green, 0.0f, 1.0f);
+          ImGui::SliderFloat("Blue", &blue, 0.0f, 1.0f);
+          ImGui::Text("Intensity");
+          ImGui::SliderFloat("Intensity", &intensity, 0.f, 10.f);
+        }
+        ImGui::End();
+        ui.render(commandBuffer);
+        ui.endFrame();
 
-      for (auto &kv : geObjects) {
-        auto &obj = kv.second;
-        if (obj.pointLight == nullptr)
-          continue;
+        for (auto &kv : geObjects) {
+          auto &obj = kv.second;
+          if (obj.pointLight == nullptr)
+            continue;
 
-        obj.color = {red, green, blue};
-        obj.pointLight->lightIntensity = intensity;
+          obj.color = {red, green, blue};
+          obj.pointLight->lightIntensity = intensity;
+        }
       }
 
       // ui end
