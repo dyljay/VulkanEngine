@@ -3,41 +3,57 @@
 #include "fastgltf/tools.hpp"
 #include "fastgltf/types.hpp"
 #include "glm/fwd.hpp"
+#include "src/engine_device.hpp"
 #include "src/engine_mesh.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <memory>
 #include <stdexcept>
 #include <sys/types.h>
 #include <vector>
 
 namespace GameEngine {
 
-void EngineModel::loadModel(const std::filesystem::path filePath) {
-  fastgltf::GltfDataBuffer data;
+EngineModel::EngineModel(EngineDevice &geDevice,
+                         const std::filesystem::path &path)
+    : geDevice{geDevice} {
+  loadModel(path);
+}
 
-  data.FromPath(filePath);
+EngineModel::~EngineModel() {}
+
+std::unique_ptr<EngineModel>
+EngineModel::createModelFromFile(EngineDevice &geDevice,
+                                 const std::filesystem::path &filePath) {
+
+  return std::make_unique<EngineModel>(geDevice, filePath);
+}
+
+void EngineModel::loadModel(const std::filesystem::path &filePath) {
+  auto data = fastgltf::GltfDataBuffer::FromPath(filePath);
 
   constexpr auto gltfOptions = fastgltf::Options::LoadExternalBuffers;
 
   fastgltf::Asset gltf;
   fastgltf::Parser parser{};
 
-  auto load = parser.loadGltfBinary(data, filePath.parent_path(), gltfOptions);
+  auto load = parser.loadGltf(data.get(), filePath.parent_path(), gltfOptions);
 
   if (load) {
     gltf = std::move(load.get());
   } else {
     throw std::runtime_error("failed to load model.");
   }
-
   std::vector<uint32_t> indices;
   std::vector<EngineMesh::Vertex> vertices;
+  std::vector<GeoSurface> surfaces;
 
   for (fastgltf::Mesh &mesh : gltf.meshes) {
 
     indices.clear();
     vertices.clear();
+    surfaces.clear();
 
     for (auto &&p : mesh.primitives) {
 
@@ -103,7 +119,22 @@ void EngineModel::loadModel(const std::filesystem::path filePath) {
               vertices[initialVertex + index].color = v;
             });
       }
+      surfaces.push_back(newSurface);
     }
+    meshes.emplace_back(
+        std::make_shared<EngineMesh>(geDevice, vertices, indices, surfaces));
+  }
+}
+
+void EngineModel::bind(VkCommandBuffer commandBuffer) {
+  for (auto &mesh : meshes) {
+    mesh->bind(commandBuffer);
+  }
+}
+
+void EngineModel::draw(VkCommandBuffer commandBuffer) {
+  for (auto &mesh : meshes) {
+    mesh->draw(commandBuffer);
   }
 }
 

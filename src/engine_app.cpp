@@ -172,15 +172,15 @@ void EngineApp::run() {
 }
 
 void EngineApp::loadGameObjects() {
-  /**
+
   std::shared_ptr<EngineModel> geModel =
-      EngineModel::createModelFromFile(geDevice, "models/flat_vase.obj");
+      EngineModel::createModelFromFile(geDevice, "./models/basicmesh.glb");
   auto flatVase = GameObject::createGameObject();
   flatVase.model = geModel;
   flatVase.transform.translation = {-.5f, .5f, 0.f};
   flatVase.transform.scale = {3.f, 1.5f, 3.f};
   geObjects.emplace(flatVase.getID(), std::move(flatVase));
-
+  /*
   geModel =
       EngineModel::createModelFromFile(geDevice, "models/smooth_vase.obj");
   auto smoothVase = GameObject::createGameObject();

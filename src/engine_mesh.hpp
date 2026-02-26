@@ -4,6 +4,7 @@
 #include "engine_device.hpp"
 #include "vulkan/vulkan_core.h"
 #include <algorithm>
+#include <vector>
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -13,6 +14,11 @@
 #include <span>
 
 namespace GameEngine {
+
+struct GeoSurface {
+  uint32_t startIndex;
+  uint32_t count;
+};
 
 class EngineMesh {
 
@@ -34,14 +40,10 @@ public:
     }
   };
 
-  struct Builder {
-    std::vector<Vertex> vertices{};
-    std::vector<uint32_t> indices{};
+  EngineMesh(EngineDevice &geDevice, const std::vector<Vertex> &vertices,
+             const std::vector<uint32_t> &indices,
+             const std::vector<GeoSurface> &surfaces);
 
-    void loadModel(const std::string &filePath);
-  };
-
-  EngineMesh(EngineDevice &device, const EngineMesh::Builder &builder);
   ~EngineMesh();
 
   EngineMesh(const EngineMesh &) = delete;
@@ -58,10 +60,10 @@ public:
 private:
   void createVertexBuffers(const std::vector<Vertex> &vertices);
   void createIndexBuffers(const std::vector<uint32_t> &indices);
-  void createBuffer(std::vector<uint32_t> indices,
+  void createBuffer(EngineDevice &geDevice, std::vector<uint32_t> indices,
                     std::vector<Vertex> vertices);
 
-  EngineDevice &geDevice;
+  std::vector<GeoSurface> surfaces_;
 
   std::unique_ptr<EngineBuffer> vertexBuffer;
   uint32_t vertexCount;

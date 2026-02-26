@@ -1,3 +1,4 @@
+#include "src/engine_mesh.hpp"
 #include "engine_model.hpp"
 #include "lib/utils.hpp"
 #include "src/engine_buffer.hpp"
@@ -35,15 +36,18 @@ struct hash<GameEngine::EngineMesh::Vertex> {
 
 namespace GameEngine {
 
-EngineMesh::EngineMesh(EngineDevice &device, const EngineMesh::Builder &builder)
-    : geDevice{device} {
-  // createBuffer(builder.indices, builder.vertices);
-  createVertexBuffers(builder.vertices);
-  createIndexBuffers(builder.indices);
+EngineMesh::EngineMesh(EngineDevice &geDevice,
+                       const std::vector<Vertex> &vertices,
+                       const std::vector<uint32_t> &indices,
+                       const std::vector<GeoSurface> &surfaces) {
+
+  createBuffer(geDevice, indices, vertices);
+  surfaces_ = surfaces;
 }
 
 EngineMesh::~EngineMesh() {}
 
+/*
 void EngineMesh::createVertexBuffers(const std::vector<Vertex> &vertices) {
   vertexCount = static_cast<uint32_t>(vertices.size());
   assert(vertexCount >= 3 && "Vertex must include at least 3 vertices");
@@ -104,17 +108,12 @@ void EngineMesh::createIndexBuffers(const std::vector<uint32_t> &indices) {
       VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
       VMA_MEMORY_USAGE_GPU_ONLY);
 
-  /*
-  VkBufferDeviceAddressInfo deviceAddressInfo{};
-  deviceAddressInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
-  deviceAddressInfo.buffer = indexBuffer->getBuffer();
-  */
-
   geDevice.copyBuffer(stagingBuffer.getBuffer(), indexBuffer->getBuffer(),
                       bufferSize);
 }
-
-void EngineMesh::createBuffer(std::vector<uint32_t> indices,
+*/
+void EngineMesh::createBuffer(EngineDevice &geDevice,
+                              std::vector<uint32_t> indices,
                               std::vector<Vertex> vertices) {
   const size_t vertexBufferSize = vertices.size() * sizeof(Vertex);
 
@@ -157,17 +156,22 @@ void EngineMesh::createBuffer(std::vector<uint32_t> indices,
 }
 
 void EngineMesh::draw(VkCommandBuffer commandBuffer) {
+  for (auto &p : surfaces_) {
+    vkCmdDrawIndexed(commandBuffer, p.count, 1, p.startIndex, 0, 0);
+  }
+  /*
   if (hasIndexBuffer) {
     vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
   } else {
     vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);
   }
+  */
 }
 
 void EngineMesh::bind(VkCommandBuffer commandBuffer) {
-  VkBuffer buffers[] = {vertexBuffer->getBuffer()};
-  VkDeviceSize offsets[] = {0};
-  // vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
+  // VkBuffer buffers[] = {vertexBuffer->getBuffer()};
+  // VkDeviceSize offsets[] = {0};
+  //  vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
 
   if (hasIndexBuffer) {
     vkCmdBindIndexBuffer(commandBuffer, indexBuffer->getBuffer(), 0,
@@ -201,7 +205,7 @@ EngineMesh::Vertex::getAttributeDescriptions() {
 
   return attributeDescriptions;
 }
-
+/*
 std::unique_ptr<EngineMesh>
 EngineMesh::createModelFromFile(EngineDevice &device,
                                 const std::string &filePath) {
@@ -271,5 +275,5 @@ void EngineMesh::Builder::loadModel(const std::string &filePath) {
     }
   }
 }
-
+*/
 } // namespace GameEngine
