@@ -1,13 +1,15 @@
 #include "engine_app.hpp"
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_keycode.h"
+#include "SDL3/SDL_mouse.h"
 #include "engine_buffer.hpp"
 #include "engine_camera.hpp"
 #include "engine_keyboardmovement.hpp"
 #include "engine_texture.hpp"
 #include "engine_ui.hpp"
-#include "glm/ext/scalar_constants.hpp"
 #include "glm/fwd.hpp"
+#include "glm/trigonometric.hpp"
+#include "imgui.h"
 #include "imgui_impl_sdl3.h"
 #include "point_light_system.hpp"
 #include "simple_render_system.hpp"
@@ -17,6 +19,8 @@
 #include "src/engine_model.hpp"
 #include "src/engine_ui.hpp"
 #include "vulkan/vulkan_core.h"
+#include <cstddef>
+#include <ios>
 #include <memory>
 
 #include <vector>
@@ -90,6 +94,15 @@ void EngineApp::run() {
   bool shouldQuit = false;
   SDL_Event e;
 
+  bool userSeeMouse = false;
+
+  float red = 0.8f;
+  float green = 0.2f;
+  float blue = 0.7f;
+  float intensity = 1.0f;
+
+  float cursor_x = 0;
+  float cursor_y = 0;
   while (!shouldQuit) {
     auto newTime = std::chrono::high_resolution_clock::now();
     float frameTime =
@@ -114,6 +127,17 @@ void EngineApp::run() {
         if (e.key.key == SDLK_ESCAPE) {
           shouldQuit = true;
         }
+        if (e.key.key == SDLK_F) {
+          if (!userSeeMouse) {
+            userSeeMouse = true;
+            SDL_GetMouseState(&cursor_x, &cursor_y);
+            SDL_SetWindowRelativeMouseMode(geWindow.getSDLWindow(), false);
+          } else {
+            userSeeMouse = false;
+            SDL_WarpMouseInWindow(geWindow.getSDLWindow(), cursor_x, cursor_y);
+            SDL_SetWindowRelativeMouseMode(geWindow.getSDLWindow(), true);
+          }
+        }
       }
 
       if (e.type == SDL_EVENT_MOUSE_MOTION) {
@@ -129,9 +153,11 @@ void EngineApp::run() {
 
     // TODOEND
 
-    cameraController.moveInXYZPlane(frameTime, viewerObject);
-    camera.setViewYXZ(viewerObject.transform.translation,
-                      viewerObject.transform.rotation);
+    if (!userSeeMouse) {
+      cameraController.moveInXYZPlane(frameTime, viewerObject);
+      camera.setViewYXZ(viewerObject.transform.translation,
+                        viewerObject.transform.rotation);
+    }
 
     float aspect = geRenderer.getAspectRatio();
     camera.setPerspectiveProjection(glm::radians(45.f), aspect, 0.1f, 1000.f);
@@ -159,9 +185,30 @@ void EngineApp::run() {
       simpleRenderSystem.renderGameObjects(frameInfo);
       pointLightSystem.render(frameInfo);
 
+      // ui
+
       ui.newFrame();
+      ImGui::Begin("Light Color");
+      ImGui::Text("RGB");
+      ImGui::SliderFloat("Red", &red, 0.0f, 1.0f);
+      ImGui::SliderFloat("Green", &green, 0.0f, 1.0f);
+      ImGui::SliderFloat("Blue", &blue, 0.0f, 1.0f);
+      ImGui::Text("Intensity");
+      ImGui::SliderFloat("Intensity", &intensity, 0.f, 10.f);
+      ImGui::End();
       ui.render(commandBuffer);
       ui.endFrame();
+
+      for (auto &kv : geObjects) {
+        auto &obj = kv.second;
+        if (obj.pointLight == nullptr)
+          continue;
+
+        obj.color = {red, green, blue};
+        obj.pointLight->lightIntensity = intensity;
+      }
+
+      // ui end
 
       geRenderer.endSwapChainRenderPass(commandBuffer);
       geRenderer.endFrame();
@@ -177,8 +224,8 @@ void EngineApp::loadGameObjects() {
       geDevice, "./models/cyberpunk_woman.glb");
   auto flatVase = GameObject::createGameObject();
   flatVase.model = geModel;
-  flatVase.transform.translation = {-.5f, .5f, 0.f};
-  flatVase.transform.scale = {3.f, 1.5f, 3.f};
+  flatVase.transform.translation = {0.35f, -.7f, -.4f};
+  flatVase.transform.rotation = {glm::radians(90.f), glm::radians(180.f), 0.0f};
   geObjects.emplace(flatVase.getID(), std::move(flatVase));
   /*
   geModel =
@@ -221,7 +268,7 @@ void EngineApp::loadGameObjects() {
   //     {1.f, .1f, .1f}, {.1f, .1f, 1.f}, {.1f, 1.f, .1f},
   //     {1.f, 1.f, .1f}, {.1f, 1.f, 1.f}, {1.f, 1.f, 1.f} //
   // };
-  std::vector<glm::vec3> lightColors = {{1.f, 1.f, 1.f}};
+  std::vector<glm::vec3> lightColors = {{0.8f, 0.2f, .7f}};
 
   for (int i = 0; i < lightColors.size(); i++) {
     auto pointLight = GameObject::makePointLight(12.f);
@@ -229,10 +276,10 @@ void EngineApp::loadGameObjects() {
 
     auto rotateLight = glm::rotate(
         glm::mat4(1.0f), (i * glm::two_pi<float>()) / lightColors.size(),
-        {0.f, -1.f, 0.f});
+        {0.f, 1.f, 0.f});
 
     pointLight.transform.translation =
-        glm::vec3(rotateLight * glm::vec4(-1.f, -1.f, -1.f, 1.f));
+        glm::vec3(rotateLight * glm::vec4(-1.f, 1.f, 1.f, 1.f));
 
     geObjects.emplace(pointLight.getID(), std::move(pointLight));
   }
