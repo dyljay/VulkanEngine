@@ -101,8 +101,6 @@ void EngineApp::run() {
   float blue = 0.7f;
   float intensity = 1.0f;
 
-  float cursor_x = 0;
-  float cursor_y = 0;
   while (!shouldQuit) {
     auto newTime = std::chrono::high_resolution_clock::now();
     float frameTime =
@@ -130,17 +128,15 @@ void EngineApp::run() {
         if (e.key.key == SDLK_F) {
           if (!userSeeMouse) {
             userSeeMouse = true;
-            SDL_GetMouseState(&cursor_x, &cursor_y);
             SDL_SetWindowRelativeMouseMode(geWindow.getSDLWindow(), false);
           } else {
             userSeeMouse = false;
-            SDL_WarpMouseInWindow(geWindow.getSDLWindow(), cursor_x, cursor_y);
             SDL_SetWindowRelativeMouseMode(geWindow.getSDLWindow(), true);
           }
         }
       }
 
-      if (e.type == SDL_EVENT_MOUSE_MOTION) {
+      if (e.type == SDL_EVENT_MOUSE_MOTION && !userSeeMouse) {
         cameraController.handleMouseMovements(e, frameTime, viewerObject);
       }
 
