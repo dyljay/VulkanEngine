@@ -30,10 +30,12 @@ public:
 
   void draw(VkCommandBuffer commandBuffer);
 
+  std::vector<std::shared_ptr<EngineMesh>> meshes;
+
 private:
   void loadModel(const std::filesystem::path &filePath);
 
-  std::vector<std::shared_ptr<EngineMesh>> meshes;
+  // std::vector<std::shared_ptr<EngineMesh>> meshes;
 
   EngineDevice &geDevice;
 };

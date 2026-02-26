@@ -1,6 +1,6 @@
 #version 450
 
-layout (location = 0) in vec3 fragColor;
+layout (location = 0) in vec4 fragColor;
 layout (location = 1) in vec3 fragPosWorld;
 layout (location = 2) in vec3 fragNormalWorld;
 
@@ -53,5 +53,5 @@ void main() {
         specularLight += light.color.xyz * attenuation * blinnTerm;
     }
     
-    outColor = vec4(diffuseLight * fragColor + specularLight * fragColor, 1.0);
+    outColor = fragColor * vec4(diffuseLight + specularLight, 1.0);
 }

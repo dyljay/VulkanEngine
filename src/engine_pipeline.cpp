@@ -201,12 +201,6 @@ void GraphicsPipeline::defaultPipelineConfigInfo(
   configInfo.dynamicStateInfo.dynamicStateCount =
       static_cast<uint32_t>(configInfo.dynamicStateEnables.size());
   configInfo.dynamicStateInfo.flags = 0;
-
-  // FIXME: should this still even be here? i thought this went into the vertex
-  // input struct?
-  configInfo.bindingDescriptions = EngineMesh::Vertex::getBindingDescriptions();
-  configInfo.attributeDescriptions =
-      EngineMesh::Vertex::getAttributeDescriptions();
 }
 
 std::vector<char> GraphicsPipeline::readFile(const std::string &fileName) {

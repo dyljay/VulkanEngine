@@ -27,7 +27,7 @@ struct hash<GameEngine::EngineMesh::Vertex> {
     size_t seed = 0;
 
     GameEngine::hashCombine(seed, vertex.position, vertex.color, vertex.normal,
-                            vertex.uv);
+                            vertex.uv_x, vertex.uv_y);
 
     return seed;
   }
@@ -119,6 +119,8 @@ void EngineMesh::createBuffer(EngineDevice &geDevice,
 
   const size_t indexBufferSize = indices.size() * sizeof(uint32_t);
 
+  hasIndexBuffer = indexBufferSize > 0;
+
   vertexBuffer = std::make_unique<EngineBuffer>(
       geDevice, vertexBufferSize, 1,
       VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT |
@@ -178,7 +180,7 @@ void EngineMesh::bind(VkCommandBuffer commandBuffer) {
                          VK_INDEX_TYPE_UINT32);
   }
 }
-
+/*
 std::vector<VkVertexInputBindingDescription>
 EngineMesh::Vertex::getBindingDescriptions() {
   std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
@@ -205,6 +207,7 @@ EngineMesh::Vertex::getAttributeDescriptions() {
 
   return attributeDescriptions;
 }
+*/
 /*
 std::unique_ptr<EngineMesh>
 EngineMesh::createModelFromFile(EngineDevice &device,

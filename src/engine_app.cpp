@@ -173,8 +173,8 @@ void EngineApp::run() {
 
 void EngineApp::loadGameObjects() {
 
-  std::shared_ptr<EngineModel> geModel =
-      EngineModel::createModelFromFile(geDevice, "./models/basicmesh.glb");
+  std::shared_ptr<EngineModel> geModel = EngineModel::createModelFromFile(
+      geDevice, "./models/cyberpunk_woman.glb");
   auto flatVase = GameObject::createGameObject();
   flatVase.model = geModel;
   flatVase.transform.translation = {-.5f, .5f, 0.f};

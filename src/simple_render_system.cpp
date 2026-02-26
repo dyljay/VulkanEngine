@@ -78,7 +78,20 @@ void SimpleRenderSystem::renderGameObjects(FrameInfo &frameInfo) {
     SimplePushConstantData pushData{};
     pushData.modelMatrix = obj.transform.mat4();
     pushData.normalMatrix = obj.transform.normalMatrix();
-    // pushData.vertexBuffer = obj.model->getVertexBufferAddress();
+
+    for (auto &mesh : obj.model->meshes) {
+      pushData.vertexBuffer = mesh->getVertexBufferAddress();
+      vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
+                         VK_SHADER_STAGE_VERTEX_BIT |
+                             VK_SHADER_STAGE_FRAGMENT_BIT,
+                         0, sizeof(SimplePushConstantData), &pushData);
+
+      mesh->bind(frameInfo.commandBuffer);
+      mesh->draw(frameInfo.commandBuffer);
+    }
+
+    /*
+    pushData.vertexBuffer = obj.model->getVertexBufferAddress();
 
     vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
                        VK_SHADER_STAGE_VERTEX_BIT |
@@ -87,6 +100,7 @@ void SimpleRenderSystem::renderGameObjects(FrameInfo &frameInfo) {
 
     obj.model->bind(frameInfo.commandBuffer);
     obj.model->draw(frameInfo.commandBuffer);
+    */
   }
 }
 

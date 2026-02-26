@@ -1,7 +1,7 @@
 #version 450
 #extension GL_EXT_buffer_reference : require
 
-layout(location = 0) out vec3 fragColor;
+layout(location = 0) out vec4 fragColor;
 layout(location = 1) out vec3 fragPosWorld;
 layout(location = 2) out vec3 fragNormalWorld;
 
@@ -21,9 +21,10 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
 
 struct Vertex {
   vec3 position;
-  vec3 color;
+  float uv_x;
   vec3 normal;
-  vec2 uv;
+  float uv_y;
+  vec4 color;
 };
 
 layout(buffer_reference, std430) readonly buffer VertexBuffer{

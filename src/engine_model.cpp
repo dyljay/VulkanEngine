@@ -85,8 +85,9 @@ void EngineModel::loadModel(const std::filesystem::path &filePath) {
               EngineMesh::Vertex vertex;
               vertex.position = v;
               vertex.normal = {1, 0, 0};
-              vertex.color = glm::vec3{1.f};
-              vertex.uv = {0, 0};
+              vertex.color = glm::vec4{1.f};
+              vertex.uv_x = 0;
+              vertex.uv_y = 0;
               vertices[initialVertex + index] = vertex;
             });
       }
@@ -107,15 +108,16 @@ void EngineModel::loadModel(const std::filesystem::path &filePath) {
         fastgltf::iterateAccessorWithIndex<glm::vec2>(
             gltf, gltf.accessors[(*uv).accessorIndex],
             [&](glm::vec2 v, size_t index) {
-              vertices[initialVertex + index].uv = v;
+              vertices[initialVertex + index].uv_x = v.x;
+              vertices[initialVertex + index].uv_y = v.y;
             });
       }
 
       auto colors = p.findAttribute("COLOR_0");
       if (colors != p.attributes.end()) {
-        fastgltf::iterateAccessorWithIndex<glm::vec3>(
+        fastgltf::iterateAccessorWithIndex<glm::vec4>(
             gltf, gltf.accessors[(*colors).accessorIndex],
-            [&](glm::vec3 v, size_t index) {
+            [&](glm::vec4 v, size_t index) {
               vertices[initialVertex + index].color = v;
             });
       }

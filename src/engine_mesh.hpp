@@ -25,9 +25,10 @@ class EngineMesh {
 public:
   struct Vertex {
     glm::vec3 position{};
-    glm::vec3 color{};
+    float uv_x;
     glm::vec3 normal{};
-    glm::vec2 uv{};
+    float uv_y;
+    glm::vec4 color{};
 
     static std::vector<VkVertexInputBindingDescription>
     getBindingDescriptions();
@@ -36,7 +37,7 @@ public:
 
     bool operator==(const Vertex &other) const {
       return position == other.position && color == other.color &&
-             normal == other.normal && uv == other.uv;
+             normal == other.normal && uv_x == other.uv_x && uv_y == other.uv_y;
     }
   };
 
