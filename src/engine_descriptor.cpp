@@ -276,6 +276,8 @@ void EngineDescriptorPoolGrowable::checkAvailablePool() {
   }
 }
 
+// FIXME: allocateDescriptorSets should be in writer so that calling build
+// automatically allocates this. dont want to have to call this manually
 void EngineDescriptorPoolGrowable::allocateDescriptorSet(
     VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet &descriptorSet) {
 

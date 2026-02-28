@@ -575,13 +575,6 @@ void EngineDevice::createImageWithInfo(const VkImageCreateInfo &imageInfo,
                                        VkImage &image,
                                        VmaAllocation &allocation) {
 
-  if (vkCreateImage(device_, &imageInfo, nullptr, &image) != VK_SUCCESS) {
-    throw std::runtime_error("failed to create image!");
-  }
-
-  VkMemoryRequirements memRequirements;
-  vkGetImageMemoryRequirements(device_, image, &memRequirements);
-
   VmaAllocationCreateInfo allocInfo{};
   allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
   allocInfo.requiredFlags =
