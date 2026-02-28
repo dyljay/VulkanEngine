@@ -1,9 +1,13 @@
 #pragma once
 
 #include "engine_device.hpp"
+#include "src/point_light_system.hpp"
+#include "vulkan/vulkan_core.h"
 
 // std
+#include <cstdint>
 #include <memory>
+#include <sys/types.h>
 #include <unordered_map>
 #include <vector>
 
@@ -50,7 +54,6 @@ public:
   class Builder {
   public:
     Builder(EngineDevice &geDevice) : geDevice{geDevice} {}
-
     Builder &addPoolSize(VkDescriptorType descriptorType, uint32_t count);
     Builder &addPoolSize(const std::vector<VkDescriptorPoolSize> &poolSizesVec);
     Builder &setPoolFlags(VkDescriptorPoolCreateFlags flags);
@@ -78,7 +81,7 @@ public:
 
   void resetPool();
 
-  VkDescriptorPool getPool() const { return descriptorPool; }
+  VkDescriptorPool getVkPool() { return descriptorPool; }
 
 private:
   EngineDevice &geDevice;
@@ -105,4 +108,45 @@ private:
   EngineDescriptorPool &pool;
   std::vector<VkWriteDescriptorSet> writes;
 };
+
+struct PoolSizeRatio {
+  VkDescriptorType type;
+  float ratio;
+};
+
+class EngineDescriptorPoolGrowable {
+public:
+  class Builder {
+  public:
+    Builder(EngineDevice &geDevice) : geDevice{geDevice} {}
+    Builder &setNumSets(uint32_t numSets);
+    Builder &addPoolSizeRatio(PoolSizeRatio ratio);
+    Builder &addPoolSizeRatioVector(const std::vector<PoolSizeRatio> ratios);
+    EngineDescriptorPoolGrowable build() const;
+
+  private:
+    EngineDevice &geDevice;
+    std::vector<PoolSizeRatio> poolSizeRatios;
+    uint32_t numSets;
+  };
+
+  EngineDescriptorPoolGrowable(EngineDevice &geDevice, uint32_t numSets,
+                               const std::vector<PoolSizeRatio> &poolSizeRatio);
+  VkDescriptorPool getAvailablePool();
+  void createPool(uint32_t setCount);
+  void allocateDescriptorSet(const VkDescriptorSetLayout descriptorSetLayout,
+                             VkDescriptorSet &descriptor);
+
+  void checkAvailablePool();
+
+private:
+  EngineDevice &geDevice;
+
+  std::vector<PoolSizeRatio> poolSizeRatios;
+  std::vector<std::unique_ptr<EngineDescriptorPool>> readyPools;
+  std::vector<std::unique_ptr<EngineDescriptorPool>> fullPools;
+
+  uint32_t setsPerPool;
+};
+
 } // namespace GameEngine

@@ -13,17 +13,20 @@
 namespace GameEngine {
 
 class EngineSwapChain {
- public:
+public:
   static constexpr int MAX_FRAMES_IN_FLIGHT = 3;
 
   EngineSwapChain(EngineDevice &deviceRef, VkExtent2D windowExtent);
-  EngineSwapChain(EngineDevice &deviceRef, VkExtent2D windowExtent, std::shared_ptr<EngineSwapChain> previous);
+  EngineSwapChain(EngineDevice &deviceRef, VkExtent2D windowExtent,
+                  std::shared_ptr<EngineSwapChain> previous);
   ~EngineSwapChain();
 
   EngineSwapChain(const EngineSwapChain &) = delete;
   EngineSwapChain &operator=(const EngineSwapChain &) = delete;
 
-  VkFramebuffer getFrameBuffer(int index) { return swapChainFramebuffers[index]; }
+  VkFramebuffer getFrameBuffer(int index) {
+    return swapChainFramebuffers[index];
+  }
   VkRenderPass getRenderPass() { return renderPass; }
   VkImageView getImageView(int index) { return swapChainImageViews[index]; }
   size_t imageCount() { return swapChainImages.size(); }
@@ -33,19 +36,21 @@ class EngineSwapChain {
   uint32_t height() { return swapChainExtent.height; }
 
   float extentAspectRatio() {
-    return static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height);
+    return static_cast<float>(swapChainExtent.width) /
+           static_cast<float>(swapChainExtent.height);
   }
   VkFormat findDepthFormat();
 
   VkResult acquireNextImage(uint32_t *imageIndex);
-  VkResult submitCommandBuffers(const VkCommandBuffer *buffers, uint32_t *imageIndex);
-    
-    bool compareSwapFormats(const EngineSwapChain& swapChain) const {
-        return swapChain.swapChainDepthFormat == swapChainDepthFormat &&
-        swapChain.swapChainImageFormat == swapChainImageFormat;
-    }
+  VkResult submitCommandBuffers(const VkCommandBuffer *buffers,
+                                uint32_t *imageIndex);
 
- private:
+  bool compareSwapFormats(const EngineSwapChain &swapChain) const {
+    return swapChain.swapChainDepthFormat == swapChainDepthFormat &&
+           swapChain.swapChainImageFormat == swapChainImageFormat;
+  }
+
+private:
   void init();
   void createSwapChain();
   void createImageViews();
@@ -69,7 +74,7 @@ class EngineSwapChain {
   VkRenderPass renderPass;
 
   std::vector<VkImage> depthImages;
-  std::vector<VkDeviceMemory> depthImageMemorys;
+  std::vector<VmaAllocation> depthImageAlloc;
   std::vector<VkImageView> depthImageViews;
   std::vector<VkImage> swapChainImages;
   std::vector<VkImageView> swapChainImageViews;
@@ -78,7 +83,7 @@ class EngineSwapChain {
   VkExtent2D windowExtent;
 
   VkSwapchainKHR swapChain;
-    std::shared_ptr<EngineSwapChain> oldSwapChain;
+  std::shared_ptr<EngineSwapChain> oldSwapChain;
 
   std::vector<VkSemaphore> imageAvailableSemaphores;
   std::vector<VkSemaphore> renderFinishedSemaphores;
@@ -87,4 +92,4 @@ class EngineSwapChain {
   size_t currentFrame = 0;
 };
 
-} 
+} // namespace GameEngine

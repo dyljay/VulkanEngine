@@ -1,7 +1,11 @@
 #include "engine_descriptor.hpp"
+#include "lib/sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
+#include "src/engine_device.hpp"
 
 // std
 #include <cassert>
+#include <cstdint>
+#include <memory>
 #include <stdexcept>
 #include <vector>
 
@@ -213,4 +217,76 @@ void EngineDescriptorWriter::overwrite(VkDescriptorSet &set) {
                          0, nullptr);
 }
 
+// *************** Growable Descriptor Pool Builder *********************
+EngineDescriptorPoolGrowable::Builder &
+EngineDescriptorPoolGrowable::Builder::addPoolSizeRatio(PoolSizeRatio ratio) {
+  poolSizeRatios.push_back(ratio);
+  return *this;
+}
+
+EngineDescriptorPoolGrowable::Builder &
+EngineDescriptorPoolGrowable::Builder::addPoolSizeRatioVector(
+    const std::vector<PoolSizeRatio> ratios) {
+  poolSizeRatios = ratios;
+  return *this;
+}
+EngineDescriptorPoolGrowable::Builder &
+EngineDescriptorPoolGrowable::Builder::setNumSets(uint32_t num) {
+  numSets = num;
+  return *this;
+}
+
+EngineDescriptorPoolGrowable
+EngineDescriptorPoolGrowable::Builder::build() const {
+  return EngineDescriptorPoolGrowable{geDevice, numSets, poolSizeRatios};
+}
+
+// *************** Growable Descriptor Pool *********************
+
+EngineDescriptorPoolGrowable::EngineDescriptorPoolGrowable(
+    EngineDevice &geDevice, uint32_t numSets,
+    const std::vector<PoolSizeRatio> &poolSizeRatio)
+    : geDevice{geDevice}, setsPerPool{numSets}, poolSizeRatios{poolSizeRatio} {}
+
+void EngineDescriptorPoolGrowable::createPool(uint32_t setCount) {
+  std::unique_ptr<EngineDescriptorPool> newPool;
+
+  for (auto &ratio : poolSizeRatios) {
+    newPool = EngineDescriptorPool::Builder(geDevice)
+                  .addPoolSize(ratio.type, uint32_t(ratio.ratio * setsPerPool))
+                  .setMaxSets(setCount)
+                  .build();
+  }
+
+  readyPools.push_back(std::move(newPool));
+}
+
+VkDescriptorPool EngineDescriptorPoolGrowable::getAvailablePool() {
+  checkAvailablePool();
+  return readyPools.back()->getVkPool();
+}
+
+void EngineDescriptorPoolGrowable::checkAvailablePool() {
+  if (readyPools.size() == 0) {
+    createPool(setsPerPool);
+
+    setsPerPool = setsPerPool * 1.5;
+    if (setsPerPool > 4092)
+      setsPerPool = 4092;
+  }
+}
+
+void EngineDescriptorPoolGrowable::allocateDescriptorSet(
+    VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet &descriptorSet) {
+
+  checkAvailablePool();
+
+  while (!readyPools.back()->allocateDescriptor(descriptorSetLayout,
+                                                descriptorSet)) {
+    fullPools.push_back(std::move(readyPools.back()));
+    readyPools.pop_back();
+
+    checkAvailablePool();
+  }
+}
 } // namespace GameEngine

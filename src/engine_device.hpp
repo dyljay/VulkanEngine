@@ -78,7 +78,7 @@ public:
 
   void createImageWithInfo(const VkImageCreateInfo &imageInfo,
                            VkMemoryPropertyFlags properties, VkImage &image,
-                           VkDeviceMemory &imageMemory);
+                           VmaAllocation &allocation);
 
   VkPhysicalDeviceProperties properties;
 

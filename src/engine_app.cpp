@@ -186,7 +186,6 @@ void EngineApp::run() {
       // to doing the ui instead of all here in the loop
       if (userSeeMouse) {
         ui.newFrame();
-
         if (ImGui::Begin("Light Color")) {
           ImGui::Text("RGB");
           ImGui::SliderFloat("Red", &red, 0.0f, 1.0f);

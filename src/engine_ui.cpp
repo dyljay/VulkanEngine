@@ -56,7 +56,7 @@ void EngineUI::initUI() {
   initInfo.PhysicalDevice = geRenderer.getDevice().getPhysicalDevice();
   initInfo.Device = geRenderer.getDevice().device();
   initInfo.Queue = geRenderer.getDevice().graphicsQueue();
-  initInfo.DescriptorPool = imguiPool->getPool();
+  initInfo.DescriptorPool = imguiPool->getVkPool();
   initInfo.MinImageCount = EngineSwapChain::MAX_FRAMES_IN_FLIGHT;
   initInfo.ImageCount = EngineSwapChain::MAX_FRAMES_IN_FLIGHT;
   initInfo.PipelineInfoMain.RenderPass = geRenderer.getSwapChainRenderPass();

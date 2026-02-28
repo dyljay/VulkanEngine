@@ -26,7 +26,7 @@ public:
 private:
   EngineDevice &geDevice;
   VkImage textureImage;
-  VkDeviceMemory textureImageMemory;
+  VmaAllocation allocation;
   VkImageView textureImageView;
   VkSampler textureSampler;
 

@@ -25,8 +25,7 @@ EngineTexture::~EngineTexture() {
 
   vkDestroyImageView(geDevice.device(), textureImageView, nullptr);
 
-  vkDestroyImage(geDevice.device(), textureImage, nullptr);
-  vkFreeMemory(geDevice.device(), textureImageMemory, nullptr);
+  vmaDestroyImage(geDevice.getAllocator(), textureImage, allocation);
 }
 
 void EngineTexture::createTextureImage(const std::string &filePath) {
@@ -93,7 +92,7 @@ void EngineTexture::createImage(uint32_t texWidth, uint32_t texHeight) {
   imageInfo.flags = 0;
 
   geDevice.createImageWithInfo(imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                               textureImage, textureImageMemory);
+                               textureImage, allocation);
 }
 
 void EngineTexture::transitionImageLayout(VkImage image, VkFormat format,
