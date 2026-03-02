@@ -478,28 +478,6 @@ void EngineDevice::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
 
   vmaCreateBuffer(allocator_, &bufferInfo, &vmaAllocInfo, &buffer, &allocation,
                   &allocInfo);
-
-  /*
-  if (vkCreateBuffer(device_, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
-    throw std::runtime_error("failed to create vertex buffer!");
-  }
-
-  VkMemoryRequirements memRequirements;
-  vkGetBufferMemoryRequirements(device_, buffer, &memRequirements);
-
-  VkMemoryAllocateInfo allocInfo{};
-  allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-  allocInfo.allocationSize = memRequirements.size;
-  allocInfo.memoryTypeIndex =
-      findMemoryType(memRequirements.memoryTypeBits, properties);
-
-  if (vkAllocateMemory(device_, &allocInfo, nullptr, &bufferMemory) !=
-      VK_SUCCESS) {
-    throw std::runtime_error("failed to allocate vertex buffer memory!");
-  }
-
-  vkBindBufferMemory(device_, buffer, bufferMemory, 0);
-  */
 }
 
 VkCommandBuffer EngineDevice::beginSingleTimeCommands() {
@@ -570,6 +548,7 @@ void EngineDevice::copyBufferToImage(VkBuffer buffer, VkImage image,
   endSingleTimeCommands(commandBuffer);
 }
 
+// FIXME: remove properties argument as no longer needed
 void EngineDevice::createImageWithInfo(const VkImageCreateInfo &imageInfo,
                                        VkMemoryPropertyFlags properties,
                                        VkImage &image,

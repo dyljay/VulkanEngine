@@ -57,6 +57,8 @@ void EngineApp::run() {
     uboBuffers[i]->map();
   }
 
+  EngineTexture texture{geDevice, "./textures/SKY.jpg"};
+
   auto globalSetLayout = EngineDescriptorSetLayout::Builder(geDevice)
                              .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                                          VK_SHADER_STAGE_ALL_GRAPHICS)
@@ -231,7 +233,7 @@ void EngineApp::loadGameObjects() {
   std::vector<glm::vec3> lightColors = {{0.8f, 0.2f, .7f}};
 
   for (int i = 0; i < lightColors.size(); i++) {
-    auto pointLight = GameObject::makePointLight(12.f);
+    auto pointLight = GameObject::makePointLight(1.f);
     pointLight.color = lightColors[i];
 
     auto rotateLight = glm::rotate(
