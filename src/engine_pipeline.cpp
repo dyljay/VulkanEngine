@@ -1,6 +1,7 @@
 #include "engine_pipeline.hpp"
 
 #include "src/engine_model.hpp"
+#include "vulkan/vulkan_core.h"
 
 #include <cassert>
 #include <fstream>

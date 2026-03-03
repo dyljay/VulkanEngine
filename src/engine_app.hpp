@@ -36,8 +36,8 @@ private:
   GameObject::Map geObjects;
 
   const std::array<std::string, 6> cubeTextureFilePaths = {
-      "./textures/px.png", "./textures/py.png", "./textures/pz.png",
-      "./textures/nx.png", "./textures/ny.png", "./textures/nz.png",
+      "./textures/egg_px.png", "./textures/egg_nx.png", "./textures/egg_py.png",
+      "./textures/egg_ny.png", "./textures/egg_pz.png", "./textures/egg_nz.png",
   };
 };
 } // namespace GameEngine

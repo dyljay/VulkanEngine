@@ -20,6 +20,8 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
     int numActiveLights;
 } ubo;
 
+layout (binding = 1) uniform samplerCube cubeMap;
+
 layout(push_constant) uniform Push {
     mat4 modelMatrix;
     mat4 normalMatrix;
@@ -53,5 +55,9 @@ void main() {
         specularLight += light.color.xyz * attenuation * blinnTerm;
     }
     
-    outColor = fragColor * vec4(diffuseLight + specularLight, 1.0);
+    vec3 I = normalize(fragPosWorld - cameraPosWorld);
+    vec3 R = reflect(I, normalize(fragNormalWorld));
+    vec4 fragSkybox = texture(cubeMap, R);
+
+    outColor = fragColor * fragSkybox * vec4(diffuseLight + specularLight, 1.0);
 }

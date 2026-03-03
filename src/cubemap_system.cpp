@@ -1,5 +1,6 @@
 #include "cubemap_system.hpp"
 #include "src/engine_texture.hpp"
+#include "vulkan/vulkan_core.h"
 
 namespace GameEngine {
 
@@ -38,6 +39,8 @@ void CubeMapRenderSystem::createPipeline(VkRenderPass renderPass) {
 
   PipelineConfigInfo pipelineConfig{};
   GraphicsPipeline::defaultPipelineConfigInfo(pipelineConfig);
+  // because it's the skybox, this pipline should be <=
+  pipelineConfig.depthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
   pipelineConfig.bindingDescriptions.clear();
   pipelineConfig.attributeDescriptions.clear();
   pipelineConfig.renderPass = renderPass;

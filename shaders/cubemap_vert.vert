@@ -46,5 +46,5 @@ void main()
 
   gl_Position = position.xyww;
 
-  outDirection = pos;
+  outDirection = normalize(pos);
 }

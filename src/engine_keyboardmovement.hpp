@@ -24,7 +24,7 @@ public:
   void handleMouseMovements(SDL_Event &e, float dt, GameObject &gameObject);
 
   KeyStates keys{};
-  float moveSpeed{3.f};
+  float moveSpeed{1.5f};
   float lookSpeed{1.5f};
   float sensitivity{1.f / 200.f};
 };
