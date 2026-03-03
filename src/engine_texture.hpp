@@ -22,6 +22,9 @@ public:
 
   ~EngineTexture();
 
+  void drawCubeMap(VkCommandBuffer commandBuffer);
+
+  VkDescriptorImageInfo getDescriptorInfo();
   VkImageView getImageView() const { return textureImageView; }
   VkSampler getSampler() const { return textureSampler; }
 
@@ -48,7 +51,8 @@ private:
                      VkImageCreateFlags flags);
 
   void transitionImageLayout(VkImage image, VkFormat format,
-                             VkImageLayout oldLayout, VkImageLayout newLayout);
+                             VkImageLayout oldLayout, VkImageLayout newLayout,
+                             uint32_t layerCount);
 
   bool setPipelineStageFlags(VkImageMemoryBarrier &barrier,
                              const VkImageLayout oldLayout,

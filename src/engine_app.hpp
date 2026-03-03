@@ -34,5 +34,10 @@ private:
 
   std::unique_ptr<EngineDescriptorPool> globalPool{};
   GameObject::Map geObjects;
+
+  const std::array<std::string, 6> cubeTextureFilePaths = {
+      "./textures/px.png", "./textures/py.png", "./textures/pz.png",
+      "./textures/nx.png", "./textures/ny.png", "./textures/nz.png",
+  };
 };
 } // namespace GameEngine

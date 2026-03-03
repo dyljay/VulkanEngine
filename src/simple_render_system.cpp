@@ -79,8 +79,9 @@ void SimpleRenderSystem::renderGameObjects(FrameInfo &frameInfo) {
     pushData.modelMatrix = obj.transform.mat4();
     pushData.normalMatrix = obj.transform.normalMatrix();
 
-    // FIXME: maybe find a safer way of getting the individual meshes to render
-    // instead of grabbing them directly
+    // TODO: maybe find a safer way of getting the individual meshes to render
+    // instead of grabbing the vector directly but also this would be the point
+    // of a shared pointer
 
     for (auto &mesh : obj.model->meshes) {
       pushData.vertexBuffer = mesh->getVertexBufferAddress();

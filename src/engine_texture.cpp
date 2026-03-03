@@ -2,6 +2,7 @@
 #include "src/engine_device.hpp"
 #include "vulkan/vulkan_core.h"
 #include <array>
+#include <cstdint>
 #include <sys/types.h>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -25,7 +26,7 @@ EngineTexture::EngineTexture(EngineDevice &geDevice,
                              const std::array<std::string, 6> &cubePaths)
     : geDevice{geDevice}, type{TextureType::TextureCube} {
   uploadCube(cubePaths);
-  createImageView(VK_IMAGE_VIEW_TYPE_CUBE_ARRAY, 6, VK_FORMAT_R8G8B8A8_SRGB);
+  createImageView(VK_IMAGE_VIEW_TYPE_CUBE, 6, VK_FORMAT_R8G8B8A8_SRGB);
   createSampler(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
 }
 
@@ -35,6 +36,14 @@ EngineTexture::~EngineTexture() {
   vkDestroyImageView(geDevice.device(), textureImageView, nullptr);
 
   vmaDestroyImage(geDevice.getAllocator(), textureImage, allocation);
+}
+
+VkDescriptorImageInfo EngineTexture::getDescriptorInfo() {
+  return VkDescriptorImageInfo{textureSampler, textureImageView,
+                               VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+}
+void EngineTexture::drawCubeMap(VkCommandBuffer commandBuffer) {
+  vkCmdDraw(commandBuffer, 36, 1, 0, 0);
 }
 
 void EngineTexture::upload2D(const std::string &filePath) {
@@ -64,14 +73,14 @@ void EngineTexture::upload2D(const std::string &filePath) {
 
   transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB,
                         VK_IMAGE_LAYOUT_UNDEFINED,
-                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1);
 
   geDevice.copyBufferToImage(stagingBuffer.getBuffer(), textureImage, texWidth,
                              texHeight, 1);
 
   transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB,
                         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1);
 }
 
 void EngineTexture::uploadCube(const std::array<std::string, 6> &cubeArray) {
@@ -87,7 +96,7 @@ void EngineTexture::uploadCube(const std::array<std::string, 6> &cubeArray) {
     faces[i].pixels = stbi_load(cubeArray[i].c_str(), &faces[i].w, &faces[i].h,
                                 &nC, STBI_rgb_alpha);
 
-    if (faces[i].pixels) {
+    if (!faces[i].pixels) {
       throw std::runtime_error("failed to load texture image!");
     }
   }
@@ -116,14 +125,14 @@ void EngineTexture::uploadCube(const std::array<std::string, 6> &cubeArray) {
 
   transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB,
                         VK_IMAGE_LAYOUT_UNDEFINED,
-                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 6);
 
   geDevice.copyBufferToImage(stagingBuffer.getBuffer(), textureImage, texWidth,
                              texHeight, 6);
 
   transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB,
                         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 6);
 }
 
 // TODO: What does the usage flag do?
@@ -153,7 +162,8 @@ void EngineTexture::createVkImage(uint32_t texWidth, uint32_t texHeight,
 
 void EngineTexture::transitionImageLayout(VkImage image, VkFormat format,
                                           VkImageLayout oldLayout,
-                                          VkImageLayout newLayout) {
+                                          VkImageLayout newLayout,
+                                          uint32_t layerCount) {
   if (VkCommandBuffer commandBuffer = geDevice.beginSingleTimeCommands()) {
 
     VkImageMemoryBarrier barrier{};
@@ -169,7 +179,7 @@ void EngineTexture::transitionImageLayout(VkImage image, VkFormat format,
     barrier.subresourceRange.baseMipLevel = 0;
     barrier.subresourceRange.levelCount = 1;
     barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.layerCount = 1;
+    barrier.subresourceRange.layerCount = layerCount;
 
     VkPipelineStageFlags srcStage;
     VkPipelineStageFlags dstStage;

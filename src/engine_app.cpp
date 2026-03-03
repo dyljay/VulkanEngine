@@ -13,16 +13,19 @@
 #include "imgui_impl_sdl3.h"
 #include "point_light_system.hpp"
 #include "simple_render_system.hpp"
+#include "src/cubemap_system.hpp"
 #include "src/engine_descriptor.hpp"
 #include "src/engine_device.hpp"
 #include "src/engine_game_object.hpp"
 #include "src/engine_model.hpp"
+#include "src/engine_swapchain.hpp"
 #include "src/engine_ui.hpp"
 #include "vulkan/vulkan_core.h"
 #include <cstddef>
 #include <ios>
 #include <memory>
 
+#include <utility>
 #include <vector>
 
 #define GLM_FORCE_RADIANS
@@ -40,6 +43,8 @@ EngineApp::EngineApp() {
                    .setMaxSets(MAX_DESCRIPTOR_SET)
                    .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                                 EngineSwapChain::MAX_FRAMES_IN_FLIGHT)
+                   .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                                EngineSwapChain::MAX_FRAMES_IN_FLIGHT)
                    .build();
 
   loadGameObjects();
@@ -48,6 +53,7 @@ EngineApp::EngineApp() {
 EngineApp::~EngineApp() {}
 
 void EngineApp::run() {
+  // loading uboBuffer
   std::vector<std::unique_ptr<EngineBuffer>> uboBuffers(
       EngineSwapChain::MAX_FRAMES_IN_FLIGHT);
   for (int i = 0; i < uboBuffers.size(); i++) {
@@ -56,23 +62,31 @@ void EngineApp::run() {
         VMA_MEMORY_USAGE_CPU_ONLY);
     uboBuffers[i]->map();
   }
+  // skybox texture
+  EngineTexture cubeMap{geDevice, cubeTextureFilePaths};
 
-  EngineTexture texture{geDevice, "./textures/SKY.jpg"};
-
-  auto globalSetLayout = EngineDescriptorSetLayout::Builder(geDevice)
-                             .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                                         VK_SHADER_STAGE_ALL_GRAPHICS)
-                             .build();
+  // FIXME: fix the descriptor info for the textures it does not load and this
+  // is clunky
+  auto globalSetLayout =
+      EngineDescriptorSetLayout::Builder(geDevice)
+          .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                      VK_SHADER_STAGE_ALL_GRAPHICS)
+          .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                      VK_SHADER_STAGE_FRAGMENT_BIT)
+          .build();
 
   std::vector<VkDescriptorSet> globalDescriptorSets(
       EngineSwapChain::MAX_FRAMES_IN_FLIGHT);
 
   for (int i = 0; i < globalDescriptorSets.size(); i++) {
     auto bufferInfo = uboBuffers[i]->descriptorInfo();
+    auto imageImgInfo = cubeMap.getDescriptorInfo();
     EngineDescriptorWriter(*globalSetLayout, *globalPool)
         .writeBuffer(0, &bufferInfo)
+        .writeImage(1, &imageImgInfo)
         .build(globalDescriptorSets[i]);
   }
+  // FIXME: END
 
   EngineUI ui{geRenderer};
 
@@ -81,6 +95,10 @@ void EngineApp::run() {
       globalSetLayout->getDescriptorSetLayout()};
 
   PointLightSystem pointLightSystem{geDevice,
+                                    geRenderer.getSwapChainRenderPass(),
+                                    globalSetLayout->getDescriptorSetLayout()};
+
+  CubeMapRenderSystem cubeMapRender{geDevice,
                                     geRenderer.getSwapChainRenderPass(),
                                     globalSetLayout->getDescriptorSetLayout()};
 
@@ -182,6 +200,7 @@ void EngineApp::run() {
       geRenderer.beginSwapChainRenderPass(commandBuffer);
       simpleRenderSystem.renderGameObjects(frameInfo);
       pointLightSystem.render(frameInfo);
+      cubeMapRender.renderSkybox(frameInfo, cubeMap);
 
       // ui
       // TODO: make this a bit cleaner - look into if there are better methods
@@ -230,6 +249,16 @@ void EngineApp::loadGameObjects() {
   flatVase.transform.rotation = {glm::radians(90.f), glm::radians(180.f), 0.0f};
   geObjects.emplace(flatVase.getID(), std::move(flatVase));
 
+  /*
+  geModel =
+      EngineModel::createModelFromFile(geDevice, "./models/VirtualCity.glb");
+  auto city = GameObject::createGameObject();
+  city.model = geModel;
+  city.transform.translation = {0.0f, .0f, 0.0f};
+  city.transform.scale = {.01f, .01f, .01f};
+  geObjects.emplace(city.getID(), std::move(city));
+  */
+
   std::vector<glm::vec3> lightColors = {{0.8f, 0.2f, .7f}};
 
   for (int i = 0; i < lightColors.size(); i++) {
@@ -246,5 +275,4 @@ void EngineApp::loadGameObjects() {
     geObjects.emplace(pointLight.getID(), std::move(pointLight));
   }
 }
-
 } // namespace GameEngine

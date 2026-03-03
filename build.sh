@@ -3,6 +3,9 @@
 # stop on error
 set -e
 
+# compile shaders
+./compile_shaders.sh
+
 # make if does not exist
 mkdir -p build
 
