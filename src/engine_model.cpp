@@ -33,8 +33,10 @@ EngineModel::createModelFromFile(EngineDevice &geDevice,
 void EngineModel::loadModel(const std::filesystem::path &filePath) {
   auto data = fastgltf::GltfDataBuffer::FromPath(filePath);
 
-  constexpr auto gltfOptions = fastgltf::Options::LoadExternalBuffers;
-
+  constexpr auto gltfOptions = fastgltf::Options::DontRequireValidAssetMember |
+                               fastgltf::Options::AllowDouble |
+                               fastgltf::Options::LoadExternalBuffers |
+                               fastgltf::Options::LoadExternalImages;
   fastgltf::Asset gltf;
   fastgltf::Parser parser{};
 
