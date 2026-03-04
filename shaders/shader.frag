@@ -28,6 +28,7 @@ layout(push_constant) uniform Push {
 } push;
 
 void main() {
+    vec3 ambientLight = vec3(.2);
     vec3 diffuseLight = ubo.ambientLightColor.xyz * ubo.ambientLightColor.w;
     vec3 specularLight = vec3(0.0);
     vec3 surfaceNormal = normalize(fragNormalWorld);
@@ -59,5 +60,5 @@ void main() {
     vec3 R = reflect(I, normalize(fragNormalWorld));
     vec4 fragSkybox = texture(cubeMap, R);
 
-    outColor = fragColor * fragSkybox * vec4(diffuseLight + specularLight, 1.0);
+    outColor = fragColor * fragSkybox * vec4(diffuseLight + specularLight + ambientLight, 1.0);
 }
