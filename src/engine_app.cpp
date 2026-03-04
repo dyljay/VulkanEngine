@@ -119,7 +119,7 @@ void EngineApp::run() {
   float red = 0.2f;
   float green = 0.2f;
   float blue = 0.7f;
-  float intensity = 1.0f;
+  float intensity = 10.0f;
 
   while (!shouldQuit) {
     auto newTime = std::chrono::high_resolution_clock::now();
@@ -213,7 +213,7 @@ void EngineApp::run() {
           ImGui::SliderFloat("Green", &green, 0.0f, 1.0f);
           ImGui::SliderFloat("Blue", &blue, 0.0f, 1.0f);
           ImGui::Text("Intensity");
-          ImGui::SliderFloat("Intensity", &intensity, 0.f, 10.f);
+          ImGui::SliderFloat("Intensity", &intensity, 0.f, 20.f);
         }
         ImGui::End();
         ui.render(commandBuffer);
@@ -250,7 +250,8 @@ void EngineApp::loadGameObjects() {
                                        0.0f};
   geObjects.emplace(cyberpunkWoman.getID(), std::move(cyberpunkWoman));
 
-  geModel = EngineModel::createModelFromFile(geDevice, "./models/dancer.glb");
+  // geModel = EngineModel::createModelFromFile(geDevice,
+  // "./models/dancer.glb");
   auto darkElf = GameObject::createGameObject();
   darkElf.model = geModel;
   darkElf.transform.translation = {-0.35f, -.7f, -.4f};
@@ -260,7 +261,7 @@ void EngineApp::loadGameObjects() {
   std::vector<glm::vec3> lightColors = {{0.2f, 0.2f, .7f}};
 
   for (int i = 0; i < lightColors.size(); i++) {
-    auto pointLight = GameObject::makePointLight(1.f);
+    auto pointLight = GameObject::makePointLight(10.f);
     pointLight.color = lightColors[i];
 
     auto rotateLight = glm::rotate(
