@@ -39,12 +39,14 @@
 namespace GameEngine {
 
 EngineApp::EngineApp() {
-  globalPool = EngineDescriptorPool::Builder(geDevice)
-                   .setMaxSets(MAX_DESCRIPTOR_SET)
-                   .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                                EngineSwapChain::MAX_FRAMES_IN_FLIGHT)
-                   .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                                EngineSwapChain::MAX_FRAMES_IN_FLIGHT)
+  std::vector<PoolSizeRatio> sizes = {
+      {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2},
+      {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2},
+      {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1}};
+
+  globalPool = EngineDescriptorPoolGrowable::Builder(geDevice)
+                   .setNumSets(MAX_DESCRIPTOR_SET)
+                   .addPoolSizeRatioVector(sizes)
                    .build();
 
   loadGameObjects();

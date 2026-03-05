@@ -12,7 +12,7 @@
 namespace GameEngine {
 class EngineApp {
 public:
-  static constexpr int MAX_DESCRIPTOR_SET = 4;
+  static constexpr int MAX_DESCRIPTOR_SET = 1;
 
   void run();
   void updateGameObjects(float deltaTime);
@@ -32,7 +32,7 @@ private:
   EngineDevice geDevice{geWindow};
   EngineRenderer geRenderer{geWindow, geDevice};
 
-  std::unique_ptr<EngineDescriptorPool> globalPool{};
+  std::unique_ptr<EngineDescriptorPoolGrowable> globalPool{};
   GameObject::Map geObjects;
 
   const std::array<std::string, 6> cubeTextureFilePaths = {

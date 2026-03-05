@@ -5,6 +5,7 @@
 // std
 #include <cassert>
 #include <cstdint>
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <vector>
@@ -152,8 +153,9 @@ void EngineDescriptorPool::resetPool() {
 // *************** Descriptor Writer *********************
 
 EngineDescriptorWriter::EngineDescriptorWriter(
-    EngineDescriptorSetLayout &setLayout, EngineDescriptorPool &pool)
-    : setLayout{setLayout}, pool{pool} {}
+    EngineDescriptorSetLayout &setLayout,
+    EngineDescriptorPoolGrowable &growablePool)
+    : setLayout{setLayout}, growablePool{growablePool} {}
 
 EngineDescriptorWriter &
 EngineDescriptorWriter::writeBuffer(uint32_t binding,
@@ -200,8 +202,8 @@ EngineDescriptorWriter::writeImage(uint32_t binding,
 }
 
 bool EngineDescriptorWriter::build(VkDescriptorSet &set) {
-  bool success =
-      pool.allocateDescriptor(setLayout.getDescriptorSetLayout(), set);
+  bool success = growablePool.allocateDescriptorSet(
+      setLayout.getDescriptorSetLayout(), set);
   if (!success) {
     return false;
   }
@@ -213,8 +215,8 @@ void EngineDescriptorWriter::overwrite(VkDescriptorSet &set) {
   for (auto &write : writes) {
     write.dstSet = set;
   }
-  vkUpdateDescriptorSets(pool.geDevice.device(), writes.size(), writes.data(),
-                         0, nullptr);
+  vkUpdateDescriptorSets(growablePool.geDevice.device(), writes.size(),
+                         writes.data(), 0, nullptr);
 }
 
 // *************** Growable Descriptor Pool Builder *********************
@@ -236,9 +238,10 @@ EngineDescriptorPoolGrowable::Builder::setNumSets(uint32_t num) {
   return *this;
 }
 
-EngineDescriptorPoolGrowable
+std::unique_ptr<EngineDescriptorPoolGrowable>
 EngineDescriptorPoolGrowable::Builder::build() const {
-  return EngineDescriptorPoolGrowable{geDevice, numSets, poolSizeRatios};
+  return std::make_unique<EngineDescriptorPoolGrowable>(geDevice, numSets,
+                                                        poolSizeRatios);
 }
 
 // *************** Growable Descriptor Pool *********************
@@ -246,18 +249,21 @@ EngineDescriptorPoolGrowable::Builder::build() const {
 EngineDescriptorPoolGrowable::EngineDescriptorPoolGrowable(
     EngineDevice &geDevice, uint32_t numSets,
     const std::vector<PoolSizeRatio> &poolSizeRatio)
-    : geDevice{geDevice}, setsPerPool{numSets}, poolSizeRatios{poolSizeRatio} {}
+    : geDevice{geDevice}, setsPerPool{numSets}, poolSizeRatios{poolSizeRatio} {
+
+  createPool(setsPerPool);
+}
 
 void EngineDescriptorPoolGrowable::createPool(uint32_t setCount) {
-  std::unique_ptr<EngineDescriptorPool> newPool;
+  EngineDescriptorPool::Builder builder =
+      EngineDescriptorPool::Builder(geDevice);
 
   for (auto &ratio : poolSizeRatios) {
-    newPool = EngineDescriptorPool::Builder(geDevice)
-                  .addPoolSize(ratio.type, uint32_t(ratio.ratio * setsPerPool))
-                  .setMaxSets(setCount)
-                  .build();
+    builder.addPoolSize(ratio.type, uint32_t(ratio.ratio * setsPerPool));
   }
 
+  std::unique_ptr<EngineDescriptorPool> newPool =
+      builder.setMaxSets(setCount).build();
   readyPools.push_back(std::move(newPool));
 }
 
@@ -276,9 +282,7 @@ void EngineDescriptorPoolGrowable::checkAvailablePool() {
   }
 }
 
-// FIXME: allocateDescriptorSets should be in writer so that calling build
-// automatically allocates this. dont want to have to call this manually
-void EngineDescriptorPoolGrowable::allocateDescriptorSet(
+bool EngineDescriptorPoolGrowable::allocateDescriptorSet(
     VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet &descriptorSet) {
 
   checkAvailablePool();
@@ -290,5 +294,7 @@ void EngineDescriptorPoolGrowable::allocateDescriptorSet(
 
     checkAvailablePool();
   }
+  // FIXME: handle return vals properly
+  return true;
 }
 } // namespace GameEngine

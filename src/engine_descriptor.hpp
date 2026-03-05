@@ -90,25 +90,6 @@ private:
   friend class EngineDescriptorWriter;
 };
 
-class EngineDescriptorWriter {
-public:
-  EngineDescriptorWriter(EngineDescriptorSetLayout &setLayout,
-                         EngineDescriptorPool &pool);
-
-  EngineDescriptorWriter &writeBuffer(uint32_t binding,
-                                      VkDescriptorBufferInfo *bufferInfo);
-  EngineDescriptorWriter &writeImage(uint32_t binding,
-                                     VkDescriptorImageInfo *imageInfo);
-
-  bool build(VkDescriptorSet &set);
-  void overwrite(VkDescriptorSet &set);
-
-private:
-  EngineDescriptorSetLayout &setLayout;
-  EngineDescriptorPool &pool;
-  std::vector<VkWriteDescriptorSet> writes;
-};
-
 struct PoolSizeRatio {
   VkDescriptorType type;
   float ratio;
@@ -122,7 +103,7 @@ public:
     Builder &setNumSets(uint32_t numSets);
     Builder &addPoolSizeRatio(PoolSizeRatio ratio);
     Builder &addPoolSizeRatioVector(const std::vector<PoolSizeRatio> ratios);
-    EngineDescriptorPoolGrowable build() const;
+    std::unique_ptr<EngineDescriptorPoolGrowable> build() const;
 
   private:
     EngineDevice &geDevice;
@@ -134,7 +115,7 @@ public:
                                const std::vector<PoolSizeRatio> &poolSizeRatio);
   VkDescriptorPool getAvailablePool();
   void createPool(uint32_t setCount);
-  void allocateDescriptorSet(const VkDescriptorSetLayout descriptorSetLayout,
+  bool allocateDescriptorSet(const VkDescriptorSetLayout descriptorSetLayout,
                              VkDescriptorSet &descriptor);
 
   void checkAvailablePool();
@@ -147,6 +128,26 @@ private:
   std::vector<std::unique_ptr<EngineDescriptorPool>> fullPools;
 
   uint32_t setsPerPool;
+
+  friend class EngineDescriptorWriter;
 };
 
+class EngineDescriptorWriter {
+public:
+  EngineDescriptorWriter(EngineDescriptorSetLayout &setLayout,
+                         EngineDescriptorPoolGrowable &growablePool);
+
+  EngineDescriptorWriter &writeBuffer(uint32_t binding,
+                                      VkDescriptorBufferInfo *bufferInfo);
+  EngineDescriptorWriter &writeImage(uint32_t binding,
+                                     VkDescriptorImageInfo *imageInfo);
+
+  bool build(VkDescriptorSet &set);
+  void overwrite(VkDescriptorSet &set);
+
+private:
+  EngineDescriptorSetLayout &setLayout;
+  EngineDescriptorPoolGrowable &growablePool;
+  std::vector<VkWriteDescriptorSet> writes;
+};
 } // namespace GameEngine
