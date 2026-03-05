@@ -40,8 +40,8 @@ namespace GameEngine {
 
 EngineApp::EngineApp() {
   std::vector<PoolSizeRatio> sizes = {
-      {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2},
-      {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2},
+      {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3},
+      {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3},
       {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1}};
 
   globalPool = EngineDescriptorPoolGrowable::Builder(geDevice)

@@ -12,7 +12,7 @@
 namespace GameEngine {
 class EngineApp {
 public:
-  static constexpr int MAX_DESCRIPTOR_SET = 1;
+  static constexpr int MAX_DESCRIPTOR_SET = 100;
 
   void run();
   void updateGameObjects(float deltaTime);
