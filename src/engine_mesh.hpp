@@ -4,7 +4,6 @@
 #include "engine_device.hpp"
 #include "glm/fwd.hpp"
 #include "vulkan/vulkan_core.h"
-#include <algorithm>
 #include <vector>
 
 #define GLM_FORCE_RADIANS
@@ -12,22 +11,14 @@
 #include <glm/glm.hpp>
 
 #include <memory>
-#include <span>
 
 namespace GameEngine {
 
 struct GeoSurface {
   uint32_t startIndex;
   uint32_t count;
-};
 
-struct Materials {
-  struct MaterialConsts {
-    glm::vec4 colorFactors;
-    glm::vec4 metalRoughFactor;
-    // padding for buffer -> 128 bytes -> 16-2 glm::vec4's
-    glm::vec4 extraPadding[14];
-  } constants;
+  VkDescriptorSet descSet;
 };
 
 class EngineMesh {

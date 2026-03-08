@@ -7,7 +7,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <string>
 #include <vector>
 
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -16,7 +15,6 @@
 
 #include <cassert>
 #include <cstring>
-#include <unordered_map>
 
 namespace std {
 template <>

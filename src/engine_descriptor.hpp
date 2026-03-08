@@ -1,7 +1,6 @@
 #pragma once
 
 #include "engine_device.hpp"
-#include "src/point_light_system.hpp"
 #include "vulkan/vulkan_core.h"
 
 // std

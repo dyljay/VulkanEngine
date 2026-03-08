@@ -47,6 +47,10 @@ void EngineModel::loadModel(const std::filesystem::path &filePath) {
   } else {
     throw std::runtime_error("failed to load model.");
   }
+
+  // building descriptorPool
+  buildDescriptorPool(MAX_SETS);
+
   std::vector<uint32_t> indices;
   std::vector<EngineMesh::Vertex> vertices;
   std::vector<GeoSurface> surfaces;
@@ -128,6 +132,18 @@ void EngineModel::loadModel(const std::filesystem::path &filePath) {
     meshes.emplace_back(
         std::make_shared<EngineMesh>(geDevice, vertices, indices, surfaces));
   }
+}
+
+void EngineModel::buildDescriptorPool(uint32_t numSets) {
+  std::vector<PoolSizeRatio> sizes = {
+      {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3},
+      {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3},
+      {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1}};
+
+  growablePool = EngineDescriptorPoolGrowable::Builder(geDevice)
+                     .setNumSets(numSets)
+                     .addPoolSizeRatioVector(sizes)
+                     .build();
 }
 
 void EngineModel::bind(VkCommandBuffer commandBuffer) {

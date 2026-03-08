@@ -1,12 +1,12 @@
 #pragma once
 
+#include "engine_descriptor.hpp"
 #include "engine_mesh.hpp"
 #include "src/engine_device.hpp"
 #include "src/engine_node.hpp"
 #include "src/engine_texture.hpp"
 #include "vulkan/vulkan_core.h"
 
-#include <cstdint>
 #include <filesystem>
 #include <memory>
 
@@ -21,6 +21,8 @@ namespace GameEngine {
 class EngineModel {
 
 public:
+  static constexpr int MAX_SETS = 100;
+
   static std::unique_ptr<EngineModel>
   createModelFromFile(EngineDevice &geDevice,
                       const std::filesystem::path &filePath);
@@ -29,14 +31,17 @@ public:
 
   ~EngineModel();
 
+  std::unique_ptr<EngineDescriptorPoolGrowable> growablePool;
+
   void bind(VkCommandBuffer commandBuffer);
 
   void draw(VkCommandBuffer commandBuffer);
 
+  void buildDescriptorPool(uint32_t numSets);
+
   std::vector<std::shared_ptr<EngineMesh>> meshes;
-  // std::unordered_map<std::string, std::unique_ptr<Node>> nodes;
-  std::unordered_map<std::string, EngineTexture> images;
-  // std::unordered_map<std::string, class Tp>
+  std::unordered_map<std::string, std::unique_ptr<Node>> nodes;
+  std::unordered_map<std::string, std::unique_ptr<EngineTexture>> images;
 
 private:
   void loadModel(const std::filesystem::path &filePath);

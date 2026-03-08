@@ -84,3 +84,13 @@ struct RenderObject {
 	glm::mat4 transform;
 	VkDeviceAddress vertexBufferAddress;
 };
+
+struct GLTFMaterial {
+  MaterialInstance data;
+};
+
+struct MaterialInstance {
+    MaterialPipeline* pipeline;
+    VkDescriptorSet materialSet;
+    MaterialPass passType;
+};

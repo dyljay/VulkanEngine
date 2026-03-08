@@ -1,14 +1,11 @@
 #pragma once
 
-#include "engine_camera.hpp"
 #include "engine_device.hpp"
 #include "engine_frame_info.hpp"
-#include "engine_game_object.hpp"
 #include "engine_pipeline.hpp"
 
 // std
 #include <memory>
-#include <vector>
 
 namespace GameEngine {
 class PointLightSystem {
