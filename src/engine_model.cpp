@@ -2,15 +2,18 @@
 #include "fastgltf/core.hpp"
 #include "fastgltf/tools.hpp"
 #include "fastgltf/types.hpp"
+#include "fastgltf/util.hpp"
 #include "glm/fwd.hpp"
 #include "src/engine_device.hpp"
 #include "src/engine_mesh.hpp"
+#include "vulkan/vulkan_core.h"
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <memory>
 #include <stdexcept>
 #include <sys/types.h>
+#include <variant>
 #include <vector>
 
 namespace GameEngine {
@@ -49,6 +52,7 @@ void EngineModel::loadModel(const std::filesystem::path &filePath) {
 
   // building descriptorPool
   buildDescriptorPool(MAX_SETS);
+  loadTextures();
 
   std::vector<uint32_t> indices;
   std::vector<EngineMesh::Vertex> vertices;
@@ -145,7 +149,89 @@ void EngineModel::buildDescriptorPool(uint32_t numSets) {
                      .build();
 }
 
-void EngineModel::loadTextures() {}
+void EngineModel::loadTextures() {
+  size_t numTextures = gltf.images.size();
+  images.resize(numTextures);
+
+  for (uint imageIndex = 0; imageIndex < numTextures; imageIndex++) {
+    fastgltf::Image &gltfImage = gltf.images[imageIndex];
+    auto texture = EngineTexture::createTexture(geDevice);
+
+    std::visit(
+        fastgltf::visitor{
+            [&](fastgltf::sources::URI &filePath) {
+              const std::string imageFilePath(filePath.uri.path().begin(),
+                                              filePath.uri.path().end());
+
+              int width = 0, height = 0, nrChannels = 0;
+
+              stbi_uc *pixels = stbi_load(imageFilePath.c_str(), &width,
+                                          &height, &nrChannels, STBI_rgb_alpha);
+
+              VkFilter minFilter = getMinFilter();
+              VkFilter magFilter = getMagFilter();
+              VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB;
+              texture->Init(width, height, imageFormat, pixels, minFilter,
+                            magFilter);
+
+              stbi_image_free(pixels);
+            },
+            [&](fastgltf::sources::Array &vector) {
+              int width = 0, height = 0, nrChannels = 0;
+
+              stbi_uc *pixels = stbi_load_from_memory(
+                  reinterpret_cast<const stbi_uc *>(vector.bytes.data()),
+                  static_cast<int>(vector.bytes.size()), &width, &height,
+                  &nrChannels, STBI_rgb_alpha);
+
+              VkFilter minFilter = getMinFilter();
+              VkFilter magFilter = getMagFilter();
+              VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB;
+              texture->Init(width, height, imageFormat, pixels, minFilter,
+                            magFilter);
+
+              stbi_image_free(pixels);
+            },
+            [&](fastgltf::sources::BufferView &view) {
+              auto &bufferView = gltf.bufferViews[view.bufferViewIndex];
+              auto &bufferFromBufferView = gltf.buffers[bufferView.bufferIndex];
+
+              std::visit(
+                  fastgltf::visitor{
+                      [&](auto &arg) {
+                        throw std::runtime_error(
+                            "not supported default branch");
+                      },
+                      [&](fastgltf::sources::Array &vector) {
+                        int width = 0, height = 0, nrChannels = 0;
+
+                        stbi_uc *pixels = stbi_load_from_memory(
+                            reinterpret_cast<const stbi_uc *>(
+                                vector.bytes.data() + bufferView.byteOffset),
+                            static_cast<int>(bufferView.byteLength), &width,
+                            &height, &nrChannels, STBI_rgb_alpha);
+
+                        VkFilter minFilter = getMinFilter();
+                        VkFilter magFilter = getMagFilter();
+                        VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB;
+                        texture->Init(width, height, imageFormat, pixels,
+                                      minFilter, magFilter);
+
+                        stbi_image_free(pixels);
+                      }},
+                  bufferFromBufferView.data);
+            },
+            [&](auto &arg) { // default case for image data not supported
+              throw std::runtime_error("Image format not supported");
+            },
+        },
+        gltfImage.data);
+    images[imageIndex] = std::move(texture);
+  }
+}
+
+VkFilter EngineModel::getMinFilter() { return VK_FILTER_NEAREST; }
+VkFilter EngineModel::getMagFilter() { return VK_FILTER_NEAREST; }
 
 void EngineModel::bind(VkCommandBuffer commandBuffer) {
   for (auto &mesh : meshes) {

@@ -6,8 +6,6 @@
 #include <memory>
 #include <sys/types.h>
 
-#define STB_IMAGE_IMPLEMENTATION
-
 #include "engine_texture.hpp"
 
 #include <stdexcept>
@@ -50,7 +48,7 @@ void EngineTexture::Init(int w, int h, VkFormat imageFormat, stbi_uc *pixels,
                          VkFilter minFilter, VkFilter magFilter) {
 
   upload2D(w, h, pixels);
-  createImageView(VK_IMAGE_VIEW_TYPE_2D, 1, VK_FORMAT_R8G8B8A8_SRGB);
+  createImageView(VK_IMAGE_VIEW_TYPE_2D, 1, imageFormat);
   createSampler(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, minFilter, magFilter);
 }
 
@@ -66,8 +64,6 @@ void EngineTexture::upload2D(int w, int h, stbi_uc *pixels) {
   stagingBuffer.map();
   stagingBuffer.writeToBuffer((void *)pixels);
   stagingBuffer.unmap();
-
-  stbi_image_free(pixels);
 
   createVkImage(texWidth, texHeight, 1, 0);
 
@@ -245,8 +241,8 @@ void EngineTexture::createSampler(VkSamplerAddressMode addressmode,
                                   VkFilter minFilter, VkFilter magFilter) {
   VkSamplerCreateInfo samplerInfo{};
   samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-  samplerInfo.magFilter = minFilter;
-  samplerInfo.minFilter = magFilter;
+  samplerInfo.magFilter = magFilter;
+  samplerInfo.minFilter = minFilter;
   samplerInfo.addressModeU = addressmode;
   samplerInfo.addressModeV = addressmode;
   samplerInfo.addressModeW = addressmode;
