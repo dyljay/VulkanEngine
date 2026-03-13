@@ -15,7 +15,9 @@ class EngineTexture {
 public:
   static constexpr int MAX_TEXTURES = 1000;
 
-  EngineTexture(EngineDevice &geDevice, const std::string &filePath);
+  static std::shared_ptr<EngineTexture> createTexture(EngineDevice &geDevice);
+
+  EngineTexture(EngineDevice &geDevice);
 
   EngineTexture(EngineDevice &geDevice,
                 const std::array<std::string, 6> &facePaths);
@@ -23,6 +25,9 @@ public:
   ~EngineTexture();
 
   void drawCubeMap(VkCommandBuffer commandBuffer);
+
+  void Init(int w, int h, VkFormat imageFormat, stbi_uc *pixels,
+            VkFilter minFilter, VkFilter magFilter);
 
   VkDescriptorImageInfo getDescriptorInfo();
   VkImageView getImageView() const { return textureImageView; }
@@ -42,9 +47,11 @@ private:
 
   void createImageView(VkImageViewType viewType, uint32_t layers,
                        VkFormat format);
-  void createSampler(VkSamplerAddressMode addressMode);
+  void createSampler(VkSamplerAddressMode addressMode,
+                     VkFilter minFilter = VK_FILTER_LINEAR,
+                     VkFilter magFilter = VK_FILTER_LINEAR);
 
-  void upload2D(const std::string &filePath);
+  void upload2D(int w, int h, stbi_uc *pixels);
   void uploadCube(const std::array<std::string, 6> &cubePaths);
 
   void createVkImage(uint32_t texWidth, uint32_t texHeight, uint32_t layers,

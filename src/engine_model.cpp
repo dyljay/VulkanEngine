@@ -37,7 +37,6 @@ void EngineModel::loadModel(const std::filesystem::path &filePath) {
                                fastgltf::Options::AllowDouble |
                                fastgltf::Options::LoadExternalBuffers |
                                fastgltf::Options::LoadExternalImages;
-  fastgltf::Asset gltf;
   fastgltf::Parser parser{};
 
   auto load = parser.loadGltf(data.get(), filePath.parent_path(), gltfOptions);
@@ -145,6 +144,8 @@ void EngineModel::buildDescriptorPool(uint32_t numSets) {
                      .addPoolSizeRatioVector(sizes)
                      .build();
 }
+
+void EngineModel::loadTextures() {}
 
 void EngineModel::bind(VkCommandBuffer commandBuffer) {
   for (auto &mesh : meshes) {

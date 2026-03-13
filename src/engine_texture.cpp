@@ -3,6 +3,7 @@
 #include "vulkan/vulkan_core.h"
 #include <array>
 #include <cstdint>
+#include <memory>
 #include <sys/types.h>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -13,14 +14,8 @@
 
 namespace GameEngine {
 
-EngineTexture::EngineTexture(EngineDevice &geDevice,
-                             const std::string &filePath)
-    : geDevice{geDevice}, type{TextureType::Texture2D} {
-
-  upload2D(filePath);
-  createImageView(VK_IMAGE_VIEW_TYPE_2D, 1, VK_FORMAT_R8G8B8A8_SRGB);
-  createSampler(VK_SAMPLER_ADDRESS_MODE_REPEAT);
-}
+EngineTexture::EngineTexture(EngineDevice &geDevice)
+    : geDevice{geDevice}, type{TextureType::Texture2D} {}
 
 EngineTexture::EngineTexture(EngineDevice &geDevice,
                              const std::array<std::string, 6> &cubePaths)
@@ -46,15 +41,20 @@ void EngineTexture::drawCubeMap(VkCommandBuffer commandBuffer) {
   vkCmdDraw(commandBuffer, 36, 1, 0, 0);
 }
 
-void EngineTexture::upload2D(const std::string &filePath) {
-  int w, h, nC;
+std::shared_ptr<EngineTexture>
+EngineTexture::createTexture(EngineDevice &geDevice) {
+  return std::make_shared<EngineTexture>(geDevice);
+}
 
-  stbi_uc *pixels = stbi_load(filePath.c_str(), &w, &h, &nC, STBI_rgb_alpha);
+void EngineTexture::Init(int w, int h, VkFormat imageFormat, stbi_uc *pixels,
+                         VkFilter minFilter, VkFilter magFilter) {
 
-  if (!pixels) {
-    throw std::runtime_error("failed to load texture image!");
-  }
+  upload2D(w, h, pixels);
+  createImageView(VK_IMAGE_VIEW_TYPE_2D, 1, VK_FORMAT_R8G8B8A8_SRGB);
+  createSampler(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, minFilter, magFilter);
+}
 
+void EngineTexture::upload2D(int w, int h, stbi_uc *pixels) {
   texWidth = static_cast<uint32_t>(w);
   texHeight = static_cast<uint32_t>(h);
   VkDeviceSize imageSize = texWidth * texHeight * 4;
@@ -241,11 +241,12 @@ void EngineTexture::createImageView(VkImageViewType viewType, uint32_t layers,
   }
 }
 
-void EngineTexture::createSampler(VkSamplerAddressMode addressmode) {
+void EngineTexture::createSampler(VkSamplerAddressMode addressmode,
+                                  VkFilter minFilter, VkFilter magFilter) {
   VkSamplerCreateInfo samplerInfo{};
   samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-  samplerInfo.magFilter = VK_FILTER_LINEAR;
-  samplerInfo.minFilter = VK_FILTER_LINEAR;
+  samplerInfo.magFilter = minFilter;
+  samplerInfo.minFilter = magFilter;
   samplerInfo.addressModeU = addressmode;
   samplerInfo.addressModeV = addressmode;
   samplerInfo.addressModeW = addressmode;

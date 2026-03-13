@@ -37,16 +37,23 @@ public:
 
   void draw(VkCommandBuffer commandBuffer);
 
-  void buildDescriptorPool(uint32_t numSets);
-
   std::vector<std::shared_ptr<EngineMesh>> meshes;
   std::unordered_map<std::string, std::unique_ptr<Node>> nodes;
-  std::unordered_map<std::string, std::unique_ptr<EngineTexture>> images;
+  std::unordered_map<std::string, std::shared_ptr<EngineTexture>> images;
 
 private:
   void loadModel(const std::filesystem::path &filePath);
 
+  void buildDescriptorPool(uint32_t numSets);
+
+  void loadMaterials();
+
+  void loadTextures();
+
+  void loadNodes();
+
   EngineDevice &geDevice;
+  fastgltf::Asset gltf;
 };
 
 } // namespace GameEngine
