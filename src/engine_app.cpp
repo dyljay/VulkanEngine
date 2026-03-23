@@ -22,7 +22,6 @@
 #include "src/engine_ui.hpp"
 #include "vulkan/vulkan_core.h"
 #include <cstddef>
-#include <ios>
 #include <memory>
 
 #include <utility>
@@ -248,16 +247,16 @@ void EngineApp::loadGameObjects() {
   auto cyberpunkWoman = GameObject::createGameObject();
   cyberpunkWoman.model = geModel;
   cyberpunkWoman.transform.translation = {0.35f, -.7f, -.4f};
-  cyberpunkWoman.transform.rotation = {glm::radians(90.f), glm::radians(180.f),
+  cyberpunkWoman.transform.rotation = {glm::radians(90.f), glm::radians(180.0f),
                                        0.0f};
+  // cyberpunkWoman.transform.scale = glm::vec3{.01f};
   geObjects.emplace(cyberpunkWoman.getID(), std::move(cyberpunkWoman));
 
-  // geModel = EngineModel::createModelFromFile(geDevice,
-  // "./models/dancer.glb");
+  geModel = EngineModel::createModelFromFile(geDevice, "./models/dancer.glb");
   auto darkElf = GameObject::createGameObject();
   darkElf.model = geModel;
   darkElf.transform.translation = {-0.35f, -.7f, -.4f};
-  darkElf.transform.rotation = {glm::radians(90.f), glm::radians(0.f), 0.0f};
+  darkElf.transform.rotation = {glm::radians(90.f), glm::radians(180.f), 0.0f};
   geObjects.emplace(darkElf.getID(), std::move(darkElf));
 
   std::vector<glm::vec3> lightColors = {{0.2f, 0.2f, .7f}};

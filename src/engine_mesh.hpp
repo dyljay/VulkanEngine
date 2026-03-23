@@ -4,6 +4,7 @@
 #include "engine_device.hpp"
 #include "glm/fwd.hpp"
 #include "vulkan/vulkan_core.h"
+#include <cstddef>
 #include <vector>
 
 #define GLM_FORCE_RADIANS
@@ -18,7 +19,7 @@ struct GeoSurface {
   uint32_t startIndex;
   uint32_t count;
 
-  VkDescriptorSet descSet;
+  unsigned int materialIndex{0};
 };
 
 class EngineMesh {

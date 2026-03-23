@@ -4,6 +4,7 @@
 #include "fastgltf/types.hpp"
 #include "fastgltf/util.hpp"
 #include "glm/fwd.hpp"
+#include "lib/sdl/vendored/SDL/src/joystick/hidapi/steam/controller_structs.h"
 #include "src/engine_device.hpp"
 #include "src/engine_mesh.hpp"
 #include "vulkan/vulkan_core.h"
@@ -52,8 +53,18 @@ void EngineModel::loadModel(const std::filesystem::path &filePath) {
 
   // building descriptorPool
   buildDescriptorPool(MAX_SETS);
+
+  // loadTextures
   loadTextures();
 
+  // materials (need to be after materials to reference them in loadMaterials)
+  loadMaterials();
+
+  // then vertices
+  loadVertices();
+}
+
+void EngineModel::loadVertices() {
   std::vector<uint32_t> indices;
   std::vector<EngineMesh::Vertex> vertices;
   std::vector<GeoSurface> surfaces;
@@ -130,6 +141,11 @@ void EngineModel::loadModel(const std::filesystem::path &filePath) {
               vertices[initialVertex + index].color = v;
             });
       }
+
+      if (p.materialIndex.has_value()) {
+        newSurface.materialIndex = p.materialIndex.value();
+      }
+
       surfaces.push_back(newSurface);
     }
     meshes.emplace_back(
@@ -227,6 +243,49 @@ void EngineModel::loadTextures() {
         },
         gltfImage.data);
     images[imageIndex] = std::move(texture);
+  }
+}
+
+void EngineModel::loadMaterials() {
+  size_t numMaterials = gltf.materials.size();
+  materials.resize(numMaterials);
+
+  for (int matIndex = 0; matIndex < numMaterials; matIndex++) {
+    auto material = std::make_shared<MaterialProperties>();
+    fastgltf::Material &gltfMaterial = gltf.materials[matIndex];
+
+    {
+      // material->baseColor =
+      //    glm::vec4{gltfMaterial.pbrData.baseColorFactor.data()};
+    }
+
+    if (gltfMaterial.pbrData.baseColorTexture.has_value()) {
+      // gltfMaterial.normalTexture.value().textureIndex;
+      // gltf.textures[0].imageIndex.value();
+    }
+
+    if (gltfMaterial.normalTexture.has_value()) {
+      // insert normal texture
+    }
+
+    // metallic/roughness values
+    {
+      material->roughness = gltfMaterial.pbrData.roughnessFactor;
+      material->metallic = gltfMaterial.pbrData.metallicFactor;
+    }
+
+    if (gltfMaterial.pbrData.metallicRoughnessTexture.has_value()) {
+    }
+
+    {
+      // emissive color and strength
+    }
+
+    if (gltfMaterial.emissiveTexture.has_value()) {
+    }
+
+    {
+    }
   }
 }
 

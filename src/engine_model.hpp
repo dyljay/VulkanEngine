@@ -2,6 +2,7 @@
 
 #include "engine_descriptor.hpp"
 #include "engine_mesh.hpp"
+#include "pbrMaterials.hpp"
 #include "src/engine_device.hpp"
 #include "src/engine_texture.hpp"
 #include "vulkan/vulkan_core.h"
@@ -36,19 +37,14 @@ public:
   void draw(VkCommandBuffer commandBuffer);
 
   std::vector<std::shared_ptr<EngineMesh>> meshes;
-  // std::unordered_map<std::string, std::unique_ptr<Node>> nodes;
   std::vector<std::shared_ptr<EngineTexture>> images;
+  std::vector<std::shared_ptr<MaterialProperties>> materials;
 
-private:
   void loadModel(const std::filesystem::path &filePath);
-
   void buildDescriptorPool(uint32_t numSets);
-
   void loadMaterials();
-
   void loadTextures();
-
-  void loadNodes();
+  void loadVertices();
 
   VkFilter getMinFilter();
   VkFilter getMagFilter();

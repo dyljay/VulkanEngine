@@ -56,13 +56,16 @@ void main() {
         blinnTerm = pow(blinnTerm, 32.0);
         
         specularLight += light.color.xyz * attenuation * blinnTerm;
-    }
-    
+    }        
+
+    // reflection of cubemap (ambient specular lighting)
     vec3 I = normalize(fragPosWorld - cameraPosWorld);
     vec3 R = reflect(I, normalize(fragNormalWorld));
-    vec4 fragSkybox = texture(cubeMap, R);
+    vec4 fragSkybox = vec3(1.0,1.0,0.0) * texture(cubeMap, R);
 
-    outColor = fragColor * fragSkybox * vec4(diffuseLight + specularLight + ambientLight, 1.0);
+    specularLight = specularLight + fragSkybox;
+
+    outColor = fragColor * vec4(diffuseLight + specularLight + ambientLight, 1.0);
 }
 
 float normalDistribution(vec3 n, vec3 h, float a) 
