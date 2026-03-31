@@ -22,6 +22,7 @@
 #include "src/engine_ui.hpp"
 #include "vulkan/vulkan_core.h"
 #include <cstddef>
+#include <iostream>
 #include <memory>
 
 #include <utility>
@@ -120,7 +121,7 @@ void EngineApp::run() {
   float red = 0.2f;
   float green = 0.2f;
   float blue = 0.7f;
-  float intensity = 10.0f;
+  float intensity = 1.0f;
 
   while (!shouldQuit) {
     auto newTime = std::chrono::high_resolution_clock::now();
@@ -214,7 +215,7 @@ void EngineApp::run() {
           ImGui::SliderFloat("Green", &green, 0.0f, 1.0f);
           ImGui::SliderFloat("Blue", &blue, 0.0f, 1.0f);
           ImGui::Text("Intensity");
-          ImGui::SliderFloat("Intensity", &intensity, 0.f, 20.f);
+          ImGui::SliderFloat("Intensity", &intensity, 0.f, 1.f);
         }
         ImGui::End();
         ui.render(commandBuffer);
@@ -241,6 +242,7 @@ void EngineApp::run() {
 }
 
 void EngineApp::loadGameObjects() {
+  std::cout << "Loading Game Objects..." << std::endl;
 
   std::shared_ptr<EngineModel> geModel = EngineModel::createModelFromFile(
       geDevice, "./models/cyberpunk_woman.glb");
@@ -262,7 +264,7 @@ void EngineApp::loadGameObjects() {
   std::vector<glm::vec3> lightColors = {{0.2f, 0.2f, .7f}};
 
   for (int i = 0; i < lightColors.size(); i++) {
-    auto pointLight = GameObject::makePointLight(10.f);
+    auto pointLight = GameObject::makePointLight(1.f);
     pointLight.color = lightColors[i];
 
     auto rotateLight = glm::rotate(
@@ -274,5 +276,7 @@ void EngineApp::loadGameObjects() {
 
     geObjects.emplace(pointLight.getID(), std::move(pointLight));
   }
+
+  std::cout << "Game Objects Loaded!" << std::endl;
 }
 } // namespace GameEngine

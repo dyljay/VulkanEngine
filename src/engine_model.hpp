@@ -15,6 +15,8 @@
 #include <fastgltf/types.hpp>
 #include <vector>
 
+#include <glm/gtc/type_ptr.hpp>
+
 namespace GameEngine {
 
 class EngineModel {

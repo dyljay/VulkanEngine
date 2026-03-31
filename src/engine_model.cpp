@@ -7,6 +7,7 @@
 #include "lib/sdl/vendored/SDL/src/joystick/hidapi/steam/controller_structs.h"
 #include "src/engine_device.hpp"
 #include "src/engine_mesh.hpp"
+#include "src/pbrMaterials.hpp"
 #include "vulkan/vulkan_core.h"
 #include <cstddef>
 #include <cstdint>
@@ -255,17 +256,19 @@ void EngineModel::loadMaterials() {
     fastgltf::Material &gltfMaterial = gltf.materials[matIndex];
 
     {
-      // material->baseColor =
-      //    glm::vec4{gltfMaterial.pbrData.baseColorFactor.data()};
+      material->baseColor =
+          glm::make_vec4(gltfMaterial.pbrData.baseColorFactor.data());
     }
 
     if (gltfMaterial.pbrData.baseColorTexture.has_value()) {
-      // gltfMaterial.normalTexture.value().textureIndex;
-      // gltf.textures[0].imageIndex.value();
+      material->baseColorMap =
+          gltfMaterial.pbrData.baseColorTexture.value().textureIndex;
+      material->numFeatures |= PBRMaterial::GLSL_HAS_BASE_MAP;
     }
 
     if (gltfMaterial.normalTexture.has_value()) {
-      // insert normal texture
+      material->normalMap = gltfMaterial.normalTexture.value().textureIndex;
+      material->numFeatures |= PBRMaterial::GLSL_HAS_NORMAL_MAP;
     }
 
     // metallic/roughness values
@@ -275,17 +278,14 @@ void EngineModel::loadMaterials() {
     }
 
     if (gltfMaterial.pbrData.metallicRoughnessTexture.has_value()) {
+      material->metallicRoughness =
+          gltfMaterial.pbrData.metallicRoughnessTexture.value().textureIndex;
+      material->numFeatures |= PBRMaterial::GLSL_HAS_METAL_MAP;
     }
+    // emissive color and strength
+    // TODO: add emissive color/strength textures for lights in future
 
-    {
-      // emissive color and strength
-    }
-
-    if (gltfMaterial.emissiveTexture.has_value()) {
-    }
-
-    {
-    }
+    materials[matIndex] = std::move(material);
   }
 }
 

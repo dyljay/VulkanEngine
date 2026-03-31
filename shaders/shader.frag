@@ -1,5 +1,7 @@
 #version 450
 
+#extension GL_EXT_nonuniform_qualifier : require
+
 layout (location = 0) in vec4 fragColor;
 layout (location = 1) in vec3 fragPosWorld;
 layout (location = 2) in vec3 fragNormalWorld;
@@ -22,6 +24,8 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
 
 layout (binding = 1) uniform samplerCube cubeMap;
 
+layout(set = 1, binding = 0) uniform sampler2D bindlessTextures[];
+
 layout(push_constant) uniform Push {
     mat4 modelMatrix;
     mat4 normalMatrix;
@@ -39,6 +43,7 @@ void main() {
     vec3 viewDirection = normalize(cameraPosWorld - fragPosWorld);
     
     for (int i = 0 ; i < ubo.numActiveLights ; i++) {
+        // diffuse lighting
         PointLight light = ubo.pointLights[i];
         vec3 directionToLight = light.position.xyz - fragPosWorld;
         float attenuation = 1.0 / dot(directionToLight, directionToLight);
@@ -58,13 +63,15 @@ void main() {
         specularLight += light.color.xyz * attenuation * blinnTerm;
     }        
 
-    // reflection of cubemap (ambient specular lighting)
+    // reflection of cubemap 
     vec3 I = normalize(fragPosWorld - cameraPosWorld);
     vec3 R = reflect(I, normalize(fragNormalWorld));
-    vec4 fragSkybox = vec3(1.0,1.0,0.0) * texture(cubeMap, R);
-
-    specularLight = specularLight + fragSkybox;
-
+    vec4 fragSkybox = texture(cubeMap, R);
+    
+    // ambient specular component from cubemap
+    specularLight = specularLight + fragSkybox.rgb;
+    
+    // total sum
     outColor = fragColor * vec4(diffuseLight + specularLight + ambientLight, 1.0);
 }
 
