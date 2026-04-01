@@ -58,7 +58,7 @@ void EngineModel::loadModel(const std::filesystem::path &filePath) {
   // loadTextures
   loadTextures();
 
-  // materials (need to be after materials to reference them in loadMaterials)
+  // materials (need to be after textures to reference them in loadMaterials)
   loadMaterials();
 
   // then vertices
@@ -283,9 +283,21 @@ void EngineModel::loadMaterials() {
           gltfMaterial.pbrData.metallicRoughnessTexture.value().textureIndex;
       material->properties.numFeatures |= PBRMaterial::GLSL_HAS_METAL_MAP;
     }
+
     // emissive color and strength
     // TODO: add emissive color/strength textures for lights in future
+    {
+    }
 
+    {
+      auto buffer = material->getMaterialBuffer();
+      buffer = std::make_shared<EngineBuffer>(
+          geDevice, sizeof(PBRMaterial), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+          VMA_MEMORY_USAGE_CPU_TO_GPU);
+      buffer.get()->map();
+      buffer.get()->writeToBuffer(&material->properties);
+      buffer.get()->flush();
+    }
     materials[matIndex] = std::move(material);
   }
 }

@@ -42,6 +42,7 @@ public:
   std::vector<std::shared_ptr<EngineTexture>> images;
   std::vector<std::shared_ptr<PBRMaterial>> materials;
 
+private:
   void loadModel(const std::filesystem::path &filePath);
   void buildDescriptorPool(uint32_t numSets);
   void loadMaterials();

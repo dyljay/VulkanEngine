@@ -33,7 +33,9 @@ public:
 
   MaterialProperties properties{};
 
+  std::shared_ptr<EngineBuffer> &getMaterialBuffer() { return pbrMaterial; }
+
 private:
-  std::unique_ptr<EngineBuffer> pbrBuffer;
+  std::shared_ptr<EngineBuffer> pbrMaterial;
 };
 } // namespace GameEngine
