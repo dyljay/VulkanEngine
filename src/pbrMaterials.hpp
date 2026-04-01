@@ -2,28 +2,25 @@
 
 #include "engine_buffer.hpp"
 #include "glm/fwd.hpp"
-#include <cstdint>
 #include <glm/glm.hpp>
 #include <memory>
 
 namespace GameEngine {
 
 struct MaterialProperties {
-  uint64_t numFeatures{0};
-
   // 16 bytes
   glm::vec4 baseColor{1.0f};
 
   // 16 bytes
-  unsigned int baseColorMap{3};
+  unsigned int numFeatures{0};
+  unsigned int baseColorMap{0};
   float metallic{1.0f};
   float roughness{1.0f};
-  unsigned int emmissiveMap{3}; // indices for textures
 
-  // 8 bytes
-  unsigned int normalMap{3};
-  unsigned int occlusionMap{3};
-  unsigned int metallicRoughness{3};
+  // 12 bytes
+  unsigned int normalMap{0};
+  unsigned int occlusionMap{0};
+  unsigned int metallicRoughness{0};
 };
 
 class PBRMaterial {
@@ -34,7 +31,7 @@ public:
     GLSL_HAS_METAL_MAP = 0x1 << 0x2
   };
 
-  struct MaterialProperties {};
+  MaterialProperties properties{};
 
 private:
   std::unique_ptr<EngineBuffer> pbrBuffer;

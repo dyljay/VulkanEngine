@@ -93,18 +93,6 @@ void SimpleRenderSystem::renderGameObjects(FrameInfo &frameInfo) {
       mesh->bind(frameInfo.commandBuffer);
       mesh->draw(frameInfo.commandBuffer);
     }
-
-    /*
-    pushData.vertexBuffer = obj.model->getVertexBufferAddress();
-
-    vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
-                       VK_SHADER_STAGE_VERTEX_BIT |
-                           VK_SHADER_STAGE_FRAGMENT_BIT,
-                       0, sizeof(SimplePushConstantData), &pushData);
-
-    obj.model->bind(frameInfo.commandBuffer);
-    obj.model->draw(frameInfo.commandBuffer);
-    */
   }
 }
 

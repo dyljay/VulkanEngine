@@ -40,7 +40,7 @@ public:
 
   std::vector<std::shared_ptr<EngineMesh>> meshes;
   std::vector<std::shared_ptr<EngineTexture>> images;
-  std::vector<std::shared_ptr<MaterialProperties>> materials;
+  std::vector<std::shared_ptr<PBRMaterial>> materials;
 
   void loadModel(const std::filesystem::path &filePath);
   void buildDescriptorPool(uint32_t numSets);

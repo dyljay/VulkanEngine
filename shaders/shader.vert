@@ -1,9 +1,12 @@
 #version 450
+
 #extension GL_EXT_buffer_reference : require
+#extension GL_ARB_shading_language_include : require
 
 layout(location = 0) out vec4 fragColor;
 layout(location = 1) out vec3 fragPosWorld;
 layout(location = 2) out vec3 fragNormalWorld;
+layout(location = 3) out vec2 fragUV;
 
 struct PointLight {
     vec4 position;
@@ -45,4 +48,5 @@ void main() {
     fragNormalWorld = normalize(mat3(push.normalMatrix) * v.normal);
     fragPosWorld = positionWorld.xyz;
     fragColor = v.color;
+    fragUV = vec2(v.uv_x, v.uv_y);
 }

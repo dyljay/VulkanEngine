@@ -53,7 +53,6 @@ private:
   VkBuffer buffer = VK_NULL_HANDLE;
   VmaAllocation allocation_;
   VmaAllocationInfo allocInfo;
-  //
 
   VkDeviceSize bufferSize;
   uint32_t instanceCount;

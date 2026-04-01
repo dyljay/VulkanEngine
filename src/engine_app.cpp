@@ -64,6 +64,7 @@ void EngineApp::run() {
         VMA_MEMORY_USAGE_CPU_ONLY);
     uboBuffers[i]->map();
   }
+
   // skybox texture
   EngineTexture cubeMap{geDevice, cubeTextureFilePaths};
 

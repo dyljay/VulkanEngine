@@ -158,13 +158,6 @@ void EngineMesh::draw(VkCommandBuffer commandBuffer) {
   for (auto &p : surfaces_) {
     vkCmdDrawIndexed(commandBuffer, p.count, 1, p.startIndex, 0, 0);
   }
-  /*
-  if (hasIndexBuffer) {
-    vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
-  } else {
-    vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);
-  }
-  */
 }
 
 void EngineMesh::bind(VkCommandBuffer commandBuffer) {

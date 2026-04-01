@@ -252,35 +252,36 @@ void EngineModel::loadMaterials() {
   materials.resize(numMaterials);
 
   for (int matIndex = 0; matIndex < numMaterials; matIndex++) {
-    auto material = std::make_shared<MaterialProperties>();
+    auto material = std::make_shared<PBRMaterial>();
     fastgltf::Material &gltfMaterial = gltf.materials[matIndex];
 
     {
-      material->baseColor =
+      material->properties.baseColor =
           glm::make_vec4(gltfMaterial.pbrData.baseColorFactor.data());
     }
 
     if (gltfMaterial.pbrData.baseColorTexture.has_value()) {
-      material->baseColorMap =
+      material->properties.baseColorMap =
           gltfMaterial.pbrData.baseColorTexture.value().textureIndex;
-      material->numFeatures |= PBRMaterial::GLSL_HAS_BASE_MAP;
+      material->properties.numFeatures |= PBRMaterial::GLSL_HAS_BASE_MAP;
     }
 
     if (gltfMaterial.normalTexture.has_value()) {
-      material->normalMap = gltfMaterial.normalTexture.value().textureIndex;
-      material->numFeatures |= PBRMaterial::GLSL_HAS_NORMAL_MAP;
+      material->properties.normalMap =
+          gltfMaterial.normalTexture.value().textureIndex;
+      material->properties.numFeatures |= PBRMaterial::GLSL_HAS_NORMAL_MAP;
     }
 
     // metallic/roughness values
     {
-      material->roughness = gltfMaterial.pbrData.roughnessFactor;
-      material->metallic = gltfMaterial.pbrData.metallicFactor;
+      material->properties.roughness = gltfMaterial.pbrData.roughnessFactor;
+      material->properties.metallic = gltfMaterial.pbrData.metallicFactor;
     }
 
     if (gltfMaterial.pbrData.metallicRoughnessTexture.has_value()) {
-      material->metallicRoughness =
+      material->properties.metallicRoughness =
           gltfMaterial.pbrData.metallicRoughnessTexture.value().textureIndex;
-      material->numFeatures |= PBRMaterial::GLSL_HAS_METAL_MAP;
+      material->properties.numFeatures |= PBRMaterial::GLSL_HAS_METAL_MAP;
     }
     // emissive color and strength
     // TODO: add emissive color/strength textures for lights in future

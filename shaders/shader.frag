@@ -1,10 +1,16 @@
 #version 450
 
 #extension GL_EXT_nonuniform_qualifier : require
+#extension GL_ARB_shading_language_include : require
+
+#include "material.glsl"
+
+#define PI 3.14159265359
 
 layout (location = 0) in vec4 fragColor;
 layout (location = 1) in vec3 fragPosWorld;
 layout (location = 2) in vec3 fragNormalWorld;
+layout (location = 3) in vec2 fragUV;
 
 layout (location = 0) out vec4 outColor;
 
@@ -26,14 +32,31 @@ layout (binding = 1) uniform samplerCube cubeMap;
 
 layout(set = 1, binding = 0) uniform sampler2D bindlessTextures[];
 
-layout(push_constant) uniform Push {
-    mat4 modelMatrix;
-    mat4 normalMatrix;
-} push;
+layout (set = 2, binding = 0) readonly uniform MaterialProperties {
+  // 16 bytes
+  vec4 baseColor;
 
-#define PI 3.14159265359
+  // 16 bytes
+  uint numFeatures;
+  uint baseColorMap;
+  float metallic;
+  float roughness;
+
+  // 12 bytes
+  uint normalMap;
+  uint occlusionMap;
+  uint metallicRoughness;
+} matProperties;
 
 void main() {
+    if (bool(matProperties.numFeatures & GLSL_HAS_BASE_MAP)){
+      vec4 albedo = texture(bindlessTextures[nonuniformEXT(matProperties.baseColorMap)], fragUV);
+    }
+    else {
+      vec4 albedo = matProperties.baseColor;  
+    }
+
+
     vec3 ambientLight = vec3(.2);
     vec3 diffuseLight = ubo.ambientLightColor.xyz * ubo.ambientLightColor.w;
     vec3 specularLight = vec3(0.0);
