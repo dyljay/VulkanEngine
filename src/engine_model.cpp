@@ -4,14 +4,15 @@
 #include "fastgltf/types.hpp"
 #include "fastgltf/util.hpp"
 #include "glm/fwd.hpp"
-#include "lib/sdl/vendored/SDL/src/joystick/hidapi/steam/controller_structs.h"
 #include "src/engine_device.hpp"
 #include "src/engine_mesh.hpp"
 #include "src/pbrMaterials.hpp"
 #include "vulkan/vulkan_core.h"
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <sys/types.h>
@@ -171,6 +172,7 @@ void EngineModel::loadTextures() {
   images.resize(numTextures);
 
   for (uint imageIndex = 0; imageIndex < numTextures; imageIndex++) {
+
     fastgltf::Image &gltfImage = gltf.images[imageIndex];
     auto texture = EngineTexture::createTexture(geDevice);
 

@@ -28,10 +28,8 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
     int numActiveLights;
 } ubo;
 
-layout (set = 0, binding = 1) uniform samplerCube cubeMap;
-// layout(set = 1, binding = 0) uniform sampler2D bindlessTextures[];
+layout (set = 1, binding = 0) uniform sampler2D cubeMap;
 
-/*
 layout (set = 2, binding = 0) readonly uniform MaterialProperties {
   // 16 bytes
   vec4 baseColor;
@@ -47,17 +45,17 @@ layout (set = 2, binding = 0) readonly uniform MaterialProperties {
   uint occlusionMap;
   uint metallicRoughness;
 } matProperties;
-*/
+
+layout(set = 3, binding = 0) uniform sampler2D bindlessTextures[];
 
 void main() {
-  /*
     if (bool(matProperties.numFeatures & GLSL_HAS_BASE_MAP)){
       vec4 albedo = texture(bindlessTextures[nonuniformEXT(matProperties.baseColorMap)], fragUV);
     }
     else {
       vec4 albedo = matProperties.baseColor;  
     }
-*/
+
     vec3 ambientLight = vec3(.2);
     vec3 diffuseLight = ubo.ambientLightColor.xyz * ubo.ambientLightColor.w;
     vec3 specularLight = vec3(0.0);

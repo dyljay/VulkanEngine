@@ -12,7 +12,7 @@
 
 namespace GameEngine {
 
-EngineTexture::EngineTexture(EngineDevice &geDevice)
+EngineTexture::EngineTexture(EngineDevice &geDevice, unsigned int ID)
     : geDevice{geDevice}, type{TextureType::Texture2D} {}
 
 EngineTexture::EngineTexture(EngineDevice &geDevice,
@@ -41,9 +41,15 @@ void EngineTexture::drawCubeMap(VkCommandBuffer commandBuffer) {
 
 std::shared_ptr<EngineTexture>
 EngineTexture::createTexture(EngineDevice &geDevice) {
-  return std::make_shared<EngineTexture>(geDevice);
+  static id_t id = 0;
+  return std::make_shared<EngineTexture>(geDevice, id++);
 }
 
+std::unique_ptr<EngineTexture>
+EngineTexture::createCubeMap(EngineDevice &geDevice,
+                             const std::array<std::string, 6> &facePaths) {
+  return std::make_unique<EngineTexture>(geDevice, facePaths);
+}
 void EngineTexture::Init(int w, int h, VkFormat imageFormat, stbi_uc *pixels,
                          VkFilter minFilter, VkFilter magFilter) {
 

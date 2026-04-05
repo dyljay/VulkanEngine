@@ -5,25 +5,33 @@
 #include "vulkan/vulkan_core.h"
 #include <array>
 #include <cstdint>
+#include <memory>
 #include <string>
 
 namespace GameEngine {
-
-enum class TextureType { Texture2D, TextureCube };
+using id_t = unsigned int;
 
 class EngineTexture {
 public:
+  enum class TextureType { Texture2D, TextureCube };
   static constexpr int MAX_TEXTURES = 1000;
 
   static std::shared_ptr<EngineTexture> createTexture(EngineDevice &geDevice);
+  static std::unique_ptr<EngineTexture>
+  createCubeMap(EngineDevice &geDevice,
+                const std::array<std::string, 6> &facePaths);
 
-  EngineTexture(EngineDevice &geDevice);
+  EngineTexture(EngineDevice &geDevice, id_t ID);
 
   EngineTexture(EngineDevice &geDevice,
                 const std::array<std::string, 6> &facePaths);
 
   ~EngineTexture();
 
+  id_t getID() const { return id; }
+
+  // TODO: probably should extend the cubeMap into a child class instead of
+  // having this just be here all under one roof
   void drawCubeMap(VkCommandBuffer commandBuffer);
 
   void Init(int w, int h, VkFormat imageFormat, stbi_uc *pixels,
@@ -34,6 +42,8 @@ public:
   VkSampler getSampler() const { return textureSampler; }
 
 private:
+  id_t id;
+
   EngineDevice &geDevice;
   VkImage textureImage;
   VmaAllocation allocation;

@@ -1,15 +1,29 @@
 #pragma once
 
-#include "engine_descriptor.hpp"
 #include "engine_device.hpp"
 #include "engine_game_object.hpp"
 #include "engine_renderer.hpp"
 #include "engine_window.hpp"
-
+#include "vulkan/vulkan_core.h"
 // std
 #include <memory>
 
 namespace GameEngine {
+
+struct DescriptorSetLayouts {
+  std::unique_ptr<EngineDescriptorSetLayout> uboSetLayout;
+  std::unique_ptr<EngineDescriptorSetLayout> materialSetLayout;
+  std::unique_ptr<EngineDescriptorSetLayout> cubemap;
+  std::unique_ptr<EngineDescriptorSetLayout> textureLayout;
+};
+
+struct DescriptorSets {
+  std::vector<VkDescriptorSet> uboSets;
+  std::vector<VkDescriptorSet> materialSets;
+  VkDescriptorSet cubeMap;
+  VkDescriptorSet textureArray;
+};
+
 class EngineApp {
 public:
   static constexpr int MAX_DESCRIPTOR_SET = 100;
@@ -27,6 +41,11 @@ public:
 
 private:
   void loadGameObjects();
+
+  void populateDescriptorSetLayouts(DescriptorSetLayouts &descriptorSetLayouts);
+
+  void createDescriptorSets(DescriptorSets &descriptorSets,
+                            DescriptorSetLayouts &descriptorSetLayouts);
 
   EngineWindow geWindow{WIDTH, HEIGHT, "Skumpwit"};
   EngineDevice geDevice{geWindow};

@@ -11,16 +11,15 @@
 #include "glm/trigonometric.hpp"
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
+#include "lib/sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
 #include "point_light_system.hpp"
 #include "simple_render_system.hpp"
 #include "src/cubemap_system.hpp"
-#include "src/engine_descriptor.hpp"
 #include "src/engine_device.hpp"
 #include "src/engine_game_object.hpp"
 #include "src/engine_model.hpp"
 #include "src/engine_swapchain.hpp"
 #include "src/engine_ui.hpp"
-#include "vulkan/vulkan_core.h"
 #include <cstddef>
 #include <iostream>
 #include <memory>
@@ -65,31 +64,26 @@ void EngineApp::run() {
     uboBuffers[i]->map();
   }
 
+  // loading in all the descriptorSetLayouts
+  DescriptorSetLayouts descriptorSetLayouts;
+  populateDescriptorSetLayouts(descriptorSetLayouts);
+
   // skybox texture
-  EngineTexture cubeMap{geDevice, cubeTextureFilePaths};
+  auto cubeMap = EngineTexture::createCubeMap(geDevice, cubeTextureFilePaths);
 
-  // FIXME: fix the descriptor info for the textures it does not load and this
-  // is clunky
-  auto globalSetLayout =
-      EngineDescriptorSetLayout::Builder(geDevice)
-          .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                      VK_SHADER_STAGE_ALL_GRAPHICS)
-          .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                      VK_SHADER_STAGE_FRAGMENT_BIT)
-          .build();
-
-  std::vector<VkDescriptorSet> globalDescriptorSets(
+  std::vector<VkDescriptorSet> uboDescriptorSets(
       EngineSwapChain::MAX_FRAMES_IN_FLIGHT);
 
-  for (int i = 0; i < globalDescriptorSets.size(); i++) {
+  for (int i = 0; i < uboDescriptorSets.size(); i++) {
     auto bufferInfo = uboBuffers[i]->descriptorInfo();
-    auto imageImgInfo = cubeMap.getDescriptorInfo();
-    EngineDescriptorWriter(*globalSetLayout, *globalPool)
+    EngineDescriptorWriter(*descriptorSetLayouts.uboSetLayout, *globalPool)
         .writeBuffer(0, &bufferInfo)
-        .writeImage(1, &imageImgInfo)
-        .build(globalDescriptorSets[i]);
+        .build(uboDescriptorSets[i]);
   }
-  // FIXME: END
+
+  // creating descriptor sets
+  DescriptorSets descriptorSets;
+  createDescriptorSets(descriptorSets, descriptorSetLayouts);
 
   EngineUI ui{geRenderer};
 
@@ -97,13 +91,16 @@ void EngineApp::run() {
       geDevice, geRenderer.getSwapChainRenderPass(),
       globalSetLayout->getDescriptorSetLayout()};
 
+  // only need to pas in the uboSetLayout to this because no material or texture
+  // data is needed
   PointLightSystem pointLightSystem{geDevice,
                                     geRenderer.getSwapChainRenderPass(),
-                                    globalSetLayout->getDescriptorSetLayout()};
+                                    uboSetLayout->getDescriptorSetLayout()};
 
+  // only need cubemap and textures here
   CubeMapRenderSystem cubeMapRender{geDevice,
                                     geRenderer.getSwapChainRenderPass(),
-                                    globalSetLayout->getDescriptorSetLayout()};
+                                    uboSetLayout->getDescriptorSetLayout()};
 
   EngineCamera camera{};
   camera.setViewDirection(glm::vec3(0.0f), glm::vec3(0.f, 0.f, 1.f));
@@ -241,6 +238,60 @@ void EngineApp::run() {
   vkDeviceWaitIdle(geDevice.device());
 }
 
+void EngineApp::populateDescriptorSetLayouts(
+    DescriptorSetLayouts &descriptorSetLayouts) {
+  // set layout for pipeline
+  descriptorSetLayouts.uboSetLayout =
+      EngineDescriptorSetLayout::Builder(geDevice)
+          .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                      VK_SHADER_STAGE_ALL_GRAPHICS)
+          .build();
+  // cubeMapSetLayout
+  descriptorSetLayouts.cubemap =
+      EngineDescriptorSetLayout::Builder(geDevice)
+          .addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                      VK_SHADER_STAGE_FRAGMENT_BIT)
+          .build();
+
+  // materialSetLayout
+  descriptorSetLayouts.materialSetLayout =
+      EngineDescriptorSetLayout::Builder(geDevice)
+          .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                      VK_SHADER_STAGE_FRAGMENT_BIT)
+          .build();
+
+  // FIXME: properly set up the flags for the bindless textures
+  // textureSetLayout containing all the textures for all models - utilizes
+  // descriptor indexing
+  descriptorSetLayouts.textureLayout =
+      EngineDescriptorSetLayout::Builder(geDevice)
+          .addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                      VK_SHADER_STAGE_FRAGMENT_BIT)
+          .build();
+}
+
+void EngineApp::createDescriptorSets(
+    DescriptorSets &descriptorSets,
+    DescriptorSetLayouts &descriptorSetLayouts) {
+
+  std::vector<VkDescriptorSet> materialDescriptorSet(3);
+
+  for (int i = 0; i < materialDescriptorSet.size(); i++) {
+  }
+
+  VkDescriptorSet cubeDescSet;
+  {
+    auto imageInfo = cubeMap->getDescriptorInfo();
+    EngineDescriptorWriter(*descriptorSetLayouts.cubemap, *globalPool)
+        .writeImage(0, &imageInfo)
+        .build(cubeDescSet);
+  }
+
+  VkDescriptorSet textureDescSet;
+  {
+  }
+}
+
 void EngineApp::loadGameObjects() {
   std::cout << "Loading Game Objects..." << std::endl;
 
@@ -251,7 +302,6 @@ void EngineApp::loadGameObjects() {
   cyberpunkWoman.transform.translation = {0.35f, -.7f, -.4f};
   cyberpunkWoman.transform.rotation = {glm::radians(90.f), glm::radians(180.0f),
                                        0.0f};
-  // cyberpunkWoman.transform.scale = glm::vec3{.01f};
   geObjects.emplace(cyberpunkWoman.getID(), std::move(cyberpunkWoman));
 
   geModel = EngineModel::createModelFromFile(geDevice, "./models/dancer.glb");
@@ -259,6 +309,7 @@ void EngineApp::loadGameObjects() {
   darkElf.model = geModel;
   darkElf.transform.translation = {-0.35f, -.7f, -.4f};
   darkElf.transform.rotation = {glm::radians(90.f), glm::radians(180.f), 0.0f};
+
   geObjects.emplace(darkElf.getID(), std::move(darkElf));
 
   std::vector<glm::vec3> lightColors = {{0.2f, 0.2f, .7f}};

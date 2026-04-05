@@ -258,6 +258,8 @@ void EngineDescriptorPoolGrowable::createPool(uint32_t setCount) {
       EngineDescriptorPool::Builder(geDevice);
 
   for (auto &ratio : poolSizeRatios) {
+    assert(ratio.ratio == 0 && "Pool size ratio cannot be 0");
+
     builder.addPoolSize(ratio.type, uint32_t(ratio.ratio * setsPerPool));
   }
 
