@@ -31,6 +31,8 @@ public:
     GLSL_HAS_METAL_MAP = 0x1 << 0x2
   };
 
+  static int TOTAL_MATERIAL_COUNT;
+
   MaterialProperties properties{};
 
   std::shared_ptr<EngineBuffer> &getMaterialBuffer() { return pbrMaterial; }

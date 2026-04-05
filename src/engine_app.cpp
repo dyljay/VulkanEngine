@@ -15,11 +15,13 @@
 #include "point_light_system.hpp"
 #include "simple_render_system.hpp"
 #include "src/cubemap_system.hpp"
+#include "src/engine_descriptor.hpp"
 #include "src/engine_device.hpp"
 #include "src/engine_game_object.hpp"
 #include "src/engine_model.hpp"
 #include "src/engine_swapchain.hpp"
 #include "src/engine_ui.hpp"
+#include "src/pbrMaterials.hpp"
 #include <cstddef>
 #include <iostream>
 #include <memory>
@@ -65,26 +67,36 @@ void EngineApp::run() {
   }
 
   // loading in all the descriptorSetLayouts
-  DescriptorSetLayouts descriptorSetLayouts;
+  DescriptorSetLayouts descriptorSetLayouts{};
   populateDescriptorSetLayouts(descriptorSetLayouts);
 
   // skybox texture
   auto cubeMap = EngineTexture::createCubeMap(geDevice, cubeTextureFilePaths);
 
-  std::vector<VkDescriptorSet> uboDescriptorSets(
-      EngineSwapChain::MAX_FRAMES_IN_FLIGHT);
+  // creating descriptor sets
+  DescriptorSets descriptorSets{};
 
-  for (int i = 0; i < uboDescriptorSets.size(); i++) {
+  descriptorSets.uboSets.resize(EngineSwapChain::MAX_FRAMES_IN_FLIGHT);
+
+  for (int i = 0; i < descriptorSets.uboSets.size(); i++) {
     auto bufferInfo = uboBuffers[i]->descriptorInfo();
     EngineDescriptorWriter(*descriptorSetLayouts.uboSetLayout, *globalPool)
         .writeBuffer(0, &bufferInfo)
-        .build(uboDescriptorSets[i]);
+        .build(descriptorSets.uboSets[i]);
   }
 
-  // creating descriptor sets
-  DescriptorSets descriptorSets;
-  createDescriptorSets(descriptorSets, descriptorSetLayouts);
+  {
+    auto imageInfo = cubeMap->getDescriptorInfo();
+    EngineDescriptorWriter(*descriptorSetLayouts.cubemap, *globalPool)
+        .writeImage(0, &imageInfo)
+        .build(descriptorSets.cubeMap);
+  }
 
+  // passing in the rest to method to handle the iteration and population of
+  // remaining descroptorsets
+  populateMatTexDescriptorSets(descriptorSets, descriptorSetLayouts);
+
+  // initializing ui object
   EngineUI ui{geRenderer};
 
   SimpleRenderSystem simpleRenderSystem{
@@ -270,26 +282,38 @@ void EngineApp::populateDescriptorSetLayouts(
           .build();
 }
 
-void EngineApp::createDescriptorSets(
+void EngineApp::populateMatTexDescriptorSets(
     DescriptorSets &descriptorSets,
     DescriptorSetLayouts &descriptorSetLayouts) {
 
-  std::vector<VkDescriptorSet> materialDescriptorSet(3);
+  descriptorSets.materialSets.resize(PBRMaterial::TOTAL_MATERIAL_COUNT);
 
-  for (int i = 0; i < materialDescriptorSet.size(); i++) {
+  int materialCount = 0;
+
+  for (auto &kv : geObjects) {
+    auto &obj = kv.second;
+
+    if (obj.model == nullptr)
+      continue;
+
+    for (std::shared_ptr<PBRMaterial> material : obj.model->materials) {
+      auto bufferInfo = material.get()->getMaterialBuffer()->descriptorInfo();
+      EngineDescriptorWriter(*descriptorSetLayouts.materialSetLayout,
+                             *globalPool)
+          .writeBuffer(0, &bufferInfo)
+          .build(descriptorSets.materialSets[materialCount]);
+      materialCount++;
+    }
   }
 
-  VkDescriptorSet cubeDescSet;
-  {
-    auto imageInfo = cubeMap->getDescriptorInfo();
-    EngineDescriptorWriter(*descriptorSetLayouts.cubemap, *globalPool)
-        .writeImage(0, &imageInfo)
-        .build(cubeDescSet);
-  }
-
+  /*
   VkDescriptorSet textureDescSet;
   {
+    EngineDescriptorWriter(*descriptorSetLayouts.textureLayout, *globalPool)
+        .addBinding(0,)
+        .build();
   }
+  */
 }
 
 void EngineApp::loadGameObjects() {

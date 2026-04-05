@@ -44,8 +44,8 @@ private:
 
   void populateDescriptorSetLayouts(DescriptorSetLayouts &descriptorSetLayouts);
 
-  void createDescriptorSets(DescriptorSets &descriptorSets,
-                            DescriptorSetLayouts &descriptorSetLayouts);
+  void populateMatTexDescriptorSets(DescriptorSets &descriptorSets,
+                                    DescriptorSetLayouts &descriptorSetLayouts);
 
   EngineWindow geWindow{WIDTH, HEIGHT, "Skumpwit"};
   EngineDevice geDevice{geWindow};

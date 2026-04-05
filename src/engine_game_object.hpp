@@ -2,6 +2,7 @@
 
 #include "engine_model.hpp"
 
+#include <cstddef>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <memory>
