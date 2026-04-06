@@ -11,16 +11,19 @@ namespace GameEngine {
 class CubeMapRenderSystem {
 public:
   CubeMapRenderSystem(EngineDevice &device, VkRenderPass renderPass,
-                      VkDescriptorSetLayout globalSetLayout);
+                      VkDescriptorSetLayout uboSetLayout,
+                      VkDescriptorSetLayout cubeMapLayout);
   ~CubeMapRenderSystem();
 
   CubeMapRenderSystem(const CubeMapRenderSystem &) = delete;
   CubeMapRenderSystem &operator=(const CubeMapRenderSystem &) = delete;
 
-  void renderSkybox(FrameInfo &frameinfo, EngineTexture &texture);
+  void renderSkybox(FrameInfo &frameinfo, VkDescriptorSet &cubeMapSet);
 
 private:
-  void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
+  void createPipelineLayout(VkDescriptorSetLayout uboSetLayout,
+                            VkDescriptorSetLayout cubeMapLayout);
+
   void createPipeline(VkRenderPass renderPass);
 
   EngineDevice &geDevice;

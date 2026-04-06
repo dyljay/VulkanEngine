@@ -4,7 +4,7 @@ layout (location = 0) in vec3 textureDirection;
 
 layout(location = 0) out vec4 outColor;
 
-layout (binding = 1) uniform samplerCube cubeMap;
+layout (set = 1, binding = 0) uniform samplerCube cubeMap;
 
 void main() 
 {

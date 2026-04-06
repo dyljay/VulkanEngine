@@ -100,19 +100,19 @@ void EngineApp::run() {
   EngineUI ui{geRenderer};
 
   SimpleRenderSystem simpleRenderSystem{
-      geDevice, geRenderer.getSwapChainRenderPass(),
-      globalSetLayout->getDescriptorSetLayout()};
+      geDevice, geRenderer.getSwapChainRenderPass(), descriptorSetLayouts};
 
   // only need to pas in the uboSetLayout to this because no material or texture
   // data is needed
-  PointLightSystem pointLightSystem{geDevice,
-                                    geRenderer.getSwapChainRenderPass(),
-                                    uboSetLayout->getDescriptorSetLayout()};
+  PointLightSystem pointLightSystem{
+      geDevice, geRenderer.getSwapChainRenderPass(),
+      descriptorSetLayouts.uboSetLayout->getDescriptorSetLayout()};
 
   // only need cubemap and textures here
-  CubeMapRenderSystem cubeMapRender{geDevice,
-                                    geRenderer.getSwapChainRenderPass(),
-                                    uboSetLayout->getDescriptorSetLayout()};
+  CubeMapRenderSystem cubeMapRender{
+      geDevice, geRenderer.getSwapChainRenderPass(),
+      descriptorSetLayouts.uboSetLayout->getDescriptorSetLayout(),
+      descriptorSetLayouts.cubemap->getDescriptorSetLayout()};
 
   EngineCamera camera{};
   camera.setViewDirection(glm::vec3(0.0f), glm::vec3(0.f, 0.f, 1.f));
@@ -196,7 +196,7 @@ void EngineApp::run() {
                           frameTime,
                           commandBuffer,
                           camera,
-                          globalDescriptorSets[frameIndex],
+                          descriptorSets.uboSets[frameIndex],
                           geObjects};
 
       // update objects
@@ -210,9 +210,10 @@ void EngineApp::run() {
 
       // draw calls
       geRenderer.beginSwapChainRenderPass(commandBuffer);
-      simpleRenderSystem.renderGameObjects(frameInfo);
+      // TODO: you're passing in the ubo twice, try to pass less duplicate data
+      simpleRenderSystem.renderGameObjects(frameInfo, descriptorSets);
       pointLightSystem.render(frameInfo);
-      cubeMapRender.renderSkybox(frameInfo, cubeMap);
+      cubeMapRender.renderSkybox(frameInfo, descriptorSets.cubeMap);
 
       // ui
       // TODO: make this a bit cleaner - look into if there are better methods
@@ -272,13 +273,25 @@ void EngineApp::populateDescriptorSetLayouts(
                       VK_SHADER_STAGE_FRAGMENT_BIT)
           .build();
 
-  // FIXME: properly set up the flags for the bindless textures
-  // textureSetLayout containing all the textures for all models - utilizes
-  // descriptor indexing
+  const VkDescriptorBindingFlagsEXT flags =
+      VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT |
+      VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT |
+      VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT |
+      VK_DESCRIPTOR_BINDING_UPDATE_UNUSED_WHILE_PENDING_BIT_EXT;
+
+  VkDescriptorSetLayoutBindingFlagsCreateInfoEXT bindingFlags{};
+  bindingFlags.sType =
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT;
+  bindingFlags.bindingCount = 1;
+  bindingFlags.pBindingFlags = &flags;
+
   descriptorSetLayouts.textureLayout =
       EngineDescriptorSetLayout::Builder(geDevice)
           .addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                      VK_SHADER_STAGE_FRAGMENT_BIT)
+                      VK_SHADER_STAGE_FRAGMENT_BIT, 10)
+          .setFlags(
+              VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT)
+          .setpNext(&bindingFlags)
           .build();
 }
 
@@ -286,9 +299,10 @@ void EngineApp::populateMatTexDescriptorSets(
     DescriptorSets &descriptorSets,
     DescriptorSetLayouts &descriptorSetLayouts) {
 
-  descriptorSets.materialSets.resize(PBRMaterial::TOTAL_MATERIAL_COUNT);
+  descriptorSets.materialSets.resize(PBRMaterial::return_total_material());
 
   int materialCount = 0;
+  std::vector<VkDescriptorImageInfo> imageInfos;
 
   for (auto &kv : geObjects) {
     auto &obj = kv.second;
@@ -296,24 +310,32 @@ void EngineApp::populateMatTexDescriptorSets(
     if (obj.model == nullptr)
       continue;
 
-    for (std::shared_ptr<PBRMaterial> material : obj.model->materials) {
-      auto bufferInfo = material.get()->getMaterialBuffer()->descriptorInfo();
+    for (std::shared_ptr<PBRMaterial> &material : obj.model->materials) {
+      auto bufferInfo = material->getMaterialBuffer()->descriptorInfo();
       EngineDescriptorWriter(*descriptorSetLayouts.materialSetLayout,
                              *globalPool)
           .writeBuffer(0, &bufferInfo)
           .build(descriptorSets.materialSets[materialCount]);
       materialCount++;
     }
+
+    for (std::shared_ptr<EngineTexture> &texture : obj.model->images) {
+      imageInfos.push_back(texture->getDescriptorInfo());
+    }
   }
 
-  /*
-  VkDescriptorSet textureDescSet;
+  uint32_t descriptorCount[1] = {static_cast<uint32_t>(imageInfos.size())};
   {
+    VkDescriptorSetVariableDescriptorCountAllocateInfo
+        variableDescripAllocInfo{};
+    variableDescripAllocInfo.sType =
+        VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO;
+    variableDescripAllocInfo.descriptorSetCount = 1;
+    variableDescripAllocInfo.pDescriptorCounts = descriptorCount;
     EngineDescriptorWriter(*descriptorSetLayouts.textureLayout, *globalPool)
-        .addBinding(0,)
-        .build();
+        .writeBulkImage(0, imageInfos)
+        .build(descriptorSets.textureArray, &variableDescripAllocInfo);
   }
-  */
 }
 
 void EngineApp::loadGameObjects() {

@@ -5,6 +5,7 @@
 // std
 #include <cassert>
 #include <cstdint>
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <vector>
@@ -28,16 +29,31 @@ EngineDescriptorSetLayout::Builder::addBinding(uint32_t binding,
   return *this;
 }
 
+EngineDescriptorSetLayout::Builder &
+EngineDescriptorSetLayout::Builder::setFlags(
+    VkDescriptorSetLayoutCreateFlags flags) {
+  descriptorFlags = flags;
+  return *this;
+}
+
+EngineDescriptorSetLayout::Builder &
+EngineDescriptorSetLayout::Builder::setpNext(const void *pNext) {
+  pNextSet = pNext;
+  return *this;
+}
+
 std::unique_ptr<EngineDescriptorSetLayout>
 EngineDescriptorSetLayout::Builder::build() const {
-  return std::make_unique<EngineDescriptorSetLayout>(geDevice, bindings);
+  return std::make_unique<EngineDescriptorSetLayout>(geDevice, bindings,
+                                                     descriptorFlags, pNextSet);
 }
 
 // *************** Descriptor Set Layout *********************
 
 EngineDescriptorSetLayout::EngineDescriptorSetLayout(
     EngineDevice &geDevice,
-    std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings)
+    std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings,
+    VkDescriptorSetLayoutCreateFlags flags, const void *pNext)
     : geDevice{geDevice}, bindings{bindings} {
   std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings{};
   for (auto kv : bindings) {
@@ -47,9 +63,11 @@ EngineDescriptorSetLayout::EngineDescriptorSetLayout(
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutInfo{};
   descriptorSetLayoutInfo.sType =
       VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  descriptorSetLayoutInfo.flags = flags;
   descriptorSetLayoutInfo.bindingCount =
       static_cast<uint32_t>(setLayoutBindings.size());
   descriptorSetLayoutInfo.pBindings = setLayoutBindings.data();
+  descriptorSetLayoutInfo.pNext = pNext;
 
   if (vkCreateDescriptorSetLayout(geDevice.device(), &descriptorSetLayoutInfo,
                                   nullptr,
@@ -118,20 +136,17 @@ EngineDescriptorPool::~EngineDescriptorPool() {
   vkDestroyDescriptorPool(geDevice.device(), descriptorPool, nullptr);
 }
 
-// should probably be called allocateDescriptorSet
-bool EngineDescriptorPool::allocateDescriptor(
+bool EngineDescriptorPool::allocateDescriptorSet(
     const VkDescriptorSetLayout descriptorSetLayout,
-    VkDescriptorSet &descriptor) const {
+    VkDescriptorSet &descriptorSet, const void *pNextAlloc) const {
   VkDescriptorSetAllocateInfo allocInfo{};
   allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
   allocInfo.descriptorPool = descriptorPool;
   allocInfo.pSetLayouts = &descriptorSetLayout;
   allocInfo.descriptorSetCount = 1;
+  allocInfo.pNext = pNextAlloc;
 
-  // Might want to create a "DescriptorPoolManager" class that handles this
-  // case, and builds a new pool whenever an old pool fills up. But this is
-  // beyond our current scope
-  if (vkAllocateDescriptorSets(geDevice.device(), &allocInfo, &descriptor) !=
+  if (vkAllocateDescriptorSets(geDevice.device(), &allocInfo, &descriptorSet) !=
       VK_SUCCESS) {
     return false;
   }
@@ -187,7 +202,7 @@ EngineDescriptorWriter::writeImage(uint32_t binding,
   auto &bindingDescription = setLayout.bindings[binding];
 
   assert(bindingDescription.descriptorCount == 1 &&
-         "Binding single descriptor info, but binding expects multiple");
+         "Binding single descriptor info, but binding expects multiple.");
 
   VkWriteDescriptorSet write{};
   write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -200,9 +215,29 @@ EngineDescriptorWriter::writeImage(uint32_t binding,
   return *this;
 }
 
-bool EngineDescriptorWriter::build(VkDescriptorSet &set) {
+EngineDescriptorWriter &EngineDescriptorWriter::writeBulkImage(
+    uint32_t binding, const std::vector<VkDescriptorImageInfo> &imagesInfo) {
+
+  assert(setLayout.bindings.count(binding) == 1 &&
+         "Layout does not contain specified binding");
+
+  auto &bindingDescription = setLayout.bindings[binding];
+
+  VkWriteDescriptorSet write{};
+  write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  write.descriptorType = bindingDescription.descriptorType;
+  write.dstBinding = binding;
+  write.pImageInfo = imagesInfo.data();
+  write.descriptorCount = static_cast<uint32_t>(imagesInfo.size());
+
+  writes.push_back(write);
+  return *this;
+}
+
+bool EngineDescriptorWriter::build(VkDescriptorSet &set,
+                                   const void *pNextAlloc) {
   bool success = growablePool.allocateDescriptorSet(
-      setLayout.getDescriptorSetLayout(), set);
+      setLayout.getDescriptorSetLayout(), set, pNextAlloc);
   if (!success) {
     return false;
   }
@@ -258,9 +293,10 @@ void EngineDescriptorPoolGrowable::createPool(uint32_t setCount) {
       EngineDescriptorPool::Builder(geDevice);
 
   for (auto &ratio : poolSizeRatios) {
-    assert(ratio.ratio == 0 && "Pool size ratio cannot be 0");
+    // assert(ratio.ratio == 0 && "Pool size ratio cannot be 0");
 
-    builder.addPoolSize(ratio.type, uint32_t(ratio.ratio * setsPerPool));
+    builder.addPoolSize(ratio.type, uint32_t(ratio.ratio * setsPerPool))
+        .setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT);
   }
 
   std::unique_ptr<EngineDescriptorPool> newPool =
@@ -284,12 +320,13 @@ void EngineDescriptorPoolGrowable::checkAvailablePool() {
 }
 
 bool EngineDescriptorPoolGrowable::allocateDescriptorSet(
-    VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet &descriptorSet) {
+    VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet &descriptorSet,
+    const void *pNextAlloc) {
 
   checkAvailablePool();
 
-  while (!readyPools.back()->allocateDescriptor(descriptorSetLayout,
-                                                descriptorSet)) {
+  while (!readyPools.back()->allocateDescriptorSet(descriptorSetLayout,
+                                                   descriptorSet, pNextAlloc)) {
     fullPools.push_back(std::move(readyPools.back()));
     readyPools.pop_back();
 

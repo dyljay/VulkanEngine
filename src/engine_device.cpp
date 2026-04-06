@@ -198,6 +198,8 @@ void EngineDevice::createLogicalDevice() {
   descriptorIndexing.runtimeDescriptorArray = VK_TRUE;
   descriptorIndexing.descriptorBindingVariableDescriptorCount = VK_TRUE;
   descriptorIndexing.descriptorBindingPartiallyBound = VK_TRUE;
+  descriptorIndexing.descriptorBindingSampledImageUpdateAfterBind = VK_TRUE;
+  descriptorIndexing.descriptorBindingUpdateUnusedWhilePending = VK_TRUE;
   descriptorIndexing.pNext = &bdaFeatures;
 
   // adding descriptor indexing features struct to device create extension
@@ -332,6 +334,8 @@ void EngineDevice::hasSDL3RequiredInstanceExtensions() {
   vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount,
                                          extensions.data());
 
+  // might be useful later, but for now it just clutters the terminal
+  /*
   std::cout << "available extensions:" << std::endl;
   std::unordered_set<std::string> available;
   for (const auto &extension : extensions) {
@@ -347,6 +351,7 @@ void EngineDevice::hasSDL3RequiredInstanceExtensions() {
       throw std::runtime_error("Missing required SDL3 extension");
     }
   }
+  */
 }
 
 bool EngineDevice::checkDeviceExtensionSupport(VkPhysicalDevice device) {

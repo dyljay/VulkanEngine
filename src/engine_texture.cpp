@@ -35,9 +35,6 @@ VkDescriptorImageInfo EngineTexture::getDescriptorInfo() {
   return VkDescriptorImageInfo{textureSampler, textureImageView,
                                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
 }
-void EngineTexture::drawCubeMap(VkCommandBuffer commandBuffer) {
-  vkCmdDraw(commandBuffer, 36, 1, 0, 0);
-}
 
 std::shared_ptr<EngineTexture>
 EngineTexture::createTexture(EngineDevice &geDevice) {

@@ -30,10 +30,6 @@ public:
 
   id_t getID() const { return id; }
 
-  // TODO: probably should extend the cubeMap into a child class instead of
-  // having this just be here all under one roof
-  void drawCubeMap(VkCommandBuffer commandBuffer);
-
   void Init(int w, int h, VkFormat imageFormat, stbi_uc *pixels,
             VkFilter minFilter, VkFilter magFilter);
 

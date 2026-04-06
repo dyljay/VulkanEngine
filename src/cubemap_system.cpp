@@ -1,14 +1,17 @@
 #include "cubemap_system.hpp"
+#include "lib/sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
 #include "src/engine_texture.hpp"
 #include "vulkan/vulkan_core.h"
+#include <cstddef>
 
 namespace GameEngine {
 
 CubeMapRenderSystem::CubeMapRenderSystem(EngineDevice &device,
                                          VkRenderPass renderPass,
-                                         VkDescriptorSetLayout globalSetLayout)
+                                         VkDescriptorSetLayout uboSetLayout,
+                                         VkDescriptorSetLayout cubeMapLayout)
     : geDevice{device} {
-  createPipelineLayout(globalSetLayout);
+  createPipelineLayout(uboSetLayout, cubeMapLayout);
   createPipeline(renderPass);
 }
 
@@ -17,9 +20,10 @@ CubeMapRenderSystem::~CubeMapRenderSystem() {
 }
 
 void CubeMapRenderSystem::createPipelineLayout(
-    VkDescriptorSetLayout globalSetLayout) {
+    VkDescriptorSetLayout uboSetLayout, VkDescriptorSetLayout cubeMapLayout) {
 
-  std::vector<VkDescriptorSetLayout> descriptorSetLayouts{globalSetLayout};
+  std::vector<VkDescriptorSetLayout> descriptorSetLayouts{uboSetLayout,
+                                                          cubeMapLayout};
 
   VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -51,14 +55,18 @@ void CubeMapRenderSystem::createPipeline(VkRenderPass renderPass) {
 }
 
 void CubeMapRenderSystem::renderSkybox(FrameInfo &frameInfo,
-                                       EngineTexture &texture) {
+                                       VkDescriptorSet &cubeMapSet) {
   gePipeline->bind(frameInfo.commandBuffer);
 
   vkCmdBindDescriptorSets(frameInfo.commandBuffer,
                           VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1,
                           &frameInfo.globalDescriptorSet, 0, nullptr);
 
-  texture.drawCubeMap(frameInfo.commandBuffer);
+  vkCmdBindDescriptorSets(frameInfo.commandBuffer,
+                          VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 1, 1,
+                          &cubeMapSet, 0, nullptr);
+
+  vkCmdDraw(frameInfo.commandBuffer, 36, 1, 0, 0);
 }
 
 } // namespace GameEngine

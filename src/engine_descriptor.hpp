@@ -4,6 +4,7 @@
 #include "vulkan/vulkan_core.h"
 
 // std
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <sys/types.h>
@@ -21,16 +22,22 @@ public:
     Builder &addBinding(uint32_t binding, VkDescriptorType descriptorType,
                         VkShaderStageFlags stageFlags, uint32_t count = 1);
 
+    Builder &setFlags(VkDescriptorSetLayoutCreateFlags flags);
+    Builder &setpNext(const void *pNext);
+
     std::unique_ptr<EngineDescriptorSetLayout> build() const;
 
   private:
     EngineDevice &geDevice;
     std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings{};
+    VkDescriptorSetLayoutCreateFlags descriptorFlags = 0U;
+    const void *pNextSet = nullptr;
   };
 
   EngineDescriptorSetLayout(
       EngineDevice &geDevice,
-      std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings);
+      std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings,
+      VkDescriptorSetLayoutCreateFlags flags, const void *pNext);
   ~EngineDescriptorSetLayout();
   EngineDescriptorSetLayout(const EngineDescriptorSetLayout &) = delete;
   EngineDescriptorSetLayout &
@@ -73,8 +80,9 @@ public:
   EngineDescriptorPool(const EngineDescriptorPool &) = delete;
   EngineDescriptorPool &operator=(const EngineDescriptorPool &) = delete;
 
-  bool allocateDescriptor(const VkDescriptorSetLayout descriptorSetLayout,
-                          VkDescriptorSet &descriptor) const;
+  bool allocateDescriptorSet(const VkDescriptorSetLayout descriptorSetLayout,
+                             VkDescriptorSet &descriptor,
+                             const void *pNextAlloc) const;
 
   void freeDescriptors(std::vector<VkDescriptorSet> &descriptors) const;
 
@@ -115,7 +123,8 @@ public:
   VkDescriptorPool getAvailablePool();
   void createPool(uint32_t setCount);
   bool allocateDescriptorSet(const VkDescriptorSetLayout descriptorSetLayout,
-                             VkDescriptorSet &descriptor);
+                             VkDescriptorSet &descriptor,
+                             const void *pNextAlloc);
 
   void checkAvailablePool();
 
@@ -140,8 +149,11 @@ public:
                                       VkDescriptorBufferInfo *bufferInfo);
   EngineDescriptorWriter &writeImage(uint32_t binding,
                                      VkDescriptorImageInfo *imageInfo);
+  EngineDescriptorWriter &
+  writeBulkImage(uint32_t binding,
+                 const std::vector<VkDescriptorImageInfo> &imagesInfo);
 
-  bool build(VkDescriptorSet &set);
+  bool build(VkDescriptorSet &set, const void *pNextAlloc = nullptr);
   void overwrite(VkDescriptorSet &set);
 
 private:

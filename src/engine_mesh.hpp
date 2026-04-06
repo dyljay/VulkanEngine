@@ -59,6 +59,7 @@ public:
   void draw(VkCommandBuffer commandBuffer);
 
   VkDeviceAddress getVertexBufferAddress() const { return vertexBufferAddress; }
+  std::vector<GeoSurface> &getSurfaces() { return surfaces_; }
 
 private:
   void createVertexBuffers(const std::vector<Vertex> &vertices);

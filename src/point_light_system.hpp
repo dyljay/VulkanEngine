@@ -11,7 +11,7 @@ namespace GameEngine {
 class PointLightSystem {
 public:
   PointLightSystem(EngineDevice &device, VkRenderPass renderPass,
-                   VkDescriptorSetLayout globalSetLayout);
+                   VkDescriptorSetLayout uboSet);
   ~PointLightSystem();
 
   PointLightSystem(const PointLightSystem &) = delete;
@@ -22,7 +22,7 @@ public:
   void render(FrameInfo &frameinfo);
 
 private:
-  void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
+  void createPipelineLayout(VkDescriptorSetLayout uboSetLayout);
   void createPipeline(VkRenderPass renderPass);
 
   EngineDevice &geDevice;

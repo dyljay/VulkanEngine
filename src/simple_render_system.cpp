@@ -1,5 +1,7 @@
 #include "simple_render_system.hpp"
+#include "src/engine_app.hpp"
 #include "vulkan/vulkan_core.h"
+#include <cstddef>
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -18,7 +20,7 @@ struct SimplePushConstantData {
 
 SimpleRenderSystem::SimpleRenderSystem(EngineDevice &device,
                                        VkRenderPass renderPass,
-                                       VkDescriptorSetLayout globalSetLayout)
+                                       DescriptorSetLayouts &globalSetLayout)
     : geDevice{device} {
   createPipelineLayout(globalSetLayout);
   createPipeline(renderPass);
@@ -28,15 +30,18 @@ SimpleRenderSystem::~SimpleRenderSystem() {
   vkDestroyPipelineLayout(geDevice.device(), pipelineLayout, nullptr);
 }
 
-void SimpleRenderSystem::createPipelineLayout(
-    VkDescriptorSetLayout globalSetLayout) {
+void SimpleRenderSystem::createPipelineLayout(DescriptorSetLayouts &setLayout) {
   VkPushConstantRange pushConstantRange{};
   pushConstantRange.stageFlags =
       VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
   pushConstantRange.offset = 0;
   pushConstantRange.size = sizeof(SimplePushConstantData);
 
-  std::vector<VkDescriptorSetLayout> descriptorSetLayouts{globalSetLayout};
+  std::vector<VkDescriptorSetLayout> descriptorSetLayouts{
+      setLayout.uboSetLayout->getDescriptorSetLayout(),
+      setLayout.materialSetLayout->getDescriptorSetLayout(),
+      setLayout.cubemap->getDescriptorSetLayout(),
+      setLayout.textureLayout->getDescriptorSetLayout()};
 
   VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -63,13 +68,26 @@ void SimpleRenderSystem::createPipeline(VkRenderPass renderPass) {
   gePipeline = std::make_unique<GraphicsPipeline>(
       geDevice, "shaders/vert.spv", "shaders/frag.spv", pipelineConfig);
 }
-
-void SimpleRenderSystem::renderGameObjects(FrameInfo &frameInfo) {
+// TODO: this is slow, having to rebind the pipeline and all descriptorsets
+// every frame
+void SimpleRenderSystem::renderGameObjects(FrameInfo &frameInfo,
+                                           DescriptorSets &descriptorSets) {
   gePipeline->bind(frameInfo.commandBuffer);
 
+  // ubo buffer
   vkCmdBindDescriptorSets(frameInfo.commandBuffer,
                           VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1,
                           &frameInfo.globalDescriptorSet, 0, nullptr);
+
+  // cubemap
+  vkCmdBindDescriptorSets(frameInfo.commandBuffer,
+                          VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 2, 1,
+                          &descriptorSets.cubeMap, 0, nullptr);
+
+  // sample2D array binding
+  vkCmdBindDescriptorSets(frameInfo.commandBuffer,
+                          VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 3, 1,
+                          &descriptorSets.textureArray, 0, nullptr);
 
   for (auto &kv : frameInfo.gameObjects) {
     auto &obj = kv.second;
@@ -79,10 +97,6 @@ void SimpleRenderSystem::renderGameObjects(FrameInfo &frameInfo) {
     pushData.modelMatrix = obj.transform.mat4();
     pushData.normalMatrix = obj.transform.normalMatrix();
 
-    // TODO: maybe find a safer way of getting the individual meshes to render
-    // instead of grabbing the vector directly but also this would be the point
-    // of a shared pointer
-
     for (auto &mesh : obj.model->meshes) {
       pushData.vertexBuffer = mesh->getVertexBufferAddress();
       vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
@@ -91,7 +105,20 @@ void SimpleRenderSystem::renderGameObjects(FrameInfo &frameInfo) {
                          0, sizeof(SimplePushConstantData), &pushData);
 
       mesh->bind(frameInfo.commandBuffer);
-      mesh->draw(frameInfo.commandBuffer);
+
+      // TODO:: clean up this method, but for testing this is okay
+
+      for (auto &p : mesh->getSurfaces()) {
+
+        vkCmdBindDescriptorSets(
+            frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+            pipelineLayout, 1, 1, &descriptorSets.materialSets[p.materialIndex],
+            0, nullptr);
+
+        vkCmdDrawIndexed(frameInfo.commandBuffer, p.count, 1, p.startIndex, 0,
+                         0);
+      }
+      // mesh->draw(frameInfo.commandBuffer);
     }
   }
 }

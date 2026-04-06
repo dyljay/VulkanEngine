@@ -252,7 +252,8 @@ void EngineModel::loadTextures() {
 void EngineModel::loadMaterials() {
   size_t numMaterials = gltf.materials.size();
   materials.resize(numMaterials);
-  PBRMaterial::TOTAL_MATERIAL_COUNT += numMaterials;
+
+  PBRMaterial::increment_total_material(numMaterials);
 
   for (int matIndex = 0; matIndex < numMaterials; matIndex++) {
     auto material = std::make_shared<PBRMaterial>();
@@ -293,7 +294,7 @@ void EngineModel::loadMaterials() {
     }
 
     {
-      auto buffer = material->getMaterialBuffer();
+      auto &buffer = material->getMaterialBuffer();
       buffer = std::make_shared<EngineBuffer>(
           geDevice, sizeof(PBRMaterial), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
           VMA_MEMORY_USAGE_CPU_TO_GPU);

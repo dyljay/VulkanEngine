@@ -31,13 +31,15 @@ public:
     GLSL_HAS_METAL_MAP = 0x1 << 0x2
   };
 
-  static int TOTAL_MATERIAL_COUNT;
-
   MaterialProperties properties{};
+
+  static void increment_total_material(int count = 1);
+  static int return_total_material() { return total_material_count; }
 
   std::shared_ptr<EngineBuffer> &getMaterialBuffer() { return pbrMaterial; }
 
 private:
   std::shared_ptr<EngineBuffer> pbrMaterial;
+  static int total_material_count;
 };
 } // namespace GameEngine
