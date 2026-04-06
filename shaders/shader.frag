@@ -6,6 +6,7 @@
 #include "material.glsl"
 
 #define PI 3.14159265359
+#define MAX_TEXTURES 100
 
 layout (location = 0) in vec4 fragColor;
 layout (location = 1) in vec3 fragPosWorld;
@@ -47,17 +48,17 @@ layout (set = 1, binding = 0) readonly uniform MaterialProperties {
 
 layout (set = 2, binding = 0) uniform samplerCube cubeMap;
 
-layout(set = 3, binding = 0) uniform sampler2D bindlessTextures[];
+layout(set = 3, binding = 0) uniform sampler2D bindlessTextures[MAX_TEXTURES];
 
 void main() {
-  /*
+    vec4 albedo;
     if (bool(matProperties.numFeatures & GLSL_HAS_BASE_MAP)){
-      vec4 albedo = texture(bindlessTextures[nonuniformEXT(matProperties.baseColorMap)], fragUV);
+      albedo = texture(bindlessTextures[matProperties.baseColorMap], fragUV);
     }
     else {
-      vec4 albedo = matProperties.baseColor;  
+      albedo = matProperties.baseColor;  
     }
-*/
+
     vec3 ambientLight = vec3(.2);
     vec3 diffuseLight = ubo.ambientLightColor.xyz * ubo.ambientLightColor.w;
     vec3 specularLight = vec3(0.0);
@@ -96,7 +97,7 @@ void main() {
     specularLight = specularLight + fragSkybox.rgb;
     
     // total sum
-    outColor = fragColor * vec4(diffuseLight + specularLight + ambientLight, 1.0);
+    outColor = albedo * vec4(diffuseLight + specularLight + ambientLight, 1.0);
 }
 
 float normalDistribution(vec3 n, vec3 h, float a) 

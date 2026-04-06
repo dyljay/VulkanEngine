@@ -223,6 +223,10 @@ bool EngineTexture::setPipelineStageFlags(VkImageMemoryBarrier &barrier,
 
 void EngineTexture::createImageView(VkImageViewType viewType, uint32_t layers,
                                     VkFormat format) {
+  VkImageViewUsageCreateInfo usageInfo{};
+  usageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_USAGE_CREATE_INFO;
+  usageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
+
   VkImageViewCreateInfo viewInfo{};
   viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
   viewInfo.image = textureImage;
@@ -233,6 +237,7 @@ void EngineTexture::createImageView(VkImageViewType viewType, uint32_t layers,
   viewInfo.subresourceRange.levelCount = 1;
   viewInfo.subresourceRange.baseArrayLayer = 0;
   viewInfo.subresourceRange.layerCount = layers;
+  viewInfo.pNext = &usageInfo;
 
   if (vkCreateImageView(geDevice.device(), &viewInfo, nullptr,
                         &textureImageView) != VK_SUCCESS) {

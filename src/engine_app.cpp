@@ -1,4 +1,6 @@
 #include "engine_app.hpp"
+#include "MoltenVK/mvk_deprecated_api.h"
+#include "MoltenVK/mvk_private_api.h"
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_keycode.h"
 #include "SDL3/SDL_mouse.h"
@@ -273,11 +275,11 @@ void EngineApp::populateDescriptorSetLayouts(
                       VK_SHADER_STAGE_FRAGMENT_BIT)
           .build();
 
-  const VkDescriptorBindingFlagsEXT flags =
-      VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT |
+  const VkDescriptorBindingFlags flags =
       VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT |
       VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT |
-      VK_DESCRIPTOR_BINDING_UPDATE_UNUSED_WHILE_PENDING_BIT_EXT;
+      VK_DESCRIPTOR_BINDING_UPDATE_UNUSED_WHILE_PENDING_BIT_EXT; // VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT
+                                                                 // removed
 
   VkDescriptorSetLayoutBindingFlagsCreateInfoEXT bindingFlags{};
   bindingFlags.sType =
@@ -288,7 +290,7 @@ void EngineApp::populateDescriptorSetLayouts(
   descriptorSetLayouts.textureLayout =
       EngineDescriptorSetLayout::Builder(geDevice)
           .addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                      VK_SHADER_STAGE_FRAGMENT_BIT, 10)
+                      VK_SHADER_STAGE_FRAGMENT_BIT, EngineTexture::MAX_TEXTURES)
           .setFlags(
               VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT)
           .setpNext(&bindingFlags)
@@ -324,8 +326,8 @@ void EngineApp::populateMatTexDescriptorSets(
     }
   }
 
-  uint32_t descriptorCount[1] = {static_cast<uint32_t>(imageInfos.size())};
   {
+    uint32_t descriptorCount[1] = {static_cast<uint32_t>(imageInfos.size())};
     VkDescriptorSetVariableDescriptorCountAllocateInfo
         variableDescripAllocInfo{};
     variableDescripAllocInfo.sType =
@@ -349,7 +351,7 @@ void EngineApp::loadGameObjects() {
   cyberpunkWoman.transform.rotation = {glm::radians(90.f), glm::radians(180.0f),
                                        0.0f};
   geObjects.emplace(cyberpunkWoman.getID(), std::move(cyberpunkWoman));
-
+  /*
   geModel = EngineModel::createModelFromFile(geDevice, "./models/dancer.glb");
   auto darkElf = GameObject::createGameObject();
   darkElf.model = geModel;
@@ -357,7 +359,7 @@ void EngineApp::loadGameObjects() {
   darkElf.transform.rotation = {glm::radians(90.f), glm::radians(180.f), 0.0f};
 
   geObjects.emplace(darkElf.getID(), std::move(darkElf));
-
+*/
   std::vector<glm::vec3> lightColors = {{0.2f, 0.2f, .7f}};
 
   for (int i = 0; i < lightColors.size(); i++) {

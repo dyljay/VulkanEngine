@@ -14,7 +14,7 @@ using id_t = unsigned int;
 class EngineTexture {
 public:
   enum class TextureType { Texture2D, TextureCube };
-  static constexpr int MAX_TEXTURES = 1000;
+  static constexpr int MAX_TEXTURES = 100;
 
   static std::shared_ptr<EngineTexture> createTexture(EngineDevice &geDevice);
   static std::unique_ptr<EngineTexture>
