@@ -293,6 +293,8 @@ void EngineModel::loadMaterials() {
     {
     }
 
+    material->properties.offset = 1;
+    /*
     {
       auto &buffer = material->getMaterialBuffer();
       buffer = std::make_shared<EngineBuffer>(
@@ -301,7 +303,10 @@ void EngineModel::loadMaterials() {
       buffer.get()->map();
       buffer.get()->writeToBuffer(&material->properties);
       buffer.get()->flush();
+      buffer.get()->unmap();
     }
+    */
+
     materials[matIndex] = std::move(material);
   }
 }

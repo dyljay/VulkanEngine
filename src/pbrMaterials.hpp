@@ -17,10 +17,11 @@ struct MaterialProperties {
   float metallic{1.0f};
   float roughness{1.0f};
 
-  // 12 bytes
+  // 16 bytes
   unsigned int normalMap{0};
   unsigned int occlusionMap{0};
   unsigned int metallicRoughness{0};
+  unsigned int offset{0};
 };
 
 class PBRMaterial {

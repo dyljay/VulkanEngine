@@ -312,17 +312,39 @@ void EngineApp::populateMatTexDescriptorSets(
     if (obj.model == nullptr)
       continue;
 
+    uint32_t textureOffset = imageInfos.size();
+    for (std::shared_ptr<EngineTexture> &texture : obj.model->images) {
+      imageInfos.push_back(texture->getDescriptorInfo());
+    }
+
     for (std::shared_ptr<PBRMaterial> &material : obj.model->materials) {
+      // doing this here because we need to know the total amount of textures
+      // before we can determine offset and possibly no point in fluhsing data
+      // twice
+      material->properties.offset = textureOffset;
+
+      std::cout << "About to write buffer:"
+                << " offset=" << material->properties.offset
+                << " baseColorMap=" << material->properties.baseColorMap
+                << std::endl;
+
+      {
+        auto &buffer = material->getMaterialBuffer();
+        buffer = std::make_shared<EngineBuffer>(
+            geDevice, sizeof(MaterialProperties), 1,
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+        buffer.get()->map();
+        buffer.get()->writeToBuffer(&material->properties);
+        buffer.get()->flush();
+      }
+
       auto bufferInfo = material->getMaterialBuffer()->descriptorInfo();
       EngineDescriptorWriter(*descriptorSetLayouts.materialSetLayout,
                              *globalPool)
           .writeBuffer(0, &bufferInfo)
           .build(descriptorSets.materialSets[materialCount]);
-      materialCount++;
-    }
 
-    for (std::shared_ptr<EngineTexture> &texture : obj.model->images) {
-      imageInfos.push_back(texture->getDescriptorInfo());
+      materialCount++;
     }
   }
 
@@ -343,16 +365,15 @@ void EngineApp::populateMatTexDescriptorSets(
 void EngineApp::loadGameObjects() {
   std::cout << "Loading Game Objects..." << std::endl;
 
-  std::shared_ptr<EngineModel> geModel =
-      EngineModel::createModelFromFile(geDevice, "./models/just_a_girl.glb");
+  std::shared_ptr<EngineModel> geModel = EngineModel::createModelFromFile(
+      geDevice, "./models/cyberpunk_woman.glb");
   auto cyberpunkWoman = GameObject::createGameObject();
   cyberpunkWoman.model = geModel;
   cyberpunkWoman.transform.translation = {0.35f, -.7f, -.4f};
-  cyberpunkWoman.transform.scale = glm::vec3{0.02f};
-  cyberpunkWoman.transform.rotation = {glm::radians(-90.f), glm::radians(0.0f),
+  cyberpunkWoman.transform.rotation = {glm::radians(90.f), glm::radians(180.0f),
                                        0.0f};
   geObjects.emplace(cyberpunkWoman.getID(), std::move(cyberpunkWoman));
-  /*
+
   geModel = EngineModel::createModelFromFile(geDevice, "./models/dancer.glb");
   auto darkElf = GameObject::createGameObject();
   darkElf.model = geModel;
@@ -360,7 +381,7 @@ void EngineApp::loadGameObjects() {
   darkElf.transform.rotation = {glm::radians(90.f), glm::radians(180.f), 0.0f};
 
   geObjects.emplace(darkElf.getID(), std::move(darkElf));
-*/
+
   std::vector<glm::vec3> lightColors = {{0.2f, 0.2f, .7f}};
 
   for (int i = 0; i < lightColors.size(); i++) {

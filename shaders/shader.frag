@@ -40,10 +40,11 @@ layout (set = 1, binding = 0) readonly uniform MaterialProperties {
   float metallic;
   float roughness;
 
-  // 12 bytes
+  // 16 bytes
   uint normalMap;
   uint occlusionMap;
   uint metallicRoughness;
+  uint offset;
 } matProperties;
 
 layout (set = 2, binding = 0) uniform samplerCube cubeMap;
@@ -53,7 +54,7 @@ layout(set = 3, binding = 0) uniform sampler2D bindlessTextures[MAX_TEXTURES];
 void main() {
     vec4 albedo;
     if (bool(matProperties.numFeatures & GLSL_HAS_BASE_MAP)){
-      albedo = texture(bindlessTextures[matProperties.baseColorMap], fragUV);
+      albedo = texture(bindlessTextures[(matProperties.baseColorMap + matProperties.offset)], fragUV);
     }
     else {
       albedo = matProperties.baseColor;  
