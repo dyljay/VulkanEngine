@@ -1,6 +1,4 @@
 #include "engine_app.hpp"
-#include "MoltenVK/mvk_deprecated_api.h"
-#include "MoltenVK/mvk_private_api.h"
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_keycode.h"
 #include "SDL3/SDL_mouse.h"
@@ -323,11 +321,6 @@ void EngineApp::populateMatTexDescriptorSets(
       // twice
       material->properties.offset = textureOffset;
 
-      std::cout << "About to write buffer:"
-                << " offset=" << material->properties.offset
-                << " baseColorMap=" << material->properties.baseColorMap
-                << std::endl;
-
       {
         auto &buffer = material->getMaterialBuffer();
         buffer = std::make_shared<EngineBuffer>(
@@ -374,13 +367,15 @@ void EngineApp::loadGameObjects() {
                                        0.0f};
   geObjects.emplace(cyberpunkWoman.getID(), std::move(cyberpunkWoman));
 
-  geModel = EngineModel::createModelFromFile(geDevice, "./models/dancer.glb");
-  auto darkElf = GameObject::createGameObject();
-  darkElf.model = geModel;
-  darkElf.transform.translation = {-0.35f, -.7f, -.4f};
-  darkElf.transform.rotation = {glm::radians(90.f), glm::radians(180.f), 0.0f};
+  geModel =
+      EngineModel::createModelFromFile(geDevice, "./models/just_a_girl.glb");
+  auto girl = GameObject::createGameObject();
+  girl.model = geModel;
+  girl.transform.scale = {.01f, .01f, .01f};
+  girl.transform.translation = {-0.5f, -1.f, .4f};
+  girl.transform.rotation = {glm::radians(-90.f), glm::radians(180.f), 0.0f};
 
-  geObjects.emplace(darkElf.getID(), std::move(darkElf));
+  geObjects.emplace(girl.getID(), std::move(girl));
 
   std::vector<glm::vec3> lightColors = {{0.2f, 0.2f, .7f}};
 
