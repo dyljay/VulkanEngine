@@ -9,6 +9,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
+#include <iostream>
 #include <stdexcept>
 
 namespace GameEngine {
@@ -90,13 +91,14 @@ void SimpleRenderSystem::renderGameObjects(FrameInfo &frameInfo,
                           VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 3, 1,
                           &descriptorSets.textureArray, 0, nullptr);
 
-  std::unordered_map<int, bool> visited_materials;
+  std::map<int, bool> visited_materials;
   int materialOffset = 0;
 
   for (auto &kv : frameInfo.gameObjects) {
     auto &obj = kv.second;
     if (obj.model == nullptr)
       continue;
+
     SimplePushConstantData pushData{};
     pushData.modelMatrix = obj.transform.mat4();
     pushData.normalMatrix = obj.transform.normalMatrix();
@@ -121,11 +123,11 @@ void SimpleRenderSystem::renderGameObjects(FrameInfo &frameInfo,
                          0);
 
         if (!visited_materials.contains(p.materialIndex + materialOffset)) {
-          visited_materials[p.materialIndex] = true;
+          visited_materials[p.materialIndex + materialOffset] = true;
         }
       }
-      materialOffset += visited_materials.size();
     }
+    materialOffset += visited_materials.size();
   }
 }
 
