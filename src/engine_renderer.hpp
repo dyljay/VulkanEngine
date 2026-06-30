@@ -3,6 +3,7 @@
 #include "engine_device.hpp"
 #include "engine_swapchain.hpp"
 #include "engine_window.hpp"
+#include "vulkan/vulkan_core.h"
 
 // std
 #include <cassert>
@@ -56,6 +57,77 @@ private:
 
   uint32_t currentImageIndex;
   int currentFrameIndex = 0;
+  bool isFrameStarted = false;
+};
+
+class OffScreenRenderer {
+public:
+  OffScreenRenderer(EngineWindow &geWindow, EngineDevice &geDevice);
+  ~OffScreenRenderer();
+
+  EngineDevice &getDevice() const { return geDevice; }
+  EngineWindow &getWindow() const { return geWindow; }
+
+  OffScreenRenderer(const OffScreenRenderer &) = delete;
+  OffScreenRenderer &operator=(const OffScreenRenderer &) = delete;
+
+  VkRenderPass getRenderPass() const { return renderPass; }
+
+  VkCommandBuffer beginFrame();
+  void endFrame();
+  void beginRenderPass(VkCommandBuffer commandBuffer);
+  void endRenderPass(VkCommandBuffer commandBuffer);
+  VkFormat getImageFormat() { return imageFormat; }
+  VkExtent2D getExtent() { return imageExtent; }
+  uint32_t width() { return imageExtent.width; }
+  uint32_t height() { return imageExtent.height; }
+
+  float extentAspectRatio() {
+    return static_cast<float>(imageExtent.width) /
+           static_cast<float>(imageExtent.height);
+  }
+  VkFormat findDepthFormat();
+
+  VkImageView getImageView() const { return offScreenImageView; }
+
+  VkResult submitCommandBuffers(const VkCommandBuffer *buffers,
+                                uint32_t *imageIndex);
+
+private:
+  void init();
+  void createImage();
+  void createImageView();
+  void createDepthResource();
+  void createRenderPass();
+  void createFramebuffer();
+  void createSyncObject();
+  void createCommandBuffer();
+  void freeCommandBuffer();
+
+  VkResult submitCommandBuffer(VkCommandBuffer commandBuffer);
+
+  EngineDevice &geDevice;
+  EngineWindow &geWindow;
+
+  VkRenderPass renderPass;
+  VkCommandBuffer commandBuffer;
+
+  VkImage offscreenImage;
+  VkImageView offScreenImageView;
+  VkImage depthImage;
+  VkImageView depthImageView;
+
+  VkFormat imageFormat;
+  VkFormat depthFormat;
+
+  VmaAllocation depthAllocator;
+  VmaAllocation offscreenAllocator;
+
+  VkFramebuffer frameBuffer;
+  VkExtent2D imageExtent;
+
+  VkSemaphore imageAvailable;
+
   bool isFrameStarted = false;
 };
 } // namespace GameEngine

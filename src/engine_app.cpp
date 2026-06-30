@@ -26,7 +26,6 @@
 #include <iostream>
 #include <memory>
 
-#include <utility>
 #include <vector>
 
 #define GLM_FORCE_RADIANS

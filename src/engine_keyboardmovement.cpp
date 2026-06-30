@@ -4,6 +4,7 @@
 #include "SDL3/SDL_scancode.h"
 #include "glm/fwd.hpp"
 #include "src/engine_game_object.hpp"
+#include "vulkan/vulkan_core.h"
 
 namespace GameEngine {
 
@@ -46,4 +47,6 @@ void EngineController::handleMouseMovements(SDL_Event &e, float dt,
   gameObject.transform.rotation.y =
       glm::mod(gameObject.transform.rotation.y, glm::two_pi<float>());
 }
+
+VkResult EngineController::render() {}
 } // namespace GameEngine

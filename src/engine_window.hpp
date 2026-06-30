@@ -40,9 +40,6 @@ public:
                         SDL_WINDOW_HIGH_PIXEL_DENSITY);
 
 private:
-  // static void frameBufferResizedCallback(GLFWwindow *window, int width,
-  //                                        int height);
-
   void initWindow();
 
   int width;

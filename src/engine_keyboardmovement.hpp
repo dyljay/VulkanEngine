@@ -2,6 +2,9 @@
 
 #include "SDL3/SDL_events.h"
 #include "engine_game_object.hpp"
+#include "engine_renderer.hpp"
+#include <memory>
+#include <vector>
 
 namespace GameEngine {
 
@@ -27,6 +30,10 @@ public:
   float moveSpeed{1.5f};
   float lookSpeed{1.5f};
   float sensitivity{1.f / 200.f};
+
+private:
+  VkResult render();
+  std::vector<VkImage> image;
 };
 
 } // namespace GameEngine
