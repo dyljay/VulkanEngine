@@ -1,5 +1,6 @@
 #include "simple_render_system.hpp"
 #include "src/engine_app.hpp"
+#include "src/engine_game_object.hpp"
 #include "vulkan/vulkan_core.h"
 #include <cstddef>
 #include <unordered_map>
@@ -70,8 +71,7 @@ void SimpleRenderSystem::createPipeline(VkRenderPass renderPass) {
   gePipeline = std::make_unique<GraphicsPipeline>(
       geDevice, "shaders/vert.spv", "shaders/frag.spv", pipelineConfig);
 }
-// TODO: this is slow, having to rebind the pipeline and all descriptorsets
-// every frame
+
 void SimpleRenderSystem::renderGameObjects(FrameInfo &frameInfo,
                                            DescriptorSets &descriptorSets) {
   gePipeline->bind(frameInfo.commandBuffer);
@@ -131,4 +131,34 @@ void SimpleRenderSystem::renderGameObjects(FrameInfo &frameInfo,
   }
 }
 
+int SimpleRenderSystem::drawObjects(GameObject &obj) {
+  SimplePushConstantData pushData{};
+  pushData.modelMatrix = obj.transform.mat4();
+  pushData.normalMatrix = obj.transform.normalMatrix();
+
+  for (auto &mesh : obj.model->meshes) {
+    pushData.vertexBuffer = mesh->getVertexBufferAddress();
+    vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
+                       VK_SHADER_STAGE_VERTEX_BIT |
+                           VK_SHADER_STAGE_FRAGMENT_BIT,
+                       0, sizeof(SimplePushConstantData), &pushData);
+
+    mesh->bind(frameInfo.commandBuffer);
+
+    for (auto &p : mesh->getSurfaces()) {
+      vkCmdBindDescriptorSets(
+          frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+          pipelineLayout, 1, 1,
+          &descriptorSets.materialSets[p.materialIndex + materialOffset], 0,
+          nullptr);
+
+      vkCmdDrawIndexed(frameInfo.commandBuffer, p.count, 1, p.startIndex, 0, 0);
+
+      if (!visited_materials.contains(p.materialIndex + materialOffset)) {
+        visited_materials[p.materialIndex + materialOffset] = true;
+      }
+    }
+  }
+
+  return visited
 } // namespace GameEngine

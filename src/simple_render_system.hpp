@@ -20,6 +20,7 @@ public:
   SimpleRenderSystem &operator=(const SimpleRenderSystem &) = delete;
 
   void renderGameObjects(FrameInfo &frameinfo, DescriptorSets &descriptorSets);
+  int drawObjects();
 
 private:
   void createPipelineLayout(DescriptorSetLayouts &setLayouts);
