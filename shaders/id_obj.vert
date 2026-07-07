@@ -21,7 +21,7 @@ layout( push_constant ) uniform Push {
     mat4 view; 
     mat4 projection;
     VertexBuffer vertexBuffer;
-    vec3 id;
+    vec4 id;
 } push;
 
 void main() {
@@ -29,6 +29,5 @@ void main() {
     vec4 positionWorld = push.modelMatrix * vec4(v.position, 1.0);
     gl_Position = push.projection * push.view * positionWorld;
     
-    fragPosWorld = positionWorld.xyz;
     fragColor = push.id;
 }

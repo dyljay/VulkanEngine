@@ -1,5 +1,6 @@
 #pragma once
 
+#include "engine_buffer.hpp"
 #include "engine_device.hpp"
 #include "engine_swapchain.hpp"
 #include "engine_window.hpp"
@@ -95,16 +96,19 @@ public:
 
 private:
   void init();
+
   void createImage();
   void createImageView();
   void createDepthResource();
-  void createRenderPass();
   void createFramebuffer();
+  void createRenderPass();
   void createSyncObject();
   void createCommandBuffer();
+
+  void freeResources();
   void freeCommandBuffer();
 
-  VkResult submitCommandBuffer(VkCommandBuffer commandBuffer);
+  VkResult submitCommandBuffer();
 
   EngineDevice &geDevice;
   EngineWindow &geWindow;
@@ -120,14 +124,18 @@ private:
   VkFormat imageFormat;
   VkFormat depthFormat;
 
-  VmaAllocation depthAllocator;
-  VmaAllocation offscreenAllocator;
+  // TODO: do i need to have two allocators?
+  VmaAllocation depthAllocation;
+  VmaAllocation offscreenAllocation;
 
   VkFramebuffer frameBuffer;
   VkExtent2D imageExtent;
 
-  VkSemaphore imageAvailable;
+  VkSemaphore imageAvailableSemaphore;
+  VkFence imageRenderedFence;
 
   bool isFrameStarted = false;
+
+  std::unique_ptr<EngineBuffer> readBuffer;
 };
 } // namespace GameEngine

@@ -1,6 +1,7 @@
 #include "engine_renderer.hpp"
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_video.h"
+#include "src/engine_device.hpp"
 #include "vulkan/vulkan_core.h"
 #include <stdexcept>
 
@@ -172,14 +173,17 @@ OffScreenRenderer::OffScreenRenderer(EngineWindow &window, EngineDevice &device)
   init();
 }
 
-OffScreenRenderer::~OffScreenRenderer() { freeCommandBuffer(); }
+OffScreenRenderer::~OffScreenRenderer() {
+  freeResources();
+  freeCommandBuffer();
+}
 
 void OffScreenRenderer::init() {
   createImage();
   createImageView();
   createDepthResource();
-  createRenderPass();
   createFramebuffer();
+  createRenderPass();
   createSyncObject();
   createCommandBuffer();
 }
@@ -196,6 +200,22 @@ void OffScreenRenderer::createCommandBuffer() {
       VK_SUCCESS) {
     throw std::runtime_error("failed to allocate command buffer");
   }
+}
+
+void OffScreenRenderer::freeResources() {
+  vkDestroyImageView(geDevice.device(), offScreenImageView, nullptr);
+  vmaDestroyImage(geDevice.getAllocator(), offscreenImage, offscreenAllocation);
+
+  vkDestroyImageView(geDevice.device(), depthImageView, nullptr);
+  vmaDestroyImage(geDevice.getAllocator(), depthImage, depthAllocation);
+
+  vkDestroyFramebuffer(geDevice.device(), frameBuffer, nullptr);
+
+  vkDestroyRenderPass(geDevice.device(), renderPass, nullptr);
+
+  vkDestroySemaphore(geDevice.device(), imageAvailableSemaphore, nullptr);
+
+  vkDestroyFence(geDevice.device(), imageRenderedFence, nullptr);
 }
 
 void OffScreenRenderer::freeCommandBuffer() {
@@ -240,7 +260,81 @@ void OffScreenRenderer::endRenderPass(VkCommandBuffer commandBuffer) {
   vkCmdEndRenderPass(commandBuffer);
 }
 
+VkResult OffScreenRenderer::submitCommandBuffer() {
+  if (imageRenderedFence != VK_NULL_HANDLE) {
+    vkWaitForFences(geDevice.device(), 1, &imageRenderedFence, VK_TRUE,
+                    UINT64_MAX);
+  }
+
+  VkSubmitInfo submitInfo = {};
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+  VkSemaphore waitSemaphores[] = {imageAvailableSemaphore};
+  VkPipelineStageFlags waitStages[] = {
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+  submitInfo.waitSemaphoreCount = 1;
+  submitInfo.pWaitSemaphores = waitSemaphores;
+  submitInfo.pWaitDstStageMask = waitStages;
+
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &commandBuffer;
+
+  /*
+  VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
+  submitInfo.signalSemaphoreCount = 1;
+  submitInfo.pSignalSemaphores = signalSemaphores;
+  */
+
+  vkResetFences(geDevice.device(), 1, &imageRenderedFence);
+  if (vkQueueSubmit(geDevice.graphicsQueue(), 1, &submitInfo,
+                    imageRenderedFence) != VK_SUCCESS) {
+    throw std::runtime_error("failed to submit draw command buffer!");
+  }
+}
+
+VkCommandBuffer OffScreenRenderer::beginFrame() {
+  assert(!isFrameStarted && "Can't call beginFrame while already in progress");
+
+  if (geWindow.wasWindowResized()) {
+    geWindow.resetWindowResizedFlag();
+    init();
+    return nullptr;
+  }
+
+  isFrameStarted = true;
+
+  VkCommandBufferBeginInfo beginInfo{};
+  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+  if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
+    throw std::runtime_error("failed to begin recording command buffer");
+  }
+
+  return commandBuffer;
+}
+
+void OffScreenRenderer::endFrame() {
+  assert(isFrameStarted &&
+         "Can't call endFrame while frame is not in progress");
+
+  if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+    throw std::runtime_error("failed to record command buffer");
+  }
+
+  auto result = submitCommandBuffer();
+
+  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+    recreateSwapChain();
+  } else if (result != VK_SUCCESS) {
+    throw std::runtime_error("failed to present swap chain image");
+  }
+
+  isFrameStarted = false;
+}
+
 void OffScreenRenderer::createImage() {
+  imageExtent = geWindow.getExtent();
+
   VkImageCreateInfo imageInfo{};
   imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
   imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -248,19 +342,18 @@ void OffScreenRenderer::createImage() {
   imageInfo.extent.height = imageExtent.height;
   imageInfo.extent.depth = 1;
   imageInfo.mipLevels = 1;
-  imageInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
-  imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+  imageInfo.format = VK_FORMAT_R8_SRGB;
+  imageInfo.tiling = VK_IMAGE_TILING_LINEAR;
   imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT |
                     VK_IMAGE_USAGE_SAMPLED_BIT |
                     VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
   imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-  // FIXME: add flags
-  //  imageInfo.flags = flags;
+  imageInfo.flags = 0;
 
   geDevice.createImageWithInfo(imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                               offscreenImage, depthAllocator);
+                               offscreenImage, offscreenAllocation);
 }
 
 // FIXME: need to add a way for image format
@@ -300,7 +393,7 @@ void OffScreenRenderer::createDepthResource() {
   imageInfo.flags = 0;
 
   geDevice.createImageWithInfo(imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                               depthImage, depthAllocator);
+                               depthImage, depthAllocation);
 
   VkImageViewCreateInfo viewInfo{};
   viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -338,7 +431,10 @@ void OffScreenRenderer::createFramebuffer() {
 
 void OffScreenRenderer::createRenderPass() {
   VkAttachmentDescription depthAttachment{};
-  depthAttachment.format = findDepthFormat();
+
+  // TODO: double check if this is correct
+  depthAttachment.format = VK_FORMAT_D32_SFLOAT;
+
   depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
   depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -353,6 +449,7 @@ void OffScreenRenderer::createRenderPass() {
   depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
   VkAttachmentDescription colorAttachment = {};
+  // FIXME: replace this -> getSwapChainImageFormat
   colorAttachment.format = getSwapChainImageFormat();
   colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
   colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -400,5 +497,22 @@ void OffScreenRenderer::createRenderPass() {
   }
 }
 
-void OffScreenRenderer::createSyncObject() {}
+void OffScreenRenderer::createSyncObject() {
+  VkSemaphoreCreateInfo semaphoreInfo{};
+  semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+  if (vkCreateSemaphore(geDevice.device(), &semaphoreInfo, nullptr,
+                        &imageAvailableSemaphore) != VK_SUCCESS) {
+    throw std::runtime_error("failed to create off-screen semaphore");
+  }
+
+  VkFenceCreateInfo fenceInfo{};
+  fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+  if (vkCreateFence(geDevice.device(), &fenceInfo, nullptr,
+                    &imageRenderedFence) != VK_SUCCESS) {
+    throw std::runtime_error("failed to create fence for off-screen renderer");
+  }
+}
 } // namespace GameEngine
