@@ -3,6 +3,8 @@
 #include "SDL3/SDL_video.h"
 #include "src/engine_device.hpp"
 #include "vulkan/vulkan_core.h"
+#include <cstdint>
+#include <memory>
 #include <stdexcept>
 
 namespace GameEngine {
@@ -186,6 +188,7 @@ void OffScreenRenderer::init() {
   createRenderPass();
   createSyncObject();
   createCommandBuffer();
+  createBuffer();
 }
 
 void OffScreenRenderer::createCommandBuffer() {
@@ -514,5 +517,21 @@ void OffScreenRenderer::createSyncObject() {
                     &imageRenderedFence) != VK_SUCCESS) {
     throw std::runtime_error("failed to create fence for off-screen renderer");
   }
+}
+
+void OffScreenRenderer::createBuffer() {
+  VkDeviceSize size = imageExtent.width * imageExtent.height;
+
+  readBuffer = std::make_unique<EngineBuffer>(
+      geDevice, size, 1, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+      VMA_MEMORY_USAGE_AUTO_PREFER_HOST, 0);
+}
+
+// TODO: why is offscreenImage a regular vkimage but buffer is a unique pointer?
+// shouldn't both or neither be? they're the same size
+// FIXME: would probably be better if you made your own EngineImage class
+VkResult OffScreenRenderer::copyImageToBuffer() {
+  uint32_t size = imageExtent.width * imageExtent.height;
+  geDevice.copyImageToBuffer(offscreenImage, readBuffer->getBuffer(), size);
 }
 } // namespace GameEngine

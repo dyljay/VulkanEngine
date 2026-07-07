@@ -4,6 +4,7 @@
 
 // std headers
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <iostream>
 #include <set>
@@ -551,6 +552,17 @@ void EngineDevice::copyBufferToImage(VkBuffer buffer, VkImage image,
   vkCmdCopyBufferToImage(commandBuffer, buffer, image,
                          VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
   endSingleTimeCommands(commandBuffer);
+}
+
+// FIXME: finish this
+void EngineDevice::copyImageToBuffer(VkImage image, VkBuffer buffer,
+                                     uint32_t size) {
+  VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+  VkCopyImageToBufferInfo2 copyInfo{};
+
+  vkCmdCopyImageToBuffer(commandBuffer, image, VkImageLayout srcImageLayout,
+                         buffer, uint32_t regionCount,
+                         const VkBufferImageCopy *pRegions);
 }
 
 // FIXME: remove properties argument as no longer needed

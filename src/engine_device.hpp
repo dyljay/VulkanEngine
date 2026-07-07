@@ -2,6 +2,7 @@
 
 #include "engine_window.hpp"
 #include "vulkan/vulkan_core.h"
+#include <cstdint>
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wnullability-completeness"
@@ -75,6 +76,8 @@ public:
                   VkDeviceSize srcOffset = 0);
   void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width,
                          uint32_t height, uint32_t layerCount);
+
+  void copyImageToBuffer(VkImage image, VkBuffer buffer, uint32_t size);
 
   void createImageWithInfo(const VkImageCreateInfo &imageInfo,
                            VkMemoryPropertyFlags properties, VkImage &image,

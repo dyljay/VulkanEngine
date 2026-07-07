@@ -94,6 +94,8 @@ public:
   VkResult submitCommandBuffers(const VkCommandBuffer *buffers,
                                 uint32_t *imageIndex);
 
+  VkResult copyImageToBuffer();
+
 private:
   void init();
 
@@ -104,6 +106,7 @@ private:
   void createRenderPass();
   void createSyncObject();
   void createCommandBuffer();
+  void createBuffer();
 
   void freeResources();
   void freeCommandBuffer();
