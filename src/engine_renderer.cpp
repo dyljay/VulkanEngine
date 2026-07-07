@@ -530,8 +530,10 @@ void OffScreenRenderer::createBuffer() {
 // TODO: why is offscreenImage a regular vkimage but buffer is a unique pointer?
 // shouldn't both or neither be? they're the same size
 // FIXME: would probably be better if you made your own EngineImage class
+// test change
 VkResult OffScreenRenderer::copyImageToBuffer() {
   uint32_t size = imageExtent.width * imageExtent.height;
   geDevice.copyImageToBuffer(offscreenImage, readBuffer->getBuffer(), size);
 }
+
 } // namespace GameEngine
