@@ -70,15 +70,13 @@ void EngineTexture::upload2D(int w, int h, stbi_uc *pixels) {
 
   createVkImage(texWidth, texHeight, 1, 0);
 
-  transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB,
-                        VK_IMAGE_LAYOUT_UNDEFINED,
+  transitionImageLayout(textureImage, VK_IMAGE_LAYOUT_UNDEFINED,
                         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1);
 
   geDevice.copyBufferToImage(stagingBuffer.getBuffer(), textureImage, texWidth,
                              texHeight, 1);
 
-  transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB,
-                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+  transitionImageLayout(textureImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1);
 }
 
@@ -122,19 +120,16 @@ void EngineTexture::uploadCube(const std::array<std::string, 6> &cubeArray) {
 
   createVkImage(texWidth, texHeight, 6, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT);
 
-  transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB,
-                        VK_IMAGE_LAYOUT_UNDEFINED,
+  transitionImageLayout(textureImage, VK_IMAGE_LAYOUT_UNDEFINED,
                         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 6);
 
   geDevice.copyBufferToImage(stagingBuffer.getBuffer(), textureImage, texWidth,
                              texHeight, 6);
 
-  transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB,
-                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+  transitionImageLayout(textureImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 6);
 }
 
-// TODO: What does the usage flag do?
 void EngineTexture::createVkImage(uint32_t texWidth, uint32_t texHeight,
                                   uint32_t layers, VkImageCreateFlags flags) {
   VkImageCreateInfo imageInfo{};
@@ -159,7 +154,7 @@ void EngineTexture::createVkImage(uint32_t texWidth, uint32_t texHeight,
                                textureImage, allocation);
 }
 
-void EngineTexture::transitionImageLayout(VkImage image, VkFormat format,
+void EngineTexture::transitionImageLayout(VkImage image,
                                           VkImageLayout oldLayout,
                                           VkImageLayout newLayout,
                                           uint32_t layerCount) {
@@ -176,7 +171,6 @@ void EngineTexture::transitionImageLayout(VkImage image, VkFormat format,
     barrier.image = textureImage;
     barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     barrier.subresourceRange.baseMipLevel = 0;
-    barrier.subresourceRange.levelCount = 1;
     barrier.subresourceRange.baseArrayLayer = 0;
     barrier.subresourceRange.layerCount = layerCount;
 
@@ -234,7 +228,6 @@ void EngineTexture::createImageView(VkImageViewType viewType, uint32_t layers,
   viewInfo.format = format;
   viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
   viewInfo.subresourceRange.baseMipLevel = 0;
-  viewInfo.subresourceRange.levelCount = 1;
   viewInfo.subresourceRange.baseArrayLayer = 0;
   viewInfo.subresourceRange.layerCount = layers;
   viewInfo.pNext = &usageInfo;

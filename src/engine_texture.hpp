@@ -63,9 +63,8 @@ private:
   void createVkImage(uint32_t texWidth, uint32_t texHeight, uint32_t layers,
                      VkImageCreateFlags flags);
 
-  void transitionImageLayout(VkImage image, VkFormat format,
-                             VkImageLayout oldLayout, VkImageLayout newLayout,
-                             uint32_t layerCount);
+  void transitionImageLayout(VkImage image, VkImageLayout oldLayout,
+                             VkImageLayout newLayout, uint32_t layerCount);
 
   bool setPipelineStageFlags(VkImageMemoryBarrier &barrier,
                              const VkImageLayout oldLayout,

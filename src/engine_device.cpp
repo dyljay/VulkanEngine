@@ -558,11 +558,16 @@ void EngineDevice::copyBufferToImage(VkBuffer buffer, VkImage image,
 void EngineDevice::copyImageToBuffer(VkImage image, VkBuffer buffer,
                                      uint32_t size) {
   VkCommandBuffer commandBuffer = beginSingleTimeCommands();
-  VkCopyImageToBufferInfo2 copyInfo{};
+  VkBufferImageCopy copyInfo{};
+  copyInfo.bufferOffset = 0;
+  copyInfo.bufferRowLength = 0;
+  copyInfo.bufferImageHeight = 0;
+  copyInfo.imageSubresource = 0;
+  copyInfo.imageOffset = 0;
+  copyInfo.imageExtent = {0, 0};
 
   vkCmdCopyImageToBuffer(commandBuffer, image, VkImageLayout srcImageLayout,
-                         buffer, uint32_t regionCount,
-                         const VkBufferImageCopy *pRegions);
+                         buffer, uint32_t regionCount, &copyInfo);
 }
 
 // FIXME: remove properties argument as no longer needed
