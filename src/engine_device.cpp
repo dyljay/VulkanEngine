@@ -570,7 +570,6 @@ void EngineDevice::copyImageToBuffer(VkImage image, VkBuffer buffer,
                          buffer, uint32_t regionCount, &copyInfo);
 }
 
-// FIXME: remove properties argument as no longer needed
 void EngineDevice::createImageWithInfo(const VkImageCreateInfo &imageInfo,
                                        VkMemoryPropertyFlags properties,
                                        VkImage &image,
@@ -578,8 +577,7 @@ void EngineDevice::createImageWithInfo(const VkImageCreateInfo &imageInfo,
 
   VmaAllocationCreateInfo allocInfo{};
   allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-  allocInfo.requiredFlags =
-      VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  allocInfo.requiredFlags = properties;
 
   vmaCreateImage(allocator_, &imageInfo, &allocInfo, &image, &allocation,
                  nullptr);

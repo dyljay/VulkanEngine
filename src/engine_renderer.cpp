@@ -181,9 +181,8 @@ OffScreenRenderer::~OffScreenRenderer() {
 }
 
 void OffScreenRenderer::init() {
-  createImage();
-  createImageView();
-  createDepthResource();
+  createOffscreenImage();
+  createDepthResources();
   createFramebuffer();
   createRenderPass();
   createSyncObject();
@@ -206,12 +205,6 @@ void OffScreenRenderer::createCommandBuffer() {
 }
 
 void OffScreenRenderer::freeResources() {
-  vkDestroyImageView(geDevice.device(), offScreenImageView, nullptr);
-  vmaDestroyImage(geDevice.getAllocator(), offscreenImage, offscreenAllocation);
-
-  vkDestroyImageView(geDevice.device(), depthImageView, nullptr);
-  vmaDestroyImage(geDevice.getAllocator(), depthImage, depthAllocation);
-
   vkDestroyFramebuffer(geDevice.device(), frameBuffer, nullptr);
 
   vkDestroyRenderPass(geDevice.device(), renderPass, nullptr);
@@ -236,7 +229,7 @@ void OffScreenRenderer::beginRenderPass(VkCommandBuffer commandBuffer) {
   renderPassInfo.framebuffer = frameBuffer;
 
   renderPassInfo.renderArea.offset = {0, 0};
-  renderPassInfo.renderArea.extent = imageExtent;
+  renderPassInfo.renderArea.extent = offscreenImage->getExtent();
 
   std::array<VkClearValue, 2> clearValues{};
   clearValues[0].color = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -250,11 +243,11 @@ void OffScreenRenderer::beginRenderPass(VkCommandBuffer commandBuffer) {
   VkViewport viewport{};
   viewport.x = 0.0f;
   viewport.y = 0.0f;
-  viewport.width = static_cast<float>(imageExtent.width);
-  viewport.height = static_cast<float>(imageExtent.height);
+  viewport.width = static_cast<float>(offscreenImage->getWidth());
+  viewport.height = static_cast<float>(offscreenImage->getHeight());
   viewport.minDepth = 0.0f;
   viewport.maxDepth = 1.0f;
-  VkRect2D scissor{{0, 0}, imageExtent};
+  VkRect2D scissor{{0, 0}, offscreenImage->getExtent()};
   vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
   vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }
@@ -336,8 +329,6 @@ void OffScreenRenderer::endFrame() {
 }
 
 void OffScreenRenderer::createImage() {
-  imageExtent = geWindow.getExtent();
-
   VkImageCreateInfo imageInfo{};
   imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
   imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -345,7 +336,7 @@ void OffScreenRenderer::createImage() {
   imageInfo.extent.height = imageExtent.height;
   imageInfo.extent.depth = 1;
   imageInfo.mipLevels = 1;
-  imageInfo.format = VK_FORMAT_R8_SRGB;
+  imageInfo.format = VK_FORMAT_R32_UINT;
   imageInfo.tiling = VK_IMAGE_TILING_LINEAR;
   imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT |
@@ -354,9 +345,6 @@ void OffScreenRenderer::createImage() {
   imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
   imageInfo.flags = 0;
-
-  geDevice.createImageWithInfo(imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                               offscreenImage, offscreenAllocation);
 }
 
 // FIXME: need to add a way for image format
@@ -529,7 +517,6 @@ void OffScreenRenderer::createBuffer() {
 
 // TODO: why is offscreenImage a regular vkimage but buffer is a unique pointer?
 // shouldn't both or neither be? they're the same size
-// FIXME: would probably be better if you made your own EngineImage class
 VkResult OffScreenRenderer::copyImageToBuffer() {
   uint32_t size = imageExtent.width * imageExtent.height;
   geDevice.copyImageToBuffer(offscreenImage, readBuffer->getBuffer(), size);

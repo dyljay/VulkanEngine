@@ -2,10 +2,10 @@
 
 #include "engine_buffer.hpp"
 #include "engine_device.hpp"
+#include "engine_image.hpp"
 #include "engine_swapchain.hpp"
 #include "engine_window.hpp"
 #include "vulkan/vulkan_core.h"
-
 // std
 #include <cassert>
 #include <memory>
@@ -78,18 +78,6 @@ public:
   void endFrame();
   void beginRenderPass(VkCommandBuffer commandBuffer);
   void endRenderPass(VkCommandBuffer commandBuffer);
-  VkFormat getImageFormat() { return imageFormat; }
-  VkExtent2D getExtent() { return imageExtent; }
-  uint32_t width() { return imageExtent.width; }
-  uint32_t height() { return imageExtent.height; }
-
-  float extentAspectRatio() {
-    return static_cast<float>(imageExtent.width) /
-           static_cast<float>(imageExtent.height);
-  }
-  VkFormat findDepthFormat();
-
-  VkImageView getImageView() const { return offScreenImageView; }
 
   VkResult submitCommandBuffers(const VkCommandBuffer *buffers,
                                 uint32_t *imageIndex);
@@ -99,9 +87,8 @@ public:
 private:
   void init();
 
-  void createImage();
-  void createImageView();
-  void createDepthResource();
+  void createOffscreenImage();
+  void createDepthResources();
   void createFramebuffer();
   void createRenderPass();
   void createSyncObject();
@@ -119,26 +106,14 @@ private:
   VkRenderPass renderPass;
   VkCommandBuffer commandBuffer;
 
-  VkImage offscreenImage;
-  VkImageView offScreenImageView;
-  VkImage depthImage;
-  VkImageView depthImageView;
-
-  VkFormat imageFormat;
-  VkFormat depthFormat;
-
-  // TODO: do i need to have two allocators?
-  VmaAllocation depthAllocation;
-  VmaAllocation offscreenAllocation;
+  std::unique_ptr<EngineImage> offscreenImage;
+  std::unique_ptr<EngineImage> depthImage;
 
   VkFramebuffer frameBuffer;
-  VkExtent2D imageExtent;
 
   VkSemaphore imageAvailableSemaphore;
   VkFence imageRenderedFence;
 
   bool isFrameStarted = false;
-
-  std::unique_ptr<EngineBuffer> readBuffer;
 };
 } // namespace GameEngine

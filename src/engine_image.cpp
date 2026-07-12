@@ -1,53 +1,20 @@
 #include "engine_image.hpp"
 #include "src/engine_device.hpp"
 #include "vulkan/vulkan_core.h"
+#include <cassert>
 #include <cstddef>
 #include <stdexcept>
 
 namespace GameEngine {
 
-/**
- * Initializes image object with VkImage and VkImageView
- *
- * @param geDevice The logical device in use
- * @param imageExtent The bounds of the image -> type 3D so it includes width,
- * height, and depth
- * @param imageUseFlags
- * @param memoryFlags
- * @param viewType
- * @param imageViewUseFlags
- * @param flags
- * @param imageType
- * @param format
- * @param imageTiling
- * @param mipLevels
- * @param arrayLayers
- * @param samples
- * @param sharingMode
- * @param initialLayout
- * @param aspectMask
- * @param baseMipLevel
- * @param baseArrayLayer
- */
+EngineImage::EngineImage(EngineDevice &geDevice, ImageConfigInfo imageInfo,
+                         ImageViewConfigInfo imageViewConfigInfo)
+    : geDevice{geDevice}, imageExtent(imageInfo.extent),
+      layerCount(imageViewConfigInfo.layerCount), format(imageInfo.format),
+      imageType(imageInfo.imageType) {
 
-EngineImage::EngineImage(
-    EngineDevice &geDevice, VkExtent3D imageExtent,
-    VkImageUsageFlags imageUseFlags, VkMemoryPropertyFlags memoryFlags,
-    VkImageViewType viewType, VkImageUsageFlags imageViewUseFlags,
-    VkImageCreateFlags flags, VkImageType imageType, VkFormat format,
-    VkImageTiling imageTiling, uint32_t mipLevels, uint32_t arrayLayers,
-    VkSampleCountFlagBits samples, VkSharingMode sharingMode,
-    VkImageLayout initialLayout, VkImageAspectFlags aspectMask,
-    uint32_t baseMipLevel, uint32_t baseArrayLayer)
-    : geDevice{geDevice}, imageExtent{imageExtent}, layerCount{arrayLayers},
-      imageType{imageType} {
-
-  createImage(imageExtent, imageUseFlags, flags, imageType, format, imageTiling,
-              mipLevels, arrayLayers, samples, sharingMode, initialLayout,
-              memoryFlags);
-
-  createImageView(viewType, imageViewUseFlags, format, aspectMask, baseMipLevel,
-                  baseArrayLayer);
+  createImage(imageInfo);
+  createImageView(imageViewConfigInfo);
 }
 
 EngineImage::~EngineImage() {
@@ -56,50 +23,43 @@ EngineImage::~EngineImage() {
   vmaDestroyImage(geDevice.getAllocator(), image, imageAllocation);
 }
 
-void EngineImage::createImage(
-    VkExtent3D imageExtent, VkImageUsageFlags imageUseFlags,
-    VkImageCreateFlags flags, VkImageType imageType, VkFormat format,
-    VkImageTiling imageTiling, uint32_t mipLevels, uint32_t arrayLayers,
-    VkSampleCountFlagBits samples, VkSharingMode sharingMode,
-    VkImageLayout initialLayout, VkMemoryPropertyFlags memoryFlags) {
+void EngineImage::verifyParameters(ImageConfigInfo imageInfo,
+                                   ImageViewConfigInfo imageViewConfigInfo) {}
+
+void EngineImage::createImage(ImageConfigInfo imageConfigInfo) {
 
   VkImageCreateInfo imageInfo{};
   imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-  imageInfo.imageType = imageType;
+  imageInfo.imageType = imageConfigInfo.imageType;
   imageInfo.extent.width = imageExtent.width;
   imageInfo.extent.height = imageExtent.height;
-  imageInfo.extent.depth = imageExtent.depth;
-  imageInfo.mipLevels = mipLevels;
-  imageInfo.arrayLayers = arrayLayers;
+  imageInfo.mipLevels = imageConfigInfo.mipLevels;
+  imageInfo.arrayLayers = imageConfigInfo.arrayLayers;
   imageInfo.format = format;
-  imageInfo.tiling = imageTiling;
-  imageInfo.usage = imageUseFlags;
-  imageInfo.sharingMode = sharingMode;
-  imageInfo.samples = samples;
-  imageInfo.flags = flags;
+  imageInfo.tiling = imageConfigInfo.tiling;
+  imageInfo.usage = imageConfigInfo.usage;
+  imageInfo.sharingMode = imageConfigInfo.sharingMode;
+  imageInfo.samples = imageConfigInfo.samples;
+  imageInfo.flags = imageConfigInfo.flags;
 
-  geDevice.createImageWithInfo(imageInfo, memoryFlags, image, imageAllocation);
+  geDevice.createImageWithInfo(imageInfo, imageConfigInfo.memPropertyFlags,
+                               image, imageAllocation);
 }
 
-void EngineImage::createImageView(VkImageViewType viewType,
-                                  VkImageUsageFlags imageViewUseFlags,
-                                  VkFormat format,
-                                  VkImageAspectFlags aspectMask,
-                                  uint32_t baseMipLevel,
-                                  uint32_t baseArrayLayer) {
+void EngineImage::createImageView(ImageViewConfigInfo imageViewConfigInfo) {
 
   VkImageViewUsageCreateInfo usageInfo{};
   usageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_USAGE_CREATE_INFO;
-  usageInfo.usage = imageViewUseFlags;
+  usageInfo.usage = imageViewConfigInfo.viewUsage;
 
   VkImageViewCreateInfo viewInfo{};
   viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
   viewInfo.image = image;
-  viewInfo.viewType = viewType;
+  viewInfo.viewType = imageViewConfigInfo.viewType;
   viewInfo.format = format;
-  viewInfo.subresourceRange.aspectMask = aspectMask;
-  viewInfo.subresourceRange.baseArrayLayer = baseArrayLayer;
-  viewInfo.subresourceRange.baseMipLevel = baseMipLevel;
+  viewInfo.subresourceRange.aspectMask = imageViewConfigInfo.aspectMask;
+  viewInfo.subresourceRange.baseArrayLayer = imageViewConfigInfo.baseArrayLayer;
+  viewInfo.subresourceRange.baseMipLevel = imageViewConfigInfo.baseMipLevel;
   viewInfo.subresourceRange.layerCount = layerCount;
   viewInfo.pNext = &usageInfo;
 
