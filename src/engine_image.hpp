@@ -45,7 +45,6 @@ private:
   uint32_t layerCount;
   VkFormat format;
   VkImageType imageType;
-
   VkImage image;
 
   // TODO: double check how allocation is handled here to see if you should work

@@ -1,6 +1,8 @@
 #include "engine_image.hpp"
 #include "src/engine_device.hpp"
 #include "vulkan/vulkan_core.h"
+#include <cstddef>
+#include <stdexcept>
 
 namespace GameEngine {
 
@@ -84,10 +86,45 @@ void EngineImage::createImageView(VkImageViewType viewType,
                                   VkFormat format,
                                   VkImageAspectFlags aspectMask,
                                   uint32_t baseMipLevel,
-                                  uint32_t baseArrayLayer) {}
+                                  uint32_t baseArrayLayer) {
+
+  VkImageViewUsageCreateInfo usageInfo{};
+  usageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_USAGE_CREATE_INFO;
+  usageInfo.usage = imageViewUseFlags;
+
+  VkImageViewCreateInfo viewInfo{};
+  viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+  viewInfo.image = image;
+  viewInfo.viewType = viewType;
+  viewInfo.format = format;
+  viewInfo.subresourceRange.aspectMask = aspectMask;
+  viewInfo.subresourceRange.baseArrayLayer = baseArrayLayer;
+  viewInfo.subresourceRange.baseMipLevel = baseMipLevel;
+  viewInfo.subresourceRange.layerCount = layerCount;
+  viewInfo.pNext = &usageInfo;
+
+  if (vkCreateImageView(geDevice.device(), &viewInfo, nullptr, &imageView) !=
+      VK_SUCCESS) {
+    throw std::runtime_error("failed to create image view");
+  }
+}
 
 void EngineImage::transitionImageLayout(VkImageLayout oldLayout,
                                         VkImageLayout newLayout) {}
 
 void EngineImage::setImageBarrierToPipeline() {}
+
+/**
+ * //before//
+ * oldLayout - VK_IMAGE_LAYOUT_UNDEFINED
+ * srcAccessMask - 0
+ * srcStage -
+ * newLayout - VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+ * dstAccessMask - VK_ACCESS_TRANSFER_READ_BIT
+ * dstStage -
+ *
+ * //after//
+ * oldLayout - VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+ * newLayout -
+ */
 } // namespace GameEngine
