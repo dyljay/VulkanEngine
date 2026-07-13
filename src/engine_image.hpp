@@ -2,15 +2,16 @@
 
 #include "src/engine_device.hpp"
 #include "vulkan/vulkan_core.h"
+#include <cstddef>
 #include <cstdint>
 
 namespace GameEngine {
 
 struct ImageConfigInfo {
-  VkImageCreateFlags flags;
+  VkImageCreateFlags flags = 0;
   VkImageType imageType = VK_IMAGE_TYPE_2D;
   VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
-  VkExtent2D extent;
+  VkExtent3D extent = {0, 0, 1};
   uint32_t mipLevels = 0;
   uint32_t arrayLayers = 1;
   VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT;
@@ -22,13 +23,15 @@ struct ImageConfigInfo {
 };
 
 struct ImageViewConfigInfo {
-  VkImageViewCreateFlags flags;
+  VkImageViewCreateFlags flags = 0;
   VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D;
   VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
   uint32_t baseMipLevel = 0;
   uint32_t baseArrayLayer = 0;
   uint32_t layerCount = 1;
+  uint32_t levelCount = 1;
   VkImageUsageFlags viewUsage;
+  const void *pNext = nullptr;
 };
 
 class EngineImage {
@@ -42,7 +45,7 @@ public:
   VkImageView getImageView() const { return imageView; }
   VkFormat getImageFormat() const { return format; }
 
-  VkExtent2D getExtent() const { return imageExtent; }
+  VkExtent3D getExtent() const { return imageExtent; }
   uint32_t getWidth() const { return imageExtent.width; }
   uint32_t getHeight() const { return imageExtent.height; }
   uint32_t getLayerCount() const { return layerCount; }
@@ -53,9 +56,6 @@ public:
   }
 
 private:
-  void verifyParameters(ImageConfigInfo imageInfo,
-                        ImageViewConfigInfo imageViewInfo);
-
   void createImage(ImageConfigInfo imageConfigInfo);
 
   void createImageView(ImageViewConfigInfo imageViewConfigInfo);
@@ -64,7 +64,7 @@ private:
 
   void setImageBarrierToPipeline();
 
-  VkExtent2D imageExtent;
+  VkExtent3D imageExtent;
   uint32_t layerCount;
   VkFormat format;
   VkImageType imageType;

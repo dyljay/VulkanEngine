@@ -48,5 +48,4 @@ void EngineController::handleMouseMovements(SDL_Event &e, float dt,
       glm::mod(gameObject.transform.rotation.y, glm::two_pi<float>());
 }
 
-VkResult EngineController::render() {}
 } // namespace GameEngine

@@ -2,6 +2,7 @@
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_video.h"
 #include "src/engine_device.hpp"
+#include "src/engine_image.hpp"
 #include "vulkan/vulkan_core.h"
 #include <cstdint>
 #include <memory>
@@ -187,7 +188,6 @@ void OffScreenRenderer::init() {
   createRenderPass();
   createSyncObject();
   createCommandBuffer();
-  createBuffer();
 }
 
 void OffScreenRenderer::createCommandBuffer() {
@@ -229,7 +229,8 @@ void OffScreenRenderer::beginRenderPass(VkCommandBuffer commandBuffer) {
   renderPassInfo.framebuffer = frameBuffer;
 
   renderPassInfo.renderArea.offset = {0, 0};
-  renderPassInfo.renderArea.extent = offscreenImage->getExtent();
+  renderPassInfo.renderArea.extent = {offscreenImage->getWidth(),
+                                      offscreenImage->getHeight()};
 
   std::array<VkClearValue, 2> clearValues{};
   clearValues[0].color = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -247,7 +248,8 @@ void OffScreenRenderer::beginRenderPass(VkCommandBuffer commandBuffer) {
   viewport.height = static_cast<float>(offscreenImage->getHeight());
   viewport.minDepth = 0.0f;
   viewport.maxDepth = 1.0f;
-  VkRect2D scissor{{0, 0}, offscreenImage->getExtent()};
+  VkRect2D scissor{{0, 0},
+                   {offscreenImage->getWidth(), offscreenImage->getHeight()}};
   vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
   vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }
@@ -282,10 +284,9 @@ VkResult OffScreenRenderer::submitCommandBuffer() {
   */
 
   vkResetFences(geDevice.device(), 1, &imageRenderedFence);
-  if (vkQueueSubmit(geDevice.graphicsQueue(), 1, &submitInfo,
-                    imageRenderedFence) != VK_SUCCESS) {
-    throw std::runtime_error("failed to submit draw command buffer!");
-  }
+  auto result = vkQueueSubmit(geDevice.graphicsQueue(), 1, &submitInfo,
+                              imageRenderedFence);
+  return result;
 }
 
 VkCommandBuffer OffScreenRenderer::beginFrame() {
@@ -320,7 +321,7 @@ void OffScreenRenderer::endFrame() {
   auto result = submitCommandBuffer();
 
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-    recreateSwapChain();
+    init();
   } else if (result != VK_SUCCESS) {
     throw std::runtime_error("failed to present swap chain image");
   }
@@ -328,82 +329,39 @@ void OffScreenRenderer::endFrame() {
   isFrameStarted = false;
 }
 
-void OffScreenRenderer::createImage() {
-  VkImageCreateInfo imageInfo{};
-  imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-  imageInfo.imageType = VK_IMAGE_TYPE_2D;
+void OffScreenRenderer::createOffscreenImage() {
+  ImageConfigInfo imageInfo{};
   imageInfo.extent.width = imageExtent.width;
   imageInfo.extent.height = imageExtent.height;
-  imageInfo.extent.depth = 1;
-  imageInfo.mipLevels = 1;
   imageInfo.format = VK_FORMAT_R32_UINT;
-  imageInfo.tiling = VK_IMAGE_TILING_LINEAR;
-  imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT |
                     VK_IMAGE_USAGE_SAMPLED_BIT |
                     VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-  imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-  imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-  imageInfo.flags = 0;
+
+  ImageViewConfigInfo imageViewInfo{};
+
+  offscreenImage =
+      std::make_unique<EngineImage>(geDevice, imageInfo, imageViewInfo);
 }
 
-// FIXME: need to add a way for image format
-void OffScreenRenderer::createImageView() {
-  VkImageViewCreateInfo viewInfo{};
-  viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-  viewInfo.image = offscreenImage;
-  viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-  viewInfo.format = imageFormat;
-  viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  viewInfo.subresourceRange.baseMipLevel = 0;
-  viewInfo.subresourceRange.levelCount = 1;
-  viewInfo.subresourceRange.baseArrayLayer = 0;
-  viewInfo.subresourceRange.layerCount = 1;
-
-  if (vkCreateImageView(geDevice.device(), &viewInfo, nullptr,
-                        &offScreenImageView) != VK_SUCCESS) {
-    throw std::runtime_error("failed to create texture image view!");
-  }
-}
-
-void OffScreenRenderer::createDepthResource() {
-  VkImageCreateInfo imageInfo{};
-  imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-  imageInfo.imageType = VK_IMAGE_TYPE_2D;
+void OffScreenRenderer::createDepthResources() {
+  ImageConfigInfo imageInfo{};
   imageInfo.extent.width = imageExtent.width;
   imageInfo.extent.height = imageExtent.height;
-  imageInfo.extent.depth = 1;
-  imageInfo.mipLevels = 1;
-  imageInfo.arrayLayers = 1;
-  imageInfo.format = depthFormat;
-  imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-  imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  imageInfo.format = VK_FORMAT_D32_SFLOAT;
   imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-  imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-  imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-  imageInfo.flags = 0;
+  imageInfo.mipLevels = 1;
+  imageInfo.memPropertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
-  geDevice.createImageWithInfo(imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                               depthImage, depthAllocation);
+  ImageViewConfigInfo viewInfo{};
+  viewInfo.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
 
-  VkImageViewCreateInfo viewInfo{};
-  viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-  viewInfo.image = depthImage;
-  viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-  viewInfo.format = depthFormat;
-  viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-  viewInfo.subresourceRange.baseMipLevel = 0;
-  viewInfo.subresourceRange.levelCount = 1;
-  viewInfo.subresourceRange.baseArrayLayer = 0;
-  viewInfo.subresourceRange.layerCount = 1;
-
-  if (vkCreateImageView(geDevice.device(), &viewInfo, nullptr,
-                        &depthImageView) != VK_SUCCESS) {
-    throw std::runtime_error("failed to create texture image view!");
-  }
+  depthImage = std::make_unique<EngineImage>(geDevice, imageInfo, viewInfo);
 }
+
 void OffScreenRenderer::createFramebuffer() {
-  std::array<VkImageView, 2> attachments = {offScreenImageView, depthImageView};
+  std::array<VkImageView, 2> attachments = {offscreenImage->getImageView(),
+                                            depthImage->getImageView()};
 
   VkFramebufferCreateInfo framebufferInfo = {};
   framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -423,7 +381,7 @@ void OffScreenRenderer::createFramebuffer() {
 void OffScreenRenderer::createRenderPass() {
   VkAttachmentDescription depthAttachment{};
 
-  // TODO: double check if this is correct
+  // TODO: double check if this is the correct format
   depthAttachment.format = VK_FORMAT_D32_SFLOAT;
 
   depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -440,8 +398,7 @@ void OffScreenRenderer::createRenderPass() {
   depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
   VkAttachmentDescription colorAttachment = {};
-  // FIXME: replace this -> getSwapChainImageFormat
-  colorAttachment.format = getSwapChainImageFormat();
+  colorAttachment.format = offscreenImage->getImageFormat();
   colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
   colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -506,20 +463,4 @@ void OffScreenRenderer::createSyncObject() {
     throw std::runtime_error("failed to create fence for off-screen renderer");
   }
 }
-
-void OffScreenRenderer::createBuffer() {
-  VkDeviceSize size = imageExtent.width * imageExtent.height;
-
-  readBuffer = std::make_unique<EngineBuffer>(
-      geDevice, size, 1, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-      VMA_MEMORY_USAGE_AUTO_PREFER_HOST, 0);
-}
-
-// TODO: why is offscreenImage a regular vkimage but buffer is a unique pointer?
-// shouldn't both or neither be? they're the same size
-VkResult OffScreenRenderer::copyImageToBuffer() {
-  uint32_t size = imageExtent.width * imageExtent.height;
-  geDevice.copyImageToBuffer(offscreenImage, readBuffer->getBuffer(), size);
-}
-
 } // namespace GameEngine

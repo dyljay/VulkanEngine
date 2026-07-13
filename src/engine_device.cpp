@@ -553,7 +553,7 @@ void EngineDevice::copyBufferToImage(VkBuffer buffer, VkImage image,
                          VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
   endSingleTimeCommands(commandBuffer);
 }
-
+/**
 // FIXME: finish this
 void EngineDevice::copyImageToBuffer(VkImage image, VkBuffer buffer,
                                      uint32_t size) {
@@ -569,6 +569,7 @@ void EngineDevice::copyImageToBuffer(VkImage image, VkBuffer buffer,
   vkCmdCopyImageToBuffer(commandBuffer, image, VkImageLayout srcImageLayout,
                          buffer, uint32_t regionCount, &copyInfo);
 }
+*/
 
 void EngineDevice::createImageWithInfo(const VkImageCreateInfo &imageInfo,
                                        VkMemoryPropertyFlags properties,

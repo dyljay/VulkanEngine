@@ -23,11 +23,7 @@ EngineImage::~EngineImage() {
   vmaDestroyImage(geDevice.getAllocator(), image, imageAllocation);
 }
 
-void EngineImage::verifyParameters(ImageConfigInfo imageInfo,
-                                   ImageViewConfigInfo imageViewConfigInfo) {}
-
 void EngineImage::createImage(ImageConfigInfo imageConfigInfo) {
-
   VkImageCreateInfo imageInfo{};
   imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
   imageInfo.imageType = imageConfigInfo.imageType;
@@ -47,11 +43,6 @@ void EngineImage::createImage(ImageConfigInfo imageConfigInfo) {
 }
 
 void EngineImage::createImageView(ImageViewConfigInfo imageViewConfigInfo) {
-
-  VkImageViewUsageCreateInfo usageInfo{};
-  usageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_USAGE_CREATE_INFO;
-  usageInfo.usage = imageViewConfigInfo.viewUsage;
-
   VkImageViewCreateInfo viewInfo{};
   viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
   viewInfo.image = image;
@@ -61,7 +52,8 @@ void EngineImage::createImageView(ImageViewConfigInfo imageViewConfigInfo) {
   viewInfo.subresourceRange.baseArrayLayer = imageViewConfigInfo.baseArrayLayer;
   viewInfo.subresourceRange.baseMipLevel = imageViewConfigInfo.baseMipLevel;
   viewInfo.subresourceRange.layerCount = layerCount;
-  viewInfo.pNext = &usageInfo;
+  viewInfo.subresourceRange.levelCount = imageViewConfigInfo.levelCount;
+  viewInfo.pNext = imageViewConfigInfo.pNext;
 
   if (vkCreateImageView(geDevice.device(), &viewInfo, nullptr, &imageView) !=
       VK_SUCCESS) {

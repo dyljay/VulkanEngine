@@ -11,7 +11,6 @@
 #include "glm/trigonometric.hpp"
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
-#include "lib/sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
 #include "point_light_system.hpp"
 #include "simple_render_system.hpp"
 #include "src/cubemap_system.hpp"

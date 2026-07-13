@@ -173,6 +173,7 @@ void EngineTexture::transitionImageLayout(VkImage image,
     barrier.subresourceRange.baseMipLevel = 0;
     barrier.subresourceRange.baseArrayLayer = 0;
     barrier.subresourceRange.layerCount = layerCount;
+    barrier.subresourceRange.levelCount = 1;
 
     VkPipelineStageFlags srcStage;
     VkPipelineStageFlags dstStage;
@@ -230,6 +231,7 @@ void EngineTexture::createImageView(VkImageViewType viewType, uint32_t layers,
   viewInfo.subresourceRange.baseMipLevel = 0;
   viewInfo.subresourceRange.baseArrayLayer = 0;
   viewInfo.subresourceRange.layerCount = layers;
+  viewInfo.subresourceRange.levelCount = 1;
   viewInfo.pNext = &usageInfo;
 
   if (vkCreateImageView(geDevice.device(), &viewInfo, nullptr,

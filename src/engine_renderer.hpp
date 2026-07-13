@@ -93,7 +93,6 @@ private:
   void createRenderPass();
   void createSyncObject();
   void createCommandBuffer();
-  void createBuffer();
 
   void freeResources();
   void freeCommandBuffer();
@@ -108,6 +107,8 @@ private:
 
   std::unique_ptr<EngineImage> offscreenImage;
   std::unique_ptr<EngineImage> depthImage;
+
+  VkExtent2D imageExtent;
 
   VkFramebuffer frameBuffer;
 
