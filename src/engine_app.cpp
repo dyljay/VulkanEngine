@@ -170,6 +170,10 @@ void EngineApp::run() {
         cameraController.handleMouseMovements(e, frameTime, viewerObject);
       }
 
+      if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+        std::cout << "mouse clicked" << std::endl;
+      }
+
       if (e.type == SDL_EVENT_WINDOW_RESIZED) {
         geWindow.setWindowResizedFlag();
       }

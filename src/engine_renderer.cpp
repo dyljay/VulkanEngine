@@ -5,6 +5,7 @@
 #include "src/engine_image.hpp"
 #include "vulkan/vulkan_core.h"
 #include <cstdint>
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 
@@ -330,13 +331,17 @@ void OffScreenRenderer::endFrame() {
 }
 
 void OffScreenRenderer::createOffscreenImage() {
+  imageExtent.width = geWindow.getWidth();
+  imageExtent.height = geWindow.getHeight();
+
   ImageConfigInfo imageInfo{};
   imageInfo.extent.width = imageExtent.width;
   imageInfo.extent.height = imageExtent.height;
   imageInfo.format = VK_FORMAT_R32_UINT;
   imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-                    VK_IMAGE_USAGE_SAMPLED_BIT |
+                    VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
                     VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+  imageInfo.memPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 
   ImageViewConfigInfo imageViewInfo{};
 

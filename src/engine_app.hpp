@@ -51,6 +51,8 @@ private:
   EngineDevice geDevice{geWindow};
   EngineRenderer geRenderer{geWindow, geDevice};
 
+  OffScreenRenderer offscreenRenderer{geWindow, geDevice};
+
   std::unique_ptr<EngineDescriptorPoolGrowable> globalPool{};
   GameObject::Map geObjects;
 

@@ -2,6 +2,7 @@
 
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_video.h"
+#include <cstdint>
 #include <vulkan/vulkan.h>
 
 #include <string>
@@ -27,6 +28,8 @@ public:
     return {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
   }
 
+  uint32_t getWidth() { return static_cast<uint32_t>(width); }
+  uint32_t getHeight() { return static_cast<uint32_t>(height); }
   bool wasWindowResized() { return frameBufferResized; }
   void setWindowResizedFlag() { frameBufferResized = true; }
   void resetWindowResizedFlag() { frameBufferResized = false; }

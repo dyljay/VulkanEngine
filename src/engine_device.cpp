@@ -553,23 +553,30 @@ void EngineDevice::copyBufferToImage(VkBuffer buffer, VkImage image,
                          VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
   endSingleTimeCommands(commandBuffer);
 }
-/**
-// FIXME: finish this
+
 void EngineDevice::copyImageToBuffer(VkImage image, VkBuffer buffer,
-                                     uint32_t size) {
+                                     VkImageLayout imageLayout, uint32_t width,
+                                     uint32_t height, uint32_t layerCount) {
   VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+
   VkBufferImageCopy copyInfo{};
   copyInfo.bufferOffset = 0;
   copyInfo.bufferRowLength = 0;
   copyInfo.bufferImageHeight = 0;
-  copyInfo.imageSubresource = 0;
-  copyInfo.imageOffset = 0;
-  copyInfo.imageExtent = {0, 0};
 
-  vkCmdCopyImageToBuffer(commandBuffer, image, VkImageLayout srcImageLayout,
-                         buffer, uint32_t regionCount, &copyInfo);
+  copyInfo.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  copyInfo.imageSubresource.mipLevel = 0;
+  copyInfo.imageSubresource.baseArrayLayer = 0;
+  copyInfo.imageSubresource.layerCount = layerCount;
+
+  copyInfo.imageOffset = {0, 0, 0};
+  copyInfo.imageExtent = {width, height};
+
+  vkCmdCopyImageToBuffer(commandBuffer, image, imageLayout, buffer, 1,
+                         &copyInfo);
+
+  endSingleTimeCommands(commandBuffer);
 }
-*/
 
 void EngineDevice::createImageWithInfo(const VkImageCreateInfo &imageInfo,
                                        VkMemoryPropertyFlags properties,
@@ -580,7 +587,11 @@ void EngineDevice::createImageWithInfo(const VkImageCreateInfo &imageInfo,
   allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
   allocInfo.requiredFlags = properties;
 
-  vmaCreateImage(allocator_, &imageInfo, &allocInfo, &image, &allocation,
-                 nullptr);
+  auto result = vmaCreateImage(allocator_, &imageInfo, &allocInfo, &image,
+                               &allocation, nullptr);
+
+  if (result != VK_SUCCESS) {
+    throw std::runtime_error("failed at image create");
+  }
 }
 } // namespace GameEngine

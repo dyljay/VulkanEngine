@@ -3,6 +3,7 @@
 #include "vulkan/vulkan_core.h"
 #include <cassert>
 #include <cstddef>
+#include <iostream>
 #include <stdexcept>
 
 namespace GameEngine {
@@ -29,6 +30,7 @@ void EngineImage::createImage(ImageConfigInfo imageConfigInfo) {
   imageInfo.imageType = imageConfigInfo.imageType;
   imageInfo.extent.width = imageExtent.width;
   imageInfo.extent.height = imageExtent.height;
+  imageInfo.extent.depth = imageExtent.depth;
   imageInfo.mipLevels = imageConfigInfo.mipLevels;
   imageInfo.arrayLayers = imageConfigInfo.arrayLayers;
   imageInfo.format = format;

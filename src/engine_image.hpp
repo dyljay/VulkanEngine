@@ -19,7 +19,7 @@ struct ImageConfigInfo {
   VkImageUsageFlags usage;
   VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   VkImageLayout initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  VkMemoryPropertyFlags memPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+  VkMemoryPropertyFlags memPropertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 };
 
 struct ImageViewConfigInfo {
@@ -70,8 +70,6 @@ private:
   VkImageType imageType;
   VkImage image;
 
-  // TODO: double check how allocation is handled here to see if you should work
-  // with a pointer here
   VmaAllocation imageAllocation;
 
   VkImageView imageView;
