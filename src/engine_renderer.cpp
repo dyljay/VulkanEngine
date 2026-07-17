@@ -185,8 +185,8 @@ OffScreenRenderer::~OffScreenRenderer() {
 void OffScreenRenderer::init() {
   createOffscreenImage();
   createDepthResources();
-  createFramebuffer();
   createRenderPass();
+  createFramebuffer();
   createSyncObject();
   createCommandBuffer();
 }
@@ -245,8 +245,8 @@ void OffScreenRenderer::beginRenderPass(VkCommandBuffer commandBuffer) {
   VkViewport viewport{};
   viewport.x = 0.0f;
   viewport.y = 0.0f;
-  viewport.width = static_cast<float>(offscreenImage->getWidth());
-  viewport.height = static_cast<float>(offscreenImage->getHeight());
+  viewport.width = static_cast<float>(imageExtent.width);
+  viewport.height = static_cast<float>(imageExtent.height);
   viewport.minDepth = 0.0f;
   viewport.maxDepth = 1.0f;
   VkRect2D scissor{{0, 0},
@@ -278,11 +278,7 @@ VkResult OffScreenRenderer::submitCommandBuffer() {
   submitInfo.commandBufferCount = 1;
   submitInfo.pCommandBuffers = &commandBuffer;
 
-  /*
-  VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
-  submitInfo.signalSemaphoreCount = 1;
-  submitInfo.pSignalSemaphores = signalSemaphores;
-  */
+  submitInfo.signalSemaphoreCount = 0;
 
   vkResetFences(geDevice.device(), 1, &imageRenderedFence);
   auto result = vkQueueSubmit(geDevice.graphicsQueue(), 1, &submitInfo,
@@ -388,7 +384,6 @@ void OffScreenRenderer::createRenderPass() {
 
   // TODO: double check if this is the correct format
   depthAttachment.format = VK_FORMAT_D32_SFLOAT;
-
   depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
   depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -444,8 +439,9 @@ void OffScreenRenderer::createRenderPass() {
   renderPassInfo.dependencyCount = 1;
   renderPassInfo.pDependencies = &dependency;
 
-  if (vkCreateRenderPass(geDevice.device(), &renderPassInfo, nullptr,
-                         &renderPass) != VK_SUCCESS) {
+  if (auto result = vkCreateRenderPass(geDevice.device(), &renderPassInfo,
+                                       nullptr, &renderPass) != VK_SUCCESS) {
+    std::cout << result << std::endl;
     throw std::runtime_error("failed to create render pass!");
   }
 }

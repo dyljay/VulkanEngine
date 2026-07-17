@@ -112,6 +112,7 @@ private:
 
   VkFramebuffer frameBuffer;
 
+  VkSemaphore renderFinishedSemaphores;
   VkSemaphore imageAvailableSemaphore;
   VkFence imageRenderedFence;
 

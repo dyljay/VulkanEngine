@@ -591,7 +591,7 @@ void EngineDevice::createImageWithInfo(const VkImageCreateInfo &imageInfo,
                                &allocation, nullptr);
 
   if (result != VK_SUCCESS) {
-    throw std::runtime_error("failed at image create");
+    throw std::runtime_error("failed to create image");
   }
 }
 } // namespace GameEngine

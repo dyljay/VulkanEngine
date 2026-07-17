@@ -66,7 +66,19 @@ void EngineImage::createImageView(ImageViewConfigInfo imageViewConfigInfo) {
 void EngineImage::transitionImageLayout(VkImageLayout oldLayout,
                                         VkImageLayout newLayout) {}
 
-void EngineImage::setImageBarrierToPipeline() {}
+void EngineImage::setImageBarrierToPipeline() {
+  if (auto commandBuffer = geDevice.beginSingleTimeCommands()) {
+    VkImageMemoryBarrier barrier{};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+    barrier.image = image;
+
+    geDevice.endSingleTimeCommands(commandBuffer);
+  }
+}
 
 /**
  * //before//

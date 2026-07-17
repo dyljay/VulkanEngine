@@ -16,6 +16,7 @@
 #include "src/cubemap_system.hpp"
 #include "src/engine_descriptor.hpp"
 #include "src/engine_device.hpp"
+#include "src/engine_frame_info.hpp"
 #include "src/engine_game_object.hpp"
 #include "src/engine_model.hpp"
 #include "src/engine_swapchain.hpp"
@@ -171,7 +172,12 @@ void EngineApp::run() {
       }
 
       if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-        std::cout << "mouse clicked" << std::endl;
+        if (auto commandBuffer = offscreenRenderer.beginFrame()) {
+          offscreenRenderer.beginRenderPass(commandBuffer);
+
+          offscreenRenderer.endRenderPass(commandBuffer);
+          offscreenRenderer.endFrame();
+        }
       }
 
       if (e.type == SDL_EVENT_WINDOW_RESIZED) {

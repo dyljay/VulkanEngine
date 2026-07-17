@@ -12,7 +12,7 @@ struct ImageConfigInfo {
   VkImageType imageType = VK_IMAGE_TYPE_2D;
   VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
   VkExtent3D extent = {0, 0, 1};
-  uint32_t mipLevels = 0;
+  uint32_t mipLevels = 1;
   uint32_t arrayLayers = 1;
   VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT;
   VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
