@@ -10,10 +10,11 @@ namespace GameEngine {
 RenderSystem::RenderSystem(
     EngineDevice &geDevice, Shader shaders,
     const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
-    uint32_t sizeOfPushConstants, VkRenderPass renderPass)
+    uint32_t sizeOfPushConstants, VkRenderPass renderPass,
+    const PipeLineSettings &pipelineSettings)
     : geDevice{geDevice} {
   createPipelineLayout(descriptorSetLayouts, sizeOfPushConstants);
-  createPipeline(renderPass, shaders);
+  createPipeline(renderPass, shaders, pipelineSettings);
 }
 
 RenderSystem::~RenderSystem() {
@@ -23,19 +24,23 @@ RenderSystem::~RenderSystem() {
 void RenderSystem::createPipelineLayout(
     const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
     uint32_t pushConstantSize) {
-  VkPushConstantRange pushConstantRange{};
-  pushConstantRange.stageFlags =
-      VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-  pushConstantRange.offset = 0;
-  pushConstantRange.size = pushConstantSize;
 
   VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+  VkPushConstantRange pushConstantRange{};
+
+  if (pushConstantSize > 0) {
+    pushConstantRange.stageFlags =
+        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+    pushConstantRange.offset = 0;
+    pushConstantRange.size = pushConstantSize;
+    pipelineLayoutInfo.pushConstantRangeCount = 1;
+    pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
+  }
+
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   pipelineLayoutInfo.setLayoutCount =
       static_cast<uint32_t>(descriptorSetLayouts.size());
   pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
-  pipelineLayoutInfo.pushConstantRangeCount = 1;
-  pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 
   if (vkCreatePipelineLayout(geDevice.device(), &pipelineLayoutInfo, nullptr,
                              &pipelineLayout) != VK_SUCCESS) {
@@ -43,12 +48,20 @@ void RenderSystem::createPipelineLayout(
   }
 }
 
-void RenderSystem::createPipeline(VkRenderPass renderPass, Shader shaders) {
+void RenderSystem::createPipeline(VkRenderPass renderPass, Shader shaders,
+                                  const PipeLineSettings &pipelineSettings) {
   assert(pipelineLayout != nullptr &&
          "Cannot create pipeline before pipeline layout");
 
   PipelineConfigInfo pipelineConfig{};
   GraphicsPipeline::defaultPipelineConfigInfo(pipelineConfig);
+  pipelineConfig.depthStencilInfo.depthCompareOp = pipelineSettings.comparison;
+
+  if (pipelineSettings.clearDescriptions) {
+    pipelineConfig.bindingDescriptions.clear();
+    pipelineConfig.attributeDescriptions.clear();
+  }
+
   pipelineConfig.renderPass = renderPass;
   pipelineConfig.pipelineLayout = pipelineLayout;
   gePipeline = std::make_unique<GraphicsPipeline>(

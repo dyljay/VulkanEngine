@@ -26,7 +26,6 @@ struct FrameInfo {
   float frameTime;
   VkCommandBuffer commandBuffer;
   EngineCamera &camera;
-  VkDescriptorSet globalDescriptorSet;
   GameObject::Map &gameObjects;
 };
 } // namespace GameEngine

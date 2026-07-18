@@ -22,6 +22,7 @@
 #include "src/engine_swapchain.hpp"
 #include "src/engine_ui.hpp"
 #include "src/pbrMaterials.hpp"
+#include "src/shaderList.hpp"
 #include <cstddef>
 #include <iostream>
 #include <memory>
@@ -98,20 +99,29 @@ void EngineApp::run() {
   // initializing ui object
   EngineUI ui{geRenderer};
 
-  SimpleRenderSystem simpleRenderSystem{
-      geDevice, geRenderer.getSwapChainRenderPass(), descriptorSetLayouts};
-
-  // only need to pas in the uboSetLayout to this because no material or texture
-  // data is needed
-  PointLightSystem pointLightSystem{
-      geDevice, geRenderer.getSwapChainRenderPass(),
-      descriptorSetLayouts.uboSetLayout->getDescriptorSetLayout()};
-
-  // only need cubemap and textures here
-  CubeMapRenderSystem cubeMapRender{
-      geDevice, geRenderer.getSwapChainRenderPass(),
+  std::vector<VkDescriptorSetLayout> mainLayouts{
       descriptorSetLayouts.uboSetLayout->getDescriptorSetLayout(),
-      descriptorSetLayouts.cubemap->getDescriptorSetLayout()};
+      descriptorSetLayouts.materialSetLayout->getDescriptorSetLayout(),
+      descriptorSetLayouts.cubemap->getDescriptorSetLayout(),
+      descriptorSetLayouts.textureLayout->getDescriptorSetLayout(),
+  };
+  SimpleRenderSystem simpleRenderSystem{geDevice, mainShaderFiles, mainLayouts,
+                                        geRenderer.getSwapChainRenderPass()};
+
+  // only need to pass in the uboSetLayout to this because no material or
+  // texture data is needed
+  std::vector<VkDescriptorSetLayout> pointLightLayouts{mainLayouts[0]};
+
+  PointLightSystem pointLightSystem{geDevice, pointLightShaderFiles,
+                                    pointLightLayouts,
+                                    geRenderer.getSwapChainRenderPass()};
+
+  // only need ubo and cubemap textures
+  std::vector<VkDescriptorSetLayout> cubeMapLayouts{mainLayouts[0],
+                                                    mainLayouts[2]};
+  CubeMapRenderSystem cubeMapRender{geDevice, cubeMapShaderFiles,
+                                    cubeMapLayouts,
+                                    geRenderer.getSwapChainRenderPass()};
 
   EngineCamera camera{};
   camera.setViewDirection(glm::vec3(0.0f), glm::vec3(0.f, 0.f, 1.f));
@@ -200,11 +210,7 @@ void EngineApp::run() {
 
     if (auto commandBuffer = geRenderer.beginFrame()) {
       int frameIndex = geRenderer.getFrameIndex();
-      FrameInfo frameInfo{frameIndex,
-                          frameTime,
-                          commandBuffer,
-                          camera,
-                          descriptorSets.uboSets[frameIndex],
+      FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera,
                           geObjects};
 
       // update objects
@@ -218,10 +224,9 @@ void EngineApp::run() {
 
       // draw calls
       geRenderer.beginSwapChainRenderPass(commandBuffer);
-      // TODO: you're passing in the ubo twice, try to pass less duplicate data
-      simpleRenderSystem.renderGameObjects(frameInfo, descriptorSets);
-      pointLightSystem.render(frameInfo);
-      cubeMapRender.renderSkybox(frameInfo, descriptorSets.cubeMap);
+      simpleRenderSystem.render(frameInfo, descriptorSets);
+      pointLightSystem.render(frameInfo, descriptorSets);
+      cubeMapRender.render(frameInfo, descriptorSets);
 
       // ui
       // TODO: make this a bit cleaner - look into if there are better methods
