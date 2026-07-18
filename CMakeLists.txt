@@ -1,48 +1,26 @@
+include(envUnix.cmake OPTIONAL RESULT_VARIABLE LOCAL_ENV)
+message(STATUS "Local .env.cmake: ${LOCAL_ENV}")
+
 cmake_minimum_required(VERSION 3.20.0)
 set(NAME VulkanEngine)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-project(${NAME} VERSION 0.0.1)
+project(${NAME} VERSION 0.20.0)
 
-# Find Vulkan package
+if (DEFINED VULKAN_SDK_PATH)
+  set(VULKAN_INCLUDE_DIR "${VULKAN_SDK_PATH}/include/")
+  set(VULKAN_LIB_DIR "${VULKAN_SDK_PATH}/lib")
+  set(Vulkan_FOUND "True")
+endif()
 
-# Link against Vulkan
-#find_package(glfw3 REQUIRED)
-
-#find_package(SDL3 REQUIRED)
 find_package(Vulkan REQUIRED)
-
-set(VULKAN_INCLUDE_DIR "/Users/dylanjayasundera/VulkanSDK/1.4.328.1/macOS/include/")
-set(VULKAN_LIB_DIR "/Users/dylanjayasundera/VulkanSDK/1.4.328.1/macOS/lib")
-
-# set the output directory for built objects.
-# This makes sure that the dynamic library goes into the build directory automatically.
-#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
-#set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 
 # This assumes the SDL source is available in vendored/SDL
 add_subdirectory("${PROJECT_SOURCE_DIR}/lib/sdl/vendored/SDL" EXCLUDE_FROM_ALL)
 add_subdirectory("${PROJECT_SOURCE_DIR}/lib/fastgltf/")
 
-# For macOS, you might need to add MoltenVK-specific configuration
-#if(APPLE)
-#  # Add MoltenVK framework path
-#  set(MOLTENVK_PATH "$ENV{VULKAN_SDK}/MoltenVK/MoltenVK.xcframework")
-#  target_link_libraries(your_app PUBLIC "-framework Metal" "-framework
-#    MetalKit" "-framework Cocoa")
-
-# If using MoltenVK as a framework
-# target_link_libraries(your_app PUBLIC "${MOLTENVK_PATH}")
-#endif()
-
-#message(STATUS "Found Vulkan: $ENV{VULKAN_SDK}")
-#if (NOT Vulkan_FOUND)
-#  message(FATAL_ERROR "Could not find Vulkan Library!")
-#else()
-#  message(STATUS "Using vulkan lib at: ${Vulkan_LIBRARIES}")
-#endif()
-
-file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
+file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp
+                          ${PROJECT_SOURCE_DIR}/src/render_sysetms/*.cpp)
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
@@ -55,8 +33,11 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY
 
 message(STATUS "CREATING BUILD")
 target_include_directories(${PROJECT_NAME} PUBLIC
-  ${PROJECT_SOURCE_DIR})
-
+  ${PROJECT_SOURCE_DIR}
+  ${PROJECT_SOURCE_DIR}/src
+  ${PROJECT_SOURCE_DIR}/lib
+  ${PROJECT_SOURCE_DIR}/src/systems
+)
 
 target_include_directories(VulkanEngine PRIVATE ${VULKAN_INCLUDE_DIR})
 target_link_directories(VulkanEngine PRIVATE ${VULKAN_LIB_DIR})
@@ -81,3 +62,38 @@ target_link_libraries(imgui PUBLIC Vulkan::Vulkan SDL3::SDL3)
 
 target_link_libraries(${PROJECT_NAME} Vulkan::Vulkan imgui SDL3::SDL3 fastgltf)
 
+
+############## Build SHADERS #######################
+
+# Find all vertex and fragment sources within shaders directory
+# taken from VBlancos vulkan tutorial
+find_program(GLSL_VALIDATOR glslangValidator HINTS
+  ${Vulkan_GLSLANG_VALIDATOR_EXECUTABLE}
+  /usr/bin
+  /usr/local/bin
+  ${VULKAN_SDK_PATH}/Bin
+  ${VULKAN_SDK_PATH}/Bin32
+  $ENV{VULKAN_SDK}/Bin/
+  $ENV{VULKAN_SDK}/Bin32/
+)
+
+# get all .vert and .frag files in shaders directory
+file(GLOB_RECURSE GLSL_SOURCE_FILES
+  "${PROJECT_SOURCE_DIR}/shaders/*.frag"
+  "${PROJECT_SOURCE_DIR}/shaders/*.vert"
+)
+
+foreach(GLSL ${GLSL_SOURCE_FILES})
+  get_filename_component(FILE_NAME ${GLSL} NAME)
+  set(SPIRV "${PROJECT_SOURCE_DIR}/shaders/${FILE_NAME}.spv")
+  add_custom_command(
+    OUTPUT ${SPIRV}
+    COMMAND ${GLSL_VALIDATOR} -V ${GLSL} -o ${SPIRV}
+    DEPENDS ${GLSL})
+  list(APPEND SPIRV_BINARY_FILES ${SPIRV})
+endforeach(GLSL)
+
+add_custom_target(
+    Shaders
+    DEPENDS ${SPIRV_BINARY_FILES}
+)

@@ -1,5 +1,4 @@
 #include "engine_descriptor.hpp"
-#include "lib/sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
 #include "src/engine_device.hpp"
 
 // std

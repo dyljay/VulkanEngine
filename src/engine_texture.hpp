@@ -1,7 +1,7 @@
 #pragma once
 
 #include "engine_device.hpp"
-#include "lib/stb_image.h"
+#include "stb_image.h"
 #include "vulkan/vulkan_core.h"
 #include <array>
 #include <cstdint>

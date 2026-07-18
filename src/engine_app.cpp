@@ -2,27 +2,26 @@
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_keycode.h"
 #include "SDL3/SDL_mouse.h"
+#include "cubemap_system.hpp"
 #include "engine_buffer.hpp"
 #include "engine_camera.hpp"
+#include "engine_descriptor.hpp"
+#include "engine_device.hpp"
+#include "engine_frame_info.hpp"
+#include "engine_game_object.hpp"
 #include "engine_keyboardmovement.hpp"
+#include "engine_model.hpp"
+#include "engine_swapchain.hpp"
 #include "engine_texture.hpp"
 #include "engine_ui.hpp"
 #include "glm/fwd.hpp"
 #include "glm/trigonometric.hpp"
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
+#include "pbrMaterials.hpp"
 #include "point_light_system.hpp"
+#include "shaderList.hpp"
 #include "simple_render_system.hpp"
-#include "src/cubemap_system.hpp"
-#include "src/engine_descriptor.hpp"
-#include "src/engine_device.hpp"
-#include "src/engine_frame_info.hpp"
-#include "src/engine_game_object.hpp"
-#include "src/engine_model.hpp"
-#include "src/engine_swapchain.hpp"
-#include "src/engine_ui.hpp"
-#include "src/pbrMaterials.hpp"
-#include "src/shaderList.hpp"
 #include <cstddef>
 #include <iostream>
 #include <memory>
@@ -122,8 +121,6 @@ void EngineApp::run() {
   CubeMapRenderSystem cubeMapRender{geDevice, cubeMapShaderFiles,
                                     cubeMapLayouts,
                                     geRenderer.getSwapChainRenderPass()};
-
-  std::vector<VkDescriptorSetLayout> offScreenInfo{pointLightLayouts};
 
   EngineCamera camera{};
   camera.setViewDirection(glm::vec3(0.0f), glm::vec3(0.f, 0.f, 1.f));

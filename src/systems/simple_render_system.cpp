@@ -1,7 +1,6 @@
 #include "simple_render_system.hpp"
-#include "src/engine_frame_info.hpp"
-#include "src/engine_game_object.hpp"
-#include "src/system.hpp"
+#include "engine_frame_info.hpp"
+#include "engine_game_object.hpp"
 #include "vulkan/vulkan_core.h"
 #include <cstddef>
 #include <vector>

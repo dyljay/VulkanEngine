@@ -1,8 +1,6 @@
 #include "point_light_system.hpp"
 #include "src/engine_descriptor.hpp"
-#include "src/system.hpp"
 #include "vulkan/vulkan_core.h"
-#include <cstdint>
 #include <vector>
 
 #define GLM_FORCE_RADIANS

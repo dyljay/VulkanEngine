@@ -1,6 +1,5 @@
 #include "cubemap_system.hpp"
 #include "src/engine_descriptor.hpp"
-#include "src/system.hpp"
 #include "vulkan/vulkan_core.h"
 #include <cstddef>
 #include <vector>
