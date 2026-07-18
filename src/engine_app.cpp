@@ -123,6 +123,8 @@ void EngineApp::run() {
                                     cubeMapLayouts,
                                     geRenderer.getSwapChainRenderPass()};
 
+  std::vector<VkDescriptorSetLayout> offScreenInfo{pointLightLayouts};
+
   EngineCamera camera{};
   camera.setViewDirection(glm::vec3(0.0f), glm::vec3(0.f, 0.f, 1.f));
 

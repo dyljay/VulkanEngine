@@ -23,7 +23,7 @@ struct PipeLineSettings {
 };
 class RenderSystem {
 public:
-  RenderSystem(EngineDevice &geDevice, Shader shaders,
+  RenderSystem(EngineDevice &geDevice, const Shader shaders,
                const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
                uint32_t sizeOfPushConstants, VkRenderPass renderPass,
                const PipeLineSettings &pipelineSettings = {});

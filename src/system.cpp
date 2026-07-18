@@ -8,7 +8,7 @@
 namespace GameEngine {
 
 RenderSystem::RenderSystem(
-    EngineDevice &geDevice, Shader shaders,
+    EngineDevice &geDevice, const Shader shaders,
     const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
     uint32_t sizeOfPushConstants, VkRenderPass renderPass,
     const PipeLineSettings &pipelineSettings)
@@ -48,7 +48,7 @@ void RenderSystem::createPipelineLayout(
   }
 }
 
-void RenderSystem::createPipeline(VkRenderPass renderPass, Shader shaders,
+void RenderSystem::createPipeline(VkRenderPass renderPass, const Shader shaders,
                                   const PipeLineSettings &pipelineSettings) {
   assert(pipelineLayout != nullptr &&
          "Cannot create pipeline before pipeline layout");
