@@ -161,4 +161,19 @@ private:
   EngineDescriptorPoolGrowable &growablePool;
   std::vector<VkWriteDescriptorSet> writes;
 };
+
+// for use in holding all the descriptor sets and layouts together
+struct DescriptorSetLayouts {
+  std::unique_ptr<EngineDescriptorSetLayout> uboSetLayout;
+  std::unique_ptr<EngineDescriptorSetLayout> materialSetLayout;
+  std::unique_ptr<EngineDescriptorSetLayout> cubemap;
+  std::unique_ptr<EngineDescriptorSetLayout> textureLayout;
+};
+
+struct DescriptorSets {
+  std::vector<VkDescriptorSet> uboSets;
+  std::vector<VkDescriptorSet> materialSets;
+  VkDescriptorSet cubeMap;
+  VkDescriptorSet textureArray;
+};
 } // namespace GameEngine

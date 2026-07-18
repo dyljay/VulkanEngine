@@ -366,16 +366,7 @@ void EngineApp::populateMatTexDescriptorSets(
 void EngineApp::loadGameObjects() {
   std::cout << "Loading Game Objects..." << std::endl;
 
-  std::shared_ptr<EngineModel> geModel = EngineModel::createModelFromFile(
-      geDevice, "./models/cyberpunk_woman.glb");
-  auto cyberpunkWoman = GameObject::createGameObject();
-  cyberpunkWoman.model = geModel;
-  cyberpunkWoman.transform.translation = {0.35f, -.7f, -.4f};
-  cyberpunkWoman.transform.rotation = {glm::radians(90.f), glm::radians(180.0f),
-                                       0.0f};
-  geObjects.emplace(cyberpunkWoman.getID(), std::move(cyberpunkWoman));
-
-  geModel =
+  std::shared_ptr<EngineModel> geModel =
       EngineModel::createModelFromFile(geDevice, "./models/just_a_girl.glb");
   auto girl = GameObject::createGameObject();
   girl.model = geModel;

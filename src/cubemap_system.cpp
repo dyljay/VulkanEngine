@@ -1,6 +1,4 @@
 #include "cubemap_system.hpp"
-#include "lib/sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
-#include "src/engine_texture.hpp"
 #include "vulkan/vulkan_core.h"
 #include <cstddef>
 

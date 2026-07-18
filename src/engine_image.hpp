@@ -54,15 +54,16 @@ public:
     return static_cast<float>(imageExtent.width) /
            static_cast<float>(imageExtent.height);
   }
+  void transitionImageLayout(const VkImageLayout oldLayout,
+                             const VkImageLayout newLayout);
 
 private:
   void createImage(ImageConfigInfo imageConfigInfo);
 
   void createImageView(ImageViewConfigInfo imageViewConfigInfo);
 
-  void transitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout);
-
-  void setImageBarrierToPipeline();
+  void setImageBarrierToPipeline(const VkImageLayout oldLayout,
+                                 const VkImageLayout newLayout);
 
   VkExtent3D imageExtent;
   uint32_t layerCount;

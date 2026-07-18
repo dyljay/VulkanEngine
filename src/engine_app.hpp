@@ -10,20 +10,6 @@
 
 namespace GameEngine {
 
-struct DescriptorSetLayouts {
-  std::unique_ptr<EngineDescriptorSetLayout> uboSetLayout;
-  std::unique_ptr<EngineDescriptorSetLayout> materialSetLayout;
-  std::unique_ptr<EngineDescriptorSetLayout> cubemap;
-  std::unique_ptr<EngineDescriptorSetLayout> textureLayout;
-};
-
-struct DescriptorSets {
-  std::vector<VkDescriptorSet> uboSets;
-  std::vector<VkDescriptorSet> materialSets;
-  VkDescriptorSet cubeMap;
-  VkDescriptorSet textureArray;
-};
-
 class EngineApp {
 public:
   static constexpr int MAX_DESCRIPTOR_SET = 100;

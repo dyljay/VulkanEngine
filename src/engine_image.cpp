@@ -63,10 +63,17 @@ void EngineImage::createImageView(ImageViewConfigInfo imageViewConfigInfo) {
   }
 }
 
-void EngineImage::transitionImageLayout(VkImageLayout oldLayout,
-                                        VkImageLayout newLayout) {}
+void EngineImage::transitionImageLayout(const VkImageLayout oldLayout,
+                                        const VkImageLayout newLayout) {
+  VkImageMemoryBarrier barrier{};
 
-void EngineImage::setImageBarrierToPipeline() {
+  if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
+      newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
+  }
+}
+
+void EngineImage::setImageBarrierToPipeline(const VkImageLayout oldLayout,
+                                            const VkImageLayout newLayout) {
   if (auto commandBuffer = geDevice.beginSingleTimeCommands()) {
     VkImageMemoryBarrier barrier{};
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
