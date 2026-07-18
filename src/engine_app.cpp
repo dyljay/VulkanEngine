@@ -18,6 +18,7 @@
 #include "glm/trigonometric.hpp"
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
+#include "offscreenSystem.hpp"
 #include "pbrMaterials.hpp"
 #include "point_light_system.hpp"
 #include "shaderList.hpp"
@@ -122,6 +123,10 @@ void EngineApp::run() {
                                     cubeMapLayouts,
                                     geRenderer.getSwapChainRenderPass()};
 
+  OffscreenSystem offScreenSystem{geDevice, offscreenShaderFiles,
+                                  pointLightLayouts,
+                                  offscreenRenderer.getRenderPass()};
+
   EngineCamera camera{};
   camera.setViewDirection(glm::vec3(0.0f), glm::vec3(0.f, 0.f, 1.f));
 
@@ -181,12 +186,15 @@ void EngineApp::run() {
       }
 
       if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+        /*
         if (auto commandBuffer = offscreenRenderer.beginFrame()) {
           offscreenRenderer.beginRenderPass(commandBuffer);
 
           offscreenRenderer.endRenderPass(commandBuffer);
+
           offscreenRenderer.endFrame();
         }
+        */
       }
 
       if (e.type == SDL_EVENT_WINDOW_RESIZED) {
