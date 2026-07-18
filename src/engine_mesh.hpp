@@ -67,6 +67,8 @@ private:
   void createBuffer(EngineDevice &geDevice, std::vector<uint32_t> indices,
                     std::vector<Vertex> vertices);
 
+  void totalIndexCount();
+
   std::vector<GeoSurface> surfaces_;
 
   std::unique_ptr<EngineBuffer> vertexBuffer;

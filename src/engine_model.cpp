@@ -294,18 +294,6 @@ void EngineModel::loadMaterials() {
     }
 
     material->properties.offset = 1;
-    /*
-    {
-      auto &buffer = material->getMaterialBuffer();
-      buffer = std::make_shared<EngineBuffer>(
-          geDevice, sizeof(PBRMaterial), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-          VMA_MEMORY_USAGE_CPU_TO_GPU);
-      buffer.get()->map();
-      buffer.get()->writeToBuffer(&material->properties);
-      buffer.get()->flush();
-      buffer.get()->unmap();
-    }
-    */
 
     materials[matIndex] = std::move(material);
   }

@@ -1,5 +1,4 @@
 #include "src/engine_mesh.hpp"
-#include "engine_model.hpp"
 #include "lib/utils.hpp"
 #include "src/engine_buffer.hpp"
 #include "src/engine_device.hpp"
@@ -7,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <numeric>
 #include <vector>
 
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -36,10 +36,12 @@ namespace GameEngine {
 EngineMesh::EngineMesh(EngineDevice &geDevice,
                        const std::vector<Vertex> &vertices,
                        const std::vector<uint32_t> &indices,
-                       const std::vector<GeoSurface> &surfaces) {
+                       const std::vector<GeoSurface> &surfaces)
+    : surfaces_{surfaces} {
 
   createBuffer(geDevice, indices, vertices);
-  surfaces_ = surfaces;
+
+  totalIndexCount();
 }
 
 EngineMesh::~EngineMesh() {}
@@ -109,6 +111,13 @@ void EngineMesh::createIndexBuffers(const std::vector<uint32_t> &indices) {
                       bufferSize);
 }
 */
+
+void EngineMesh::totalIndexCount() {
+  for (auto &surface : surfaces_) {
+    indexCount += surface.count;
+  }
+}
+
 void EngineMesh::createBuffer(EngineDevice &geDevice,
                               std::vector<uint32_t> indices,
                               std::vector<Vertex> vertices) {
@@ -155,9 +164,7 @@ void EngineMesh::createBuffer(EngineDevice &geDevice,
 }
 
 void EngineMesh::draw(VkCommandBuffer commandBuffer) {
-  for (auto &p : surfaces_) {
-    vkCmdDrawIndexed(commandBuffer, p.count, 1, p.startIndex, 0, 0);
-  }
+  vkCmdDrawIndexed(commandBuffer, indexCount, surfaces_.size(), 0, 0, 0);
 }
 
 void EngineMesh::bind(VkCommandBuffer commandBuffer) {
