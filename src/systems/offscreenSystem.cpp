@@ -23,6 +23,8 @@ OffscreenSystem::OffscreenSystem(
     : RenderSystem(geDevice, shaders, descriptorSetLayouts,
                    sizeof(OffscreenPushConstants), renderPass) {}
 
+OffscreenSystem::~OffscreenSystem() {}
+
 void OffscreenSystem::render(FrameInfo &frameInfo,
                              DescriptorSets &descriptorSets) {
   getPipeline()->bind(frameInfo.commandBuffer);

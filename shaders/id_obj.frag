@@ -1,8 +1,8 @@
 #version 450
 
-layout(location = 0) in vec4 fragColor;
+layout(location = 0) flat in uint fragColor;
 
-layout(location = 0) out vec4 outColor;
+layout(location = 0) out uint outColor;
 
 void main() {
   outColor = fragColor;

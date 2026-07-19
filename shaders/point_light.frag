@@ -28,6 +28,9 @@ void main() {
     if (dis >= 1.0) {
         discard;
     }
-    outColor = vec4(push.color.xyz, 1.0);
+    
+    float intensityModifier = log2(push.color.w + 0.5) + 1; 
+
+    outColor = vec4(intensityModifier * push.color.xyz, 1.0);
 }
 

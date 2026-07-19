@@ -20,8 +20,8 @@ const Shader cubeMapShaderFiles{
 };
 
 const Shader offscreenShaderFiles{
-    .vertexShader = "id_obj.vert.spv",
-    .fragShader = "id_obj.frag.spv",
+    .vertexShader = "shaders/id_obj.vert.spv",
+    .fragShader = "shaders/id_obj.frag.spv",
 };
 
 } // namespace GameEngine

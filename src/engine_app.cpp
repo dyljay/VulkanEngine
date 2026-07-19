@@ -186,15 +186,6 @@ void EngineApp::run() {
       }
 
       if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-        /*
-        if (auto commandBuffer = offscreenRenderer.beginFrame()) {
-          offscreenRenderer.beginRenderPass(commandBuffer);
-
-          offscreenRenderer.endRenderPass(commandBuffer);
-
-          offscreenRenderer.endFrame();
-        }
-        */
       }
 
       if (e.type == SDL_EVENT_WINDOW_RESIZED) {
@@ -235,6 +226,18 @@ void EngineApp::run() {
       pointLightSystem.render(frameInfo, descriptorSets);
       cubeMapRender.render(frameInfo, descriptorSets);
 
+      if (hasClicked) {
+        if (auto commandBuffer = offscreenRenderer.beginFrame()) {
+          offscreenRenderer.beginRenderPass(commandBuffer);
+          offScreenSystem.render(frameInfo, descriptorSets);
+          offscreenRenderer.endRenderPass(commandBuffer);
+          offscreenRenderer.endFrame();
+
+          hasClicked = false;
+          std::cout << "Mouse clicked" << std::endl;
+        }
+      }
+
       // ui
       // TODO: make this a bit cleaner - look into if there are better methods
       // to doing the ui instead of all here in the loop
@@ -246,7 +249,7 @@ void EngineApp::run() {
           ImGui::SliderFloat("Green", &green, 0.0f, 1.0f);
           ImGui::SliderFloat("Blue", &blue, 0.0f, 1.0f);
           ImGui::Text("Intensity");
-          ImGui::SliderFloat("Intensity", &intensity, 0.f, 1.f);
+          ImGui::SliderFloat("Intensity", &intensity, 0.f, 10.f);
         }
         ImGui::End();
         ui.render(commandBuffer);
@@ -383,12 +386,12 @@ void EngineApp::loadGameObjects() {
   auto girl = GameObject::createGameObject();
   girl.model = geModel;
   girl.transform.scale = {.01f, .01f, .01f};
-  girl.transform.translation = {-0.5f, -1.f, .4f};
+  girl.transform.translation = {0.0f, -1.0f, 0.0f};
   girl.transform.rotation = {glm::radians(-90.f), glm::radians(180.f), 0.0f};
 
   geObjects.emplace(girl.getID(), std::move(girl));
 
-  std::vector<glm::vec3> lightColors = {{0.2f, 0.2f, .7f}};
+  std::vector<glm::vec3> lightColors = {{0.2f, 0.2f, .7f}, {0.2f, 0.2f, .7f}};
 
   for (int i = 0; i < lightColors.size(); i++) {
     auto pointLight = GameObject::makePointLight(1.f);

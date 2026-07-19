@@ -46,5 +46,7 @@ private:
       "./textures/px.jpg", "./textures/nx.jpg", "./textures/py.jpg",
       "./textures/ny.jpg", "./textures/pz.jpg", "./textures/nz.jpg",
   };
+
+  bool hasClicked = false;
 };
 } // namespace GameEngine
