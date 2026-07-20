@@ -143,7 +143,7 @@ void GraphicsPipeline::defaultPipelineConfigInfo(
   configInfo.multisampleInfo.sType =
       VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
   configInfo.multisampleInfo.sampleShadingEnable = VK_FALSE;
-  configInfo.multisampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+  configInfo.multisampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_4_BIT;
   configInfo.multisampleInfo.minSampleShading = 1.0f;
   configInfo.multisampleInfo.pSampleMask = nullptr;
   configInfo.multisampleInfo.alphaToCoverageEnable = VK_FALSE;

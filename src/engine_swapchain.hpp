@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine_device.hpp"
+#include "vulkan/vulkan_core.h"
 
 // vulkan headers
 #include <vulkan/vulkan.h>
@@ -54,6 +55,7 @@ private:
   void init();
   void createSwapChain();
   void createImageViews();
+  void createColorResources();
   void createDepthResources();
   void createRenderPass();
   void createFramebuffers();
@@ -69,6 +71,7 @@ private:
   VkFormat swapChainImageFormat;
   VkFormat swapChainDepthFormat;
   VkExtent2D swapChainExtent;
+  VkSampleCountFlagBits swapChainSampleCount;
 
   std::vector<VkFramebuffer> swapChainFramebuffers;
   VkRenderPass renderPass;
@@ -78,6 +81,9 @@ private:
   std::vector<VkImageView> depthImageViews;
   std::vector<VkImage> swapChainImages;
   std::vector<VkImageView> swapChainImageViews;
+  std::vector<VkImage> multiSampleImages;
+  std::vector<VmaAllocation> multiSampleAlloc;
+  std::vector<VkImageView> multiSampleViews;
 
   EngineDevice &device;
   VkExtent2D windowExtent;

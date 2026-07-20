@@ -140,9 +140,10 @@ void EngineRenderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer) {
   renderPassInfo.renderArea.offset = {0, 0};
   renderPassInfo.renderArea.extent = geSwapChain->getSwapChainExtent();
 
-  std::array<VkClearValue, 2> clearValues{};
+  std::array<VkClearValue, 3> clearValues{};
   clearValues[0].color = {0.0f, 0.0f, 0.0f, 0.0f};
   clearValues[1].depthStencil = {1.0f, 0};
+  clearValues[2].color = {0.0f, 0.0f, 0.0f, 0.0f};
   renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
   renderPassInfo.pClearValues = clearValues.data();
 
@@ -210,8 +211,6 @@ void OffScreenRenderer::freeResources() {
 
   vkDestroyRenderPass(geDevice.device(), renderPass, nullptr);
 
-  vkDestroySemaphore(geDevice.device(), imageAvailableSemaphore, nullptr);
-
   vkDestroyFence(geDevice.device(), imageRenderedFence, nullptr);
 }
 
@@ -268,17 +267,8 @@ VkResult OffScreenRenderer::submitCommandBuffer() {
   VkSubmitInfo submitInfo = {};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-  VkSemaphore waitSemaphores[] = {imageAvailableSemaphore};
-  VkPipelineStageFlags waitStages[] = {
-      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-  submitInfo.waitSemaphoreCount = 1;
-  submitInfo.pWaitSemaphores = waitSemaphores;
-  submitInfo.pWaitDstStageMask = waitStages;
-
   submitInfo.commandBufferCount = 1;
   submitInfo.pCommandBuffers = &commandBuffer;
-
-  submitInfo.signalSemaphoreCount = 0;
 
   vkResetFences(geDevice.device(), 1, &imageRenderedFence);
   auto result = vkQueueSubmit(geDevice.graphicsQueue(), 1, &submitInfo,
@@ -289,12 +279,14 @@ VkResult OffScreenRenderer::submitCommandBuffer() {
 VkCommandBuffer OffScreenRenderer::beginFrame() {
   assert(!isFrameStarted && "Can't call beginFrame while already in progress");
 
+  // FIXME: account for resized window
+  /*
   if (geWindow.wasWindowResized()) {
     geWindow.resetWindowResizedFlag();
     init();
     return nullptr;
   }
-
+  */
   isFrameStarted = true;
 
   VkCommandBufferBeginInfo beginInfo{};
@@ -338,6 +330,7 @@ void OffScreenRenderer::createOffscreenImage() {
                     VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
                     VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
   imageInfo.memPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+  imageInfo.tiling = VK_IMAGE_TILING_LINEAR;
 
   ImageViewConfigInfo imageViewInfo{};
 
@@ -405,7 +398,7 @@ void OffScreenRenderer::createRenderPass() {
   colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  colorAttachment.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 
   VkAttachmentReference colorAttachmentRef = {};
   colorAttachmentRef.attachment = 0;
@@ -447,14 +440,6 @@ void OffScreenRenderer::createRenderPass() {
 }
 
 void OffScreenRenderer::createSyncObject() {
-  VkSemaphoreCreateInfo semaphoreInfo{};
-  semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-  if (vkCreateSemaphore(geDevice.device(), &semaphoreInfo, nullptr,
-                        &imageAvailableSemaphore) != VK_SUCCESS) {
-    throw std::runtime_error("failed to create off-screen semaphore");
-  }
-
   VkFenceCreateInfo fenceInfo{};
   fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
   fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;

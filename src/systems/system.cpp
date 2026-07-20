@@ -56,7 +56,8 @@ void RenderSystem::createPipeline(VkRenderPass renderPass, const Shader shaders,
   PipelineConfigInfo pipelineConfig{};
   GraphicsPipeline::defaultPipelineConfigInfo(pipelineConfig);
   pipelineConfig.depthStencilInfo.depthCompareOp = pipelineSettings.comparison;
-
+  pipelineConfig.multisampleInfo.rasterizationSamples =
+      pipelineSettings.sampleCount;
   if (pipelineSettings.clearDescriptions) {
     pipelineConfig.bindingDescriptions.clear();
     pipelineConfig.attributeDescriptions.clear();

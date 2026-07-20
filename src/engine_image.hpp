@@ -50,11 +50,13 @@ public:
   uint32_t getHeight() const { return imageExtent.height; }
   uint32_t getLayerCount() const { return layerCount; }
 
+  uint32_t *getValue(int x, int y);
+
   float extentAspectRatio() {
     return static_cast<float>(imageExtent.width) /
            static_cast<float>(imageExtent.height);
   }
-  void transitionImageLayout(const VkImageLayout oldLayout,
+  void transitionImageLayout(VkImageLayout oldLayout,
                              const VkImageLayout newLayout);
 
 private:

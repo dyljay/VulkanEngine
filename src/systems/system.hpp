@@ -20,7 +20,9 @@ struct Shader {
 struct PipeLineSettings {
   bool clearDescriptions = false;
   VkCompareOp comparison = VK_COMPARE_OP_LESS;
+  VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_4_BIT;
 };
+
 class RenderSystem {
 public:
   RenderSystem(EngineDevice &geDevice, const Shader shaders,

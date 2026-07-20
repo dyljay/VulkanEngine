@@ -54,6 +54,9 @@ public:
   VkPhysicalDevice getPhysicalDevice() { return physicalDevice; }
   VmaAllocator getAllocator() { return allocator_; }
 
+  // for use in multisampling
+  VkSampleCountFlagBits getSampleCount() { return msaaSamples_; }
+
   SwapChainSupportDetails getSwapChainSupport() {
     return querySwapChainSupport(physicalDevice);
   }
@@ -92,6 +95,7 @@ private:
   void setupDebugMessenger();
   void createSurface();
   void pickPhysicalDevice();
+  void setMaxSampleCount();
   void createLogicalDevice();
   void createCommandPool();
   void createAllocator();
@@ -117,6 +121,8 @@ private:
   VkSurfaceKHR surface_;
   VkQueue graphicsQueue_;
   VkQueue presentQueue_;
+
+  VkSampleCountFlagBits msaaSamples_ = VK_SAMPLE_COUNT_4_BIT;
 
   VmaAllocator allocator_;
 

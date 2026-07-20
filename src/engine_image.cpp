@@ -3,6 +3,7 @@
 #include "vulkan/vulkan_core.h"
 #include <cassert>
 #include <cstddef>
+#include <cstdint>
 #include <iostream>
 #include <stdexcept>
 

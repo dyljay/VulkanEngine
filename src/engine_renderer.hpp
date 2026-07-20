@@ -73,6 +73,7 @@ public:
   OffScreenRenderer &operator=(const OffScreenRenderer &) = delete;
 
   VkRenderPass getRenderPass() const { return renderPass; }
+  std::unique_ptr<EngineImage> &getImage() { return offscreenImage; }
 
   VkCommandBuffer beginFrame();
   void endFrame();
@@ -112,8 +113,6 @@ private:
 
   VkFramebuffer frameBuffer;
 
-  VkSemaphore renderFinishedSemaphores;
-  VkSemaphore imageAvailableSemaphore;
   VkFence imageRenderedFence;
 
   bool isFrameStarted = false;

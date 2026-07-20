@@ -186,6 +186,7 @@ void EngineApp::run() {
       }
 
       if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+        hasClicked = true;
       }
 
       if (e.type == SDL_EVENT_WINDOW_RESIZED) {
@@ -227,17 +228,16 @@ void EngineApp::run() {
       cubeMapRender.render(frameInfo, descriptorSets);
 
       if (hasClicked) {
-        if (auto commandBuffer = offscreenRenderer.beginFrame()) {
-          offscreenRenderer.beginRenderPass(commandBuffer);
+        if (auto commandBuffer_off = offscreenRenderer.beginFrame()) {
+          offscreenRenderer.beginRenderPass(commandBuffer_off);
+          frameInfo.commandBuffer = commandBuffer_off;
           offScreenSystem.render(frameInfo, descriptorSets);
-          offscreenRenderer.endRenderPass(commandBuffer);
+          offscreenRenderer.endRenderPass(commandBuffer_off);
           offscreenRenderer.endFrame();
 
           hasClicked = false;
-          std::cout << "Mouse clicked" << std::endl;
         }
       }
-
       // ui
       // TODO: make this a bit cleaner - look into if there are better methods
       // to doing the ui instead of all here in the loop

@@ -21,13 +21,19 @@ OffscreenSystem::OffscreenSystem(
     const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
     VkRenderPass renderPass)
     : RenderSystem(geDevice, shaders, descriptorSetLayouts,
-                   sizeof(OffscreenPushConstants), renderPass) {}
+                   sizeof(OffscreenPushConstants), renderPass,
+                   {.sampleCount = VK_SAMPLE_COUNT_1_BIT}) {}
 
 OffscreenSystem::~OffscreenSystem() {}
 
 void OffscreenSystem::render(FrameInfo &frameInfo,
                              DescriptorSets &descriptorSets) {
   getPipeline()->bind(frameInfo.commandBuffer);
+
+  vkCmdBindDescriptorSets(frameInfo.commandBuffer,
+                          VK_PIPELINE_BIND_POINT_GRAPHICS, getPipelineLayout(),
+                          0, 1, &descriptorSets.uboSets[frameInfo.frameIndex],
+                          0, nullptr);
 
   for (auto &kv : frameInfo.gameObjects) {
     auto &obj = kv.second;

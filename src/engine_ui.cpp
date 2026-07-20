@@ -61,7 +61,8 @@ void EngineUI::initUI() {
   initInfo.ImageCount = EngineSwapChain::MAX_FRAMES_IN_FLIGHT;
   initInfo.PipelineInfoMain.RenderPass = geRenderer.getSwapChainRenderPass();
   initInfo.PipelineInfoMain.Subpass = 0;
-  initInfo.PipelineInfoMain.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+  initInfo.PipelineInfoMain.MSAASamples =
+      geRenderer.getDevice().getSampleCount();
   initInfo.CheckVkResultFn = check_vk_result;
 
   ImGui_ImplVulkan_Init(&initInfo);

@@ -53,6 +53,7 @@ EngineDevice::EngineDevice(EngineWindow &window) : window{window} {
   setupDebugMessenger();
   createSurface();
   pickPhysicalDevice();
+  setMaxSampleCount();
   createLogicalDevice();
   createCommandPool();
   createAllocator();
@@ -143,6 +144,18 @@ void EngineDevice::pickPhysicalDevice() {
 
   vkGetPhysicalDeviceProperties(physicalDevice, &properties);
   std::cout << "physical device: " << properties.deviceName << std::endl;
+}
+
+void EngineDevice::setMaxSampleCount() {
+  VkSampleCountFlags countBits =
+      properties.limits.framebufferColorSampleCounts &
+      properties.limits.framebufferDepthSampleCounts;
+
+  if (countBits & VK_SAMPLE_COUNT_4_BIT) {
+    msaaSamples_ = VK_SAMPLE_COUNT_4_BIT;
+  } else {
+    msaaSamples_ = VK_SAMPLE_COUNT_1_BIT;
+  }
 }
 
 void EngineDevice::createLogicalDevice() {
