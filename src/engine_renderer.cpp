@@ -331,7 +331,6 @@ void OffScreenRenderer::createOffscreenImage() {
                     VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
   imageInfo.memPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
   imageInfo.tiling = VK_IMAGE_TILING_LINEAR;
-  imageInfo.memUsage = VMA_MEMORY_USAGE_AUTO;
   ImageViewConfigInfo imageViewInfo{};
 
   offscreenImage =

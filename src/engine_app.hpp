@@ -7,6 +7,7 @@
 #include "shaderList.hpp"
 // std
 #include <memory>
+#include <stdbool.h>
 
 namespace GameEngine {
 

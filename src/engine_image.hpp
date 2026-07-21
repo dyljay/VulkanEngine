@@ -48,6 +48,9 @@ public:
   VkImageView getImageView() const { return imageView; }
   VkFormat getImageFormat() const { return format; }
 
+  VmaAllocation getAllocation() const { return imageAllocation; }
+  VkImageTiling getTiling() const { return tiling; }
+
   VkExtent3D getExtent() const { return imageExtent; }
   uint32_t getWidth() const { return imageExtent.width; }
   uint32_t getHeight() const { return imageExtent.height; }
@@ -59,19 +62,6 @@ public:
   }
   void transitionImageLayout(VkImageLayout oldLayout,
                              const VkImageLayout newLayout);
-
-  template <typename T> T *getPixelData(uint32_t x, uint32_t y) {
-    assert(tiling == VK_IMAGE_TILING_LINEAR &&
-           "Tiling must be linear to read directly from image");
-
-    void *mapped = nullptr;
-    vmaMapMemory(geDevice.getAllocator(), imageAllocation, &mapped);
-    T *data_t = static_cast<T *>(mapped);
-    T *dataPoint = &data_t[y * imageExtent.width + x];
-    vmaUnmapMemory(geDevice.getAllocator(), imageAllocation);
-
-    return dataPoint;
-  }
 
 private:
   void createImage(ImageConfigInfo imageConfigInfo);

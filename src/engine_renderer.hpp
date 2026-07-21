@@ -8,6 +8,7 @@
 #include "vulkan/vulkan_core.h"
 // std
 #include <cassert>
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -79,6 +80,23 @@ public:
   void endFrame();
   void beginRenderPass(VkCommandBuffer commandBuffer);
   void endRenderPass(VkCommandBuffer commandBuffer);
+
+  template <typename T> T *getPixelData(uint32_t x, uint32_t y) {
+    assert(offscreenImage->getTiling() == VK_IMAGE_TILING_LINEAR &&
+           "Tiling must be linear to read directly from image");
+
+    vkWaitForFences(geDevice.device(), 1, &imageRenderedFence, VK_TRUE,
+                    UINT64_MAX);
+
+    void *mapped = nullptr;
+    vmaMapMemory(geDevice.getAllocator(), offscreenImage->getAllocation(),
+                 &mapped);
+    T *data_t = static_cast<T *>(mapped);
+    T *dataPoint = &data_t[y * imageExtent.width + x];
+    vmaUnmapMemory(geDevice.getAllocator(), offscreenImage->getAllocation());
+
+    return dataPoint;
+  }
 
   VkResult submitCommandBuffers(const VkCommandBuffer *buffers,
                                 uint32_t *imageIndex);

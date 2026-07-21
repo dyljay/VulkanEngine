@@ -28,6 +28,7 @@
 #include <iostream>
 #include <memory>
 
+#include <utility>
 #include <vector>
 
 #define GLM_FORCE_RADIANS
@@ -240,8 +241,7 @@ void EngineApp::run() {
           offscreenRenderer.endRenderPass(commandBuffer_off);
           offscreenRenderer.endFrame();
 
-          uint32_t *pixelColor =
-              offscreenRenderer.getImage()->getPixelData<uint32_t>(x, y);
+          uint32_t *pixelColor = offscreenRenderer.getPixelData<uint32_t>(x, y);
 
           std::cout << *pixelColor << std::endl;
           hasClicked = false;
