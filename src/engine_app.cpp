@@ -24,6 +24,7 @@
 #include "shaderList.hpp"
 #include "simple_render_system.hpp"
 #include <cstddef>
+#include <cstdint>
 #include <iostream>
 #include <memory>
 
@@ -140,7 +141,7 @@ void EngineApp::run() {
   SDL_Event e;
 
   bool userSeeMouse = false;
-
+  uint32_t x, y = 0;
   float red = 0.2f;
   float green = 0.2f;
   float blue = 0.7f;
@@ -186,7 +187,11 @@ void EngineApp::run() {
       }
 
       if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-        hasClicked = true;
+        if (e.button.button == SDL_BUTTON_LEFT) {
+          hasClicked = true;
+          x = e.motion.x;
+          y = e.motion.y;
+        }
       }
 
       if (e.type == SDL_EVENT_WINDOW_RESIZED) {
@@ -235,6 +240,10 @@ void EngineApp::run() {
           offscreenRenderer.endRenderPass(commandBuffer_off);
           offscreenRenderer.endFrame();
 
+          uint32_t *pixelColor =
+              offscreenRenderer.getImage()->getPixelData<uint32_t>(x, y);
+
+          std::cout << *pixelColor << std::endl;
           hasClicked = false;
         }
       }

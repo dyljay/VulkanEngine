@@ -31,7 +31,7 @@ public:
   using Map = std::map<id_t, GameObject>;
 
   static GameObject createGameObject() {
-    static id_t currentID = 0;
+    static id_t currentID = 1;
     return GameObject{currentID++};
   }
 

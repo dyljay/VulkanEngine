@@ -3,8 +3,6 @@
 #include "vulkan/vulkan_core.h"
 #include <cassert>
 #include <cstddef>
-#include <cstdint>
-#include <iostream>
 #include <stdexcept>
 
 namespace GameEngine {
@@ -13,7 +11,7 @@ EngineImage::EngineImage(EngineDevice &geDevice, ImageConfigInfo imageInfo,
                          ImageViewConfigInfo imageViewConfigInfo)
     : geDevice{geDevice}, imageExtent(imageInfo.extent),
       layerCount(imageViewConfigInfo.layerCount), format(imageInfo.format),
-      imageType(imageInfo.imageType) {
+      imageType(imageInfo.imageType), tiling{imageInfo.tiling} {
 
   createImage(imageInfo);
   createImageView(imageViewConfigInfo);

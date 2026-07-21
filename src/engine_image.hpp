@@ -2,8 +2,10 @@
 
 #include "src/engine_device.hpp"
 #include "vulkan/vulkan_core.h"
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 
 namespace GameEngine {
 
@@ -20,6 +22,7 @@ struct ImageConfigInfo {
   VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   VkImageLayout initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   VkMemoryPropertyFlags memPropertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+  VmaMemoryUsage memUsage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
 };
 
 struct ImageViewConfigInfo {
@@ -50,14 +53,25 @@ public:
   uint32_t getHeight() const { return imageExtent.height; }
   uint32_t getLayerCount() const { return layerCount; }
 
-  uint32_t *getValue(int x, int y);
-
   float extentAspectRatio() {
     return static_cast<float>(imageExtent.width) /
            static_cast<float>(imageExtent.height);
   }
   void transitionImageLayout(VkImageLayout oldLayout,
                              const VkImageLayout newLayout);
+
+  template <typename T> T *getPixelData(uint32_t x, uint32_t y) {
+    assert(tiling == VK_IMAGE_TILING_LINEAR &&
+           "Tiling must be linear to read directly from image");
+
+    void *mapped = nullptr;
+    vmaMapMemory(geDevice.getAllocator(), imageAllocation, &mapped);
+    T *data_t = static_cast<T *>(mapped);
+    T *dataPoint = &data_t[y * imageExtent.width + x];
+    vmaUnmapMemory(geDevice.getAllocator(), imageAllocation);
+
+    return dataPoint;
+  }
 
 private:
   void createImage(ImageConfigInfo imageConfigInfo);
@@ -72,6 +86,7 @@ private:
   VkFormat format;
   VkImageType imageType;
   VkImage image;
+  VkImageTiling tiling;
 
   VmaAllocation imageAllocation;
 

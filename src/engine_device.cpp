@@ -594,10 +594,11 @@ void EngineDevice::copyImageToBuffer(VkImage image, VkBuffer buffer,
 void EngineDevice::createImageWithInfo(const VkImageCreateInfo &imageInfo,
                                        VkMemoryPropertyFlags properties,
                                        VkImage &image,
-                                       VmaAllocation &allocation) {
+                                       VmaAllocation &allocation,
+                                       VmaMemoryUsage usage) {
 
   VmaAllocationCreateInfo allocInfo{};
-  allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+  allocInfo.usage = usage;
   allocInfo.requiredFlags = properties;
 
   auto result = vmaCreateImage(allocator_, &imageInfo, &allocInfo, &image,

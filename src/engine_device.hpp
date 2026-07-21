@@ -82,7 +82,8 @@ public:
 
   void createImageWithInfo(const VkImageCreateInfo &imageInfo,
                            VkMemoryPropertyFlags properties, VkImage &image,
-                           VmaAllocation &allocation);
+                           VmaAllocation &allocation,
+                           VmaMemoryUsage usage = VMA_MEMORY_USAGE_GPU_ONLY);
 
   void copyImageToBuffer(VkImage image, VkBuffer buffer,
                          VkImageLayout imageLayout, uint32_t width,
