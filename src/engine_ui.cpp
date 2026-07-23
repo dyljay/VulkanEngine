@@ -95,10 +95,10 @@ void EngineUI::renderLightUI(glm::vec3 &color, float &intensity) {
 }
 
 void EngineUI::renderModelUI(TransformComponent &transform) {
-  if (ImGui::Begin("Light Color")) {
-    ImGui::DragFloat3("Location", &transform.translation.x);
-    ImGui::DragFloat3("Rotation", &transform.rotation.x);
-    ImGui::DragFloat3("Scale", &transform.scale.x);
+  if (ImGui::Begin("Model Transform")) {
+    ImGui::DragFloat3("Location", &transform.translation.x, 0.01f);
+    ImGui::DragFloat3("Rotation", &transform.rotation.x, 0.01f);
+    ImGui::DragFloat3("Scale", &transform.scale.x, 0.001f, 0.0f, 10.0f);
     ImGui::End();
   }
 }

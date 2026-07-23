@@ -34,7 +34,7 @@ private:
   void populateMatTexDescriptorSets(DescriptorSets &descriptorSets,
                                     DescriptorSetLayouts &descriptorSetLayouts);
 
-  EngineWindow geWindow{WIDTH, HEIGHT, "Skumpwit"};
+  EngineWindow geWindow{WIDTH, HEIGHT, "WIT Engine"};
   EngineDevice geDevice{geWindow};
   EngineRenderer geRenderer{geWindow, geDevice};
 

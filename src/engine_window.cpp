@@ -35,6 +35,7 @@ void EngineWindow::initWindow() {
   isInitialized = true;
   SDL_SetWindowRelativeMouseMode(window, true);
   SDL_WarpMouseInWindow(window, width / 2.f, height / 2.f);
+  SDL_GetWindowSizeInPixels(window, &width, &height);
 }
 
 void EngineWindow::createWindowSurface(VkInstance instance,
@@ -47,19 +48,9 @@ void EngineWindow::createWindowSurface(VkInstance instance,
 void EngineWindow::setWindowDimensions() {
   int w, h;
 
-  SDL_GetWindowSize(window, &w, &h);
+  SDL_GetWindowSizeInPixels(window, &w, &h);
 
   width = w;
   height = h;
 }
-/*
-void EngineWindow::frameBufferResizedCallback(GLFWwindow *window, int width,
-                                              int height) {
-  auto geWindow =
-      reinterpret_cast<EngineWindow *>(glfwGetWindowUserPointer(window));
-  geWindow->frameBufferResized = true;
-  geWindow->width = width;
-  geWindow->height = height;
-}
-*/
 } // namespace GameEngine

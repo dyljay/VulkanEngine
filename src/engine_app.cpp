@@ -2,6 +2,7 @@
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_keycode.h"
 #include "SDL3/SDL_mouse.h"
+#include "SDL3/SDL_video.h"
 #include "cubemap_system.hpp"
 #include "engine_buffer.hpp"
 #include "engine_camera.hpp"
@@ -143,10 +144,6 @@ void EngineApp::run() {
 
   bool userSeeMouse = false;
   uint32_t x, y = 0;
-  float red = 0.2f;
-  float green = 0.2f;
-  float blue = 0.7f;
-  float intensity = 1.0f;
 
   while (!shouldQuit) {
     auto newTime = std::chrono::high_resolution_clock::now();
@@ -190,8 +187,10 @@ void EngineApp::run() {
       if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
         if (e.button.button == SDL_BUTTON_LEFT) {
           hasClicked = true;
-          x = e.motion.x;
-          y = e.motion.y;
+          float pixelDensity =
+              SDL_GetWindowPixelDensity(geWindow.getSDLWindow());
+          x = (int)pixelDensity * e.motion.x;
+          y = (int)pixelDensity * e.motion.y;
         }
       }
 
@@ -242,30 +241,38 @@ void EngineApp::run() {
           offscreenRenderer.endFrame();
 
           id_t objIDFromPixel = *offscreenRenderer.getPixelData<uint32_t>(x, y);
-          std::cout << objIDFromPixel << std::endl;
+
           if (objIDFromPixel > 0) {
+            geObjects.at(objIDFromPixel).isSelected = true;
           }
 
           hasClicked = false;
         }
       }
+
       // ui
-      // TODO: make this a bit cleaner - look into if there are better methods
-      // to doing the ui instead of all here in the loop
       if (userSeeMouse) {
+
         ui.newFrame();
-        ui.renderLightUI();
-        ui.render(commandBuffer);
-        ui.endFrame();
 
         for (auto &kv : geObjects) {
           auto &obj = kv.second;
-          if (obj.pointLight == nullptr)
-            continue;
-
-          obj.color = {red, green, blue};
-          obj.pointLight->lightIntensity = intensity;
+          if (obj.isSelected) {
+            if (obj.model == nullptr) {
+              glm::vec3 color{obj.color};
+              float intensity = obj.pointLight->lightIntensity;
+              ui.renderLightUI(color, intensity);
+              obj.color = {color.r, color.g, color.b};
+              obj.pointLight->lightIntensity = intensity;
+            } else {
+              TransformComponent transformUI{obj.transform};
+              ui.renderModelUI(transformUI);
+              obj.transform = transformUI;
+            }
+          }
         }
+        ui.render(commandBuffer);
+        ui.endFrame();
       }
       // ui end
 

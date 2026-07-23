@@ -43,10 +43,10 @@ void EngineRenderer::freeCommandBuffers() {
 
 void EngineRenderer::recreateSwapChain() {
   int width = 0, height = 0;
-  SDL_GetWindowSize(geWindow.getSDLWindow(), &width, &height);
+  SDL_GetWindowSizeInPixels(geWindow.getSDLWindow(), &width, &height);
 
   while (width == 0 || height == 0) {
-    SDL_GetWindowSize(geWindow.getSDLWindow(), &width, &height);
+    SDL_GetWindowSizeInPixels(geWindow.getSDLWindow(), &width, &height);
     SDL_WaitEvent(nullptr);
   }
 
@@ -319,8 +319,10 @@ void OffScreenRenderer::endFrame() {
 }
 
 void OffScreenRenderer::createOffscreenImage() {
-  imageExtent.width = geWindow.getWidth();
-  imageExtent.height = geWindow.getHeight();
+  int w, h;
+  SDL_GetWindowSizeInPixels(geWindow.getSDLWindow(), &w, &h);
+  imageExtent.width = w;
+  imageExtent.height = h;
 
   ImageConfigInfo imageInfo{};
   imageInfo.extent.width = imageExtent.width;
