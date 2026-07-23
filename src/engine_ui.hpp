@@ -1,10 +1,11 @@
 #pragma once
 
 #include "engine_descriptor.hpp"
+#include "engine_game_object.hpp"
 #include "engine_renderer.hpp"
 #include "vulkan/vulkan_core.h"
-
 #include <cstdio>
+#include <glm/glm.hpp>
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_vulkan.h>
@@ -34,6 +35,10 @@ public:
   void initUI();
 
   void newFrame();
+
+  void renderLightUI(glm::vec3 &color, float &intensity);
+
+  void renderModelUI(TransformComponent &transform);
 
   void render(VkCommandBuffer commandBuffer);
 

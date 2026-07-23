@@ -1,4 +1,5 @@
 #include "engine_ui.hpp"
+#include "engine_game_object.hpp"
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_vulkan.h"
@@ -77,6 +78,29 @@ void EngineUI::newFrame() {
 void EngineUI::render(VkCommandBuffer commandBuffer) {
   ImGui::Render();
   ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+}
+
+// don't forget to call ImGUI::Begin() and ImGui::End() here. shouldn't call in
+// function in case you need to render multiple
+void EngineUI::renderLightUI(glm::vec3 &color, float &intensity) {
+  if (ImGui::Begin("Light Color")) {
+    ImGui::Text("RGB");
+    ImGui::SliderFloat("Red", &color.r, 0.0f, 1.0f);
+    ImGui::SliderFloat("Green", &color.g, 0.0f, 1.0f);
+    ImGui::SliderFloat("Blue", &color.b, 0.0f, 1.0f);
+    ImGui::Text("Intensity");
+    ImGui::SliderFloat("Intensity", &intensity, 0.f, 10.f);
+    ImGui::End();
+  }
+}
+
+void EngineUI::renderModelUI(TransformComponent &transform) {
+  if (ImGui::Begin("Light Color")) {
+    ImGui::DragFloat3("Location", &transform.translation.x);
+    ImGui::DragFloat3("Rotation", &transform.rotation.x);
+    ImGui::DragFloat3("Scale", &transform.scale.x);
+    ImGui::End();
+  }
 }
 
 void EngineUI::endFrame() { ImGui::EndFrame(); }

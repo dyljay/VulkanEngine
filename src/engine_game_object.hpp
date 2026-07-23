@@ -48,6 +48,8 @@ public:
   glm::vec3 color{};
   TransformComponent transform{};
 
+  bool isSelected = false;
+
   std::shared_ptr<EngineModel> model{};
   std::unique_ptr<PointLightComponent> pointLight = nullptr;
 

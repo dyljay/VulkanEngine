@@ -241,9 +241,11 @@ void EngineApp::run() {
           offscreenRenderer.endRenderPass(commandBuffer_off);
           offscreenRenderer.endFrame();
 
-          uint32_t *pixelColor = offscreenRenderer.getPixelData<uint32_t>(x, y);
+          id_t objIDFromPixel = *offscreenRenderer.getPixelData<uint32_t>(x, y);
+          std::cout << objIDFromPixel << std::endl;
+          if (objIDFromPixel > 0) {
+          }
 
-          std::cout << *pixelColor << std::endl;
           hasClicked = false;
         }
       }
@@ -252,15 +254,7 @@ void EngineApp::run() {
       // to doing the ui instead of all here in the loop
       if (userSeeMouse) {
         ui.newFrame();
-        if (ImGui::Begin("Light Color")) {
-          ImGui::Text("RGB");
-          ImGui::SliderFloat("Red", &red, 0.0f, 1.0f);
-          ImGui::SliderFloat("Green", &green, 0.0f, 1.0f);
-          ImGui::SliderFloat("Blue", &blue, 0.0f, 1.0f);
-          ImGui::Text("Intensity");
-          ImGui::SliderFloat("Intensity", &intensity, 0.f, 10.f);
-        }
-        ImGui::End();
+        ui.renderLightUI();
         ui.render(commandBuffer);
         ui.endFrame();
 
