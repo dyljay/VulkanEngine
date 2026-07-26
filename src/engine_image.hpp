@@ -73,6 +73,8 @@ class EngineImage {
 
     void createImageView(ImageViewConfigInfo imageViewConfigInfo);
 
+    bool hasStencilComponent(VkFormat format);
+
     VkExtent3D imageExtent;
     uint32_t layerCount;
     VkFormat format;

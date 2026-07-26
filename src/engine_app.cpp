@@ -189,7 +189,8 @@ void EngineApp::run()
                         SDL_SetWindowRelativeMouseMode(
                             geWindow.getSDLWindow(),
                             false);
-                    } else {
+                    }
+                    else {
                         userSeeMouse = false;
                         SDL_SetWindowRelativeMouseMode(
                             geWindow.getSDLWindow(),
@@ -293,7 +294,8 @@ void EngineApp::run()
                             ui.renderLightUI(color, intensity);
                             obj.color = {color.r, color.g, color.b};
                             obj.pointLight->lightIntensity = intensity;
-                        } else {
+                        }
+                        else {
                             TransformComponent transformUI{obj.transform};
                             ui.renderModelUI(transformUI);
                             obj.transform = transformUI;

@@ -4,8 +4,7 @@
 #include <cstddef>
 #include <stdexcept>
 
-#include "sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
-#include "src/engine_device.hpp"
+#include "engine_device.hpp"
 #include "vulkan/vulkan_core.h"
 
 namespace GameEngine {
@@ -115,8 +114,15 @@ void EngineImage::imageMemoryBarrier(VkCommandBuffer commandBuffer,
         (format == VK_FORMAT_D24_UNORM_S8_UINT))
     {
         barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+        if (hasStencilComponent(format))
+        {
+            barrier.subresourceRange.aspectMask |=
+                VK_IMAGE_ASPECT_STENCIL_BIT;
+        }
     }
-    else {
+    else
+    {
         barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     }
 
@@ -268,7 +274,8 @@ void EngineImage::imageMemoryBarrier(VkCommandBuffer commandBuffer,
         srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
         dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
     }
-    else {
+    else
+    {
         throw std::runtime_error(
             "attempting to transition to an unsupported layout "
             "configuration");
@@ -285,4 +292,11 @@ void EngineImage::imageMemoryBarrier(VkCommandBuffer commandBuffer,
                          1,
                          &barrier);
 }
+
+bool EngineImage::hasStencilComponent(VkFormat format)
+{
+    return ((format == VK_FORMAT_D32_SFLOAT_S8_UINT) ||
+            (format == VK_FORMAT_D24_UNORM_S8_UINT));
+}
+
 }  // namespace GameEngine
