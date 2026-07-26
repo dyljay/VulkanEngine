@@ -64,6 +64,7 @@ void EngineApp::run()
     // loading uboBuffer
     std::vector<std::unique_ptr<EngineBuffer>> uboBuffers(
         EngineSwapChain::MAX_FRAMES_IN_FLIGHT);
+
     for (int i = 0; i < uboBuffers.size(); i++) {
         uboBuffers[i] = std::make_unique<EngineBuffer>(
             geDevice,
