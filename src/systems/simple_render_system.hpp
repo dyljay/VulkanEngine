@@ -10,17 +10,18 @@
 
 namespace GameEngine {
 class SimpleRenderSystem : RenderSystem {
-public:
-  SimpleRenderSystem(
-      EngineDevice &device, Shader shaders,
-      const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
-      VkRenderPass renderPass);
+   public:
+    SimpleRenderSystem(
+        EngineDevice& device,
+        Shader shaders,
+        const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
+        VkRenderPass renderPass);
 
-  ~SimpleRenderSystem();
+    ~SimpleRenderSystem();
 
-  SimpleRenderSystem(const SimpleRenderSystem &) = delete;
-  SimpleRenderSystem &operator=(const SimpleRenderSystem &) = delete;
+    SimpleRenderSystem(const SimpleRenderSystem&) = delete;
+    SimpleRenderSystem& operator=(const SimpleRenderSystem&) = delete;
 
-  void render(FrameInfo &frameinfo, DescriptorSets &descriptorSets);
+    void render(FrameInfo& frameinfo, DescriptorSets& descriptorSets);
 };
-} // namespace GameEngine
+}  // namespace GameEngine

@@ -1,4 +1,5 @@
 #include "engine_buffer.hpp"
+
 #include "src/engine_device.hpp"
 
 #define VMA_IMPLEMENTATION
@@ -18,52 +19,64 @@ namespace GameEngine {
  * minOffsetAlignment
  *
  * @param instanceSize The size of an instance
- * @param minOffsetAlignment The minimum required alignment, in bytes, for the
- * offset member (eg minUniformBufferOffsetAlignment)
+ * @param minOffsetAlignment The minimum required alignment, in bytes, for
+ * the offset member (eg minUniformBufferOffsetAlignment)
  *
  * @return VkResult of the buffer mapping call
  */
 VkDeviceSize EngineBuffer::getAlignment(VkDeviceSize instanceSize,
-                                        VkDeviceSize minOffsetAlignment) {
-  if (minOffsetAlignment > 0) {
-    return (instanceSize + minOffsetAlignment - 1) & ~(minOffsetAlignment - 1);
-  }
-  return instanceSize;
+                                        VkDeviceSize minOffsetAlignment)
+{
+    if (minOffsetAlignment > 0) {
+        return (instanceSize + minOffsetAlignment - 1) &
+               ~(minOffsetAlignment - 1);
+    }
+    return instanceSize;
 }
 
-EngineBuffer::EngineBuffer(EngineDevice &device, VkDeviceSize instanceSize,
+EngineBuffer::EngineBuffer(EngineDevice& device,
+                           VkDeviceSize instanceSize,
                            uint32_t instanceCount,
                            VkBufferUsageFlags usageFlags,
                            VmaMemoryUsage memoryUsage,
                            VkDeviceSize minOffsetAlignment)
-    : lveDevice{device}, instanceSize{instanceSize},
-      instanceCount{instanceCount}, usageFlags{usageFlags},
-      memoryUsage{memoryUsage} {
-  alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
-  bufferSize = alignmentSize * instanceCount;
-  device.createBuffer(bufferSize, usageFlags, memoryUsage, buffer, allocation_,
-                      allocInfo);
+    : lveDevice{device},
+      instanceSize{instanceSize},
+      instanceCount{instanceCount},
+      usageFlags{usageFlags},
+      memoryUsage{memoryUsage}
+{
+    alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
+    bufferSize = alignmentSize * instanceCount;
+    device.createBuffer(bufferSize,
+                        usageFlags,
+                        memoryUsage,
+                        buffer,
+                        allocation_,
+                        allocInfo);
 }
 
-EngineBuffer::~EngineBuffer() {
-  unmap();
-  // handles both freeing memory and destroying buffer
-  vmaDestroyBuffer(lveDevice.getAllocator(), buffer, allocation_);
+EngineBuffer::~EngineBuffer()
+{
+    unmap();
+    // handles both freeing memory and destroying buffer
+    vmaDestroyBuffer(lveDevice.getAllocator(), buffer, allocation_);
 }
 
 /**
  * Map a memory range of this buffer. If successful, mapped points to the
  * specified buffer range.
  *
- * @param size (Optional) Size of the memory range to map. Pass VK_WHOLE_SIZE to
- * map the complete buffer range.
+ * @param size (Optional) Size of the memory range to map. Pass
+ * VK_WHOLE_SIZE to map the complete buffer range.
  * @param offset (Optional) Byte offset from beginning
  *
  */
-void EngineBuffer::map(VkDeviceSize size, VkDeviceSize offset) {
-  assert(buffer && allocation_->GetMemory() &&
-         "Called map on buffer before create");
-  vmaMapMemory(lveDevice.getAllocator(), allocation_, &mapped);
+void EngineBuffer::map(VkDeviceSize size, VkDeviceSize offset)
+{
+    assert(buffer && allocation_->GetMemory() &&
+           "Called map on buffer before create");
+    vmaMapMemory(lveDevice.getAllocator(), allocation_, &mapped);
 }
 
 /**
@@ -71,34 +84,37 @@ void EngineBuffer::map(VkDeviceSize size, VkDeviceSize offset) {
  *
  * @note Does not return a result as vkUnmapMemory can't fail
  */
-void EngineBuffer::unmap() {
-  if (mapped) {
-    vmaUnmapMemory(lveDevice.getAllocator(), allocation_);
-    mapped = nullptr;
-  }
+void EngineBuffer::unmap()
+{
+    if (mapped) {
+        vmaUnmapMemory(lveDevice.getAllocator(), allocation_);
+        mapped = nullptr;
+    }
 }
 
 /**
- * Copies the specified data to the mapped buffer. Default value writes whole
- * buffer range
+ * Copies the specified data to the mapped buffer. Default value writes
+ * whole buffer range
  *
  * @param data Pointer to the data to copy
- * @param size (Optional) Size of the data to copy. Pass VK_WHOLE_SIZE to flush
- * the complete buffer range.
+ * @param size (Optional) Size of the data to copy. Pass VK_WHOLE_SIZE to
+ * flush the complete buffer range.
  * @param offset (Optional) Byte offset from beginning of mapped region
  *
  */
-void EngineBuffer::writeToBuffer(void *data, VkDeviceSize size,
-                                 VkDeviceSize offset) {
-  assert(mapped && "Cannot copy to unmapped buffer");
+void EngineBuffer::writeToBuffer(void* data,
+                                 VkDeviceSize size,
+                                 VkDeviceSize offset)
+{
+    assert(mapped && "Cannot copy to unmapped buffer");
 
-  if (size == VK_WHOLE_SIZE) {
-    memcpy(mapped, data, bufferSize);
-  } else {
-    char *memOffset = (char *)mapped;
-    memOffset += offset;
-    memcpy(memOffset, data, size);
-  }
+    if (size == VK_WHOLE_SIZE) {
+        memcpy(mapped, data, bufferSize);
+    } else {
+        char* memOffset = (char*)mapped;
+        memOffset += offset;
+        memcpy(memOffset, data, size);
+    }
 }
 
 /**
@@ -106,15 +122,18 @@ void EngineBuffer::writeToBuffer(void *data, VkDeviceSize size,
  *
  * @note Only required for non-coherent memory
  *
- * @param size (Optional) Size of the memory range to flush. Pass VK_WHOLE_SIZE
- * to flush the complete buffer range.
+ * @param size (Optional) Size of the memory range to flush. Pass
+ * VK_WHOLE_SIZE to flush the complete buffer range.
  * @param offset (Optional) Byte offset from beginning
  *
  * @return VkResult of the flush call
  */
-VkResult EngineBuffer::flush(VkDeviceSize size, VkDeviceSize offset) {
-  return vmaFlushAllocation(lveDevice.getAllocator(), allocation_, offset,
-                            size);
+VkResult EngineBuffer::flush(VkDeviceSize size, VkDeviceSize offset)
+{
+    return vmaFlushAllocation(lveDevice.getAllocator(),
+                              allocation_,
+                              offset,
+                              size);
 }
 
 /**
@@ -128,9 +147,12 @@ VkResult EngineBuffer::flush(VkDeviceSize size, VkDeviceSize offset) {
  *
  * @return VkResult of the invalidate call
  */
-VkResult EngineBuffer::invalidate(VkDeviceSize size, VkDeviceSize offset) {
-  return vmaInvalidateAllocation(lveDevice.getAllocator(), allocation_, offset,
-                                 size);
+VkResult EngineBuffer::invalidate(VkDeviceSize size, VkDeviceSize offset)
+{
+    return vmaInvalidateAllocation(lveDevice.getAllocator(),
+                                   allocation_,
+                                   offset,
+                                   size);
 }
 
 /**
@@ -142,12 +164,13 @@ VkResult EngineBuffer::invalidate(VkDeviceSize size, VkDeviceSize offset) {
  * @return VkDescriptorBufferInfo of specified offset and range
  */
 VkDescriptorBufferInfo EngineBuffer::descriptorInfo(VkDeviceSize size,
-                                                    VkDeviceSize offset) {
-  return VkDescriptorBufferInfo{
-      buffer,
-      offset,
-      size,
-  };
+                                                    VkDeviceSize offset)
+{
+    return VkDescriptorBufferInfo{
+        buffer,
+        offset,
+        size,
+    };
 }
 
 /**
@@ -158,19 +181,21 @@ VkDescriptorBufferInfo EngineBuffer::descriptorInfo(VkDeviceSize size,
  * @param index Used in offset calculation
  *
  */
-void EngineBuffer::writeToIndex(void *data, int index) {
-  writeToBuffer(data, instanceSize, index * alignmentSize);
+void EngineBuffer::writeToIndex(void* data, int index)
+{
+    writeToBuffer(data, instanceSize, index * alignmentSize);
 }
 
 /**
- *  Flush the memory range at index * alignmentSize of the buffer to make it
- * visible to the device
+ *  Flush the memory range at index * alignmentSize of the buffer to make
+ * it visible to the device
  *
  * @param index Used in offset calculation
  *
  */
-VkResult EngineBuffer::flushIndex(int index) {
-  return flush(alignmentSize, index * alignmentSize);
+VkResult EngineBuffer::flushIndex(int index)
+{
+    return flush(alignmentSize, index * alignmentSize);
 }
 
 /**
@@ -180,8 +205,9 @@ VkResult EngineBuffer::flushIndex(int index) {
  *
  * @return VkDescriptorBufferInfo for instance at index
  */
-VkDescriptorBufferInfo EngineBuffer::descriptorInfoForIndex(int index) {
-  return descriptorInfo(alignmentSize, index * alignmentSize);
+VkDescriptorBufferInfo EngineBuffer::descriptorInfoForIndex(int index)
+{
+    return descriptorInfo(alignmentSize, index * alignmentSize);
 }
 
 /**
@@ -193,8 +219,9 @@ VkDescriptorBufferInfo EngineBuffer::descriptorInfoForIndex(int index) {
  *
  * @return VkResult of the invalidate call
  */
-VkResult EngineBuffer::invalidateIndex(int index) {
-  return invalidate(alignmentSize, index * alignmentSize);
+VkResult EngineBuffer::invalidateIndex(int index)
+{
+    return invalidate(alignmentSize, index * alignmentSize);
 }
 
-} // namespace GameEngine
+}  // namespace GameEngine

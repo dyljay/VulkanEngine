@@ -24,4 +24,4 @@ const Shader offscreenShaderFiles{
     .fragShader = "shaders/id_obj.frag.spv",
 };
 
-} // namespace GameEngine
+}  // namespace GameEngine

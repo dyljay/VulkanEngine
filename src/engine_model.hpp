@@ -1,5 +1,13 @@
 #pragma once
 
+#include <fastgltf/glm_element_traits.hpp>
+#include <fastgltf/tools.hpp>
+#include <fastgltf/types.hpp>
+#include <filesystem>
+#include <glm/gtc/type_ptr.hpp>
+#include <memory>
+#include <vector>
+
 #include "engine_descriptor.hpp"
 #include "engine_mesh.hpp"
 #include "pbrMaterials.hpp"
@@ -7,53 +15,42 @@
 #include "src/engine_texture.hpp"
 #include "vulkan/vulkan_core.h"
 
-#include <filesystem>
-#include <memory>
-
-#include <fastgltf/glm_element_traits.hpp>
-#include <fastgltf/tools.hpp>
-#include <fastgltf/types.hpp>
-#include <vector>
-
-#include <glm/gtc/type_ptr.hpp>
-
 namespace GameEngine {
 
 class EngineModel {
+   public:
+    static constexpr int MAX_SETS = 100;
 
-public:
-  static constexpr int MAX_SETS = 100;
+    static std::unique_ptr<EngineModel> createModelFromFile(
+        EngineDevice& geDevice,
+        const std::filesystem::path& filePath);
 
-  static std::unique_ptr<EngineModel>
-  createModelFromFile(EngineDevice &geDevice,
-                      const std::filesystem::path &filePath);
+    EngineModel(EngineDevice& geDevice, const std::filesystem::path& path);
 
-  EngineModel(EngineDevice &geDevice, const std::filesystem::path &path);
+    ~EngineModel();
 
-  ~EngineModel();
+    std::unique_ptr<EngineDescriptorPoolGrowable> growablePool;
 
-  std::unique_ptr<EngineDescriptorPoolGrowable> growablePool;
+    void bind(VkCommandBuffer commandBuffer);
 
-  void bind(VkCommandBuffer commandBuffer);
+    void draw(VkCommandBuffer commandBuffer);
 
-  void draw(VkCommandBuffer commandBuffer);
+    std::vector<std::shared_ptr<EngineMesh>> meshes;
+    std::vector<std::shared_ptr<EngineTexture>> images;
+    std::vector<std::shared_ptr<PBRMaterial>> materials;
 
-  std::vector<std::shared_ptr<EngineMesh>> meshes;
-  std::vector<std::shared_ptr<EngineTexture>> images;
-  std::vector<std::shared_ptr<PBRMaterial>> materials;
+   private:
+    void loadModel(const std::filesystem::path& filePath);
+    void buildDescriptorPool(uint32_t numSets);
+    void loadMaterials();
+    void loadTextures();
+    void loadVertices();
 
-private:
-  void loadModel(const std::filesystem::path &filePath);
-  void buildDescriptorPool(uint32_t numSets);
-  void loadMaterials();
-  void loadTextures();
-  void loadVertices();
+    VkFilter getMinFilter();
+    VkFilter getMagFilter();
 
-  VkFilter getMinFilter();
-  VkFilter getMagFilter();
-
-  EngineDevice &geDevice;
-  fastgltf::Asset gltf;
+    EngineDevice& geDevice;
+    fastgltf::Asset gltf;
 };
 
-} // namespace GameEngine
+}  // namespace GameEngine

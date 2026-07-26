@@ -1,4 +1,5 @@
 #include "engine_window.hpp"
+
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_init.h"
 #include "SDL3/SDL_mouse.h"
@@ -9,48 +10,57 @@
 namespace GameEngine {
 
 EngineWindow::EngineWindow(int width, int height, std::string windowName)
-    : width{width}, height{height}, windowName{windowName} {
-  initWindow();
+    : width{width},
+      height{height},
+      windowName{windowName}
+{
+    initWindow();
 }
 
-EngineWindow::~EngineWindow() {
-  if (isInitialized) {
-    SDL_DestroyWindow(window);
-  }
+EngineWindow::~EngineWindow()
+{
+    if (isInitialized) {
+        SDL_DestroyWindow(window);
+    }
 }
 
-bool EngineWindow::shouldClose(SDL_Event &e) {
-  if (e.type == SDL_EVENT_QUIT) {
-    return true;
-  }
-  return false;
+bool EngineWindow::shouldClose(SDL_Event& e)
+{
+    if (e.type == SDL_EVENT_QUIT) {
+        return true;
+    }
+    return false;
 }
 
-void EngineWindow::initWindow() {
-  SDL_Init(SDL_INIT_VIDEO);
+void EngineWindow::initWindow()
+{
+    SDL_Init(SDL_INIT_VIDEO);
 
-  // TODO: should error check here
-  window = SDL_CreateWindow(windowName.c_str(), width, height, windowFlags);
+    // TODO: should error check here
+    window =
+        SDL_CreateWindow(windowName.c_str(), width, height, windowFlags);
 
-  isInitialized = true;
-  SDL_SetWindowRelativeMouseMode(window, true);
-  SDL_WarpMouseInWindow(window, width / 2.f, height / 2.f);
-  SDL_GetWindowSizeInPixels(window, &width, &height);
+    isInitialized = true;
+    SDL_SetWindowRelativeMouseMode(window, true);
+    SDL_WarpMouseInWindow(window, width / 2.f, height / 2.f);
+    SDL_GetWindowSizeInPixels(window, &width, &height);
 }
 
 void EngineWindow::createWindowSurface(VkInstance instance,
-                                       VkSurfaceKHR *surface) {
-  if (!SDL_Vulkan_CreateSurface(window, instance, nullptr, surface)) {
-    throw std::runtime_error("failed to create surface!");
-  }
+                                       VkSurfaceKHR* surface)
+{
+    if (!SDL_Vulkan_CreateSurface(window, instance, nullptr, surface)) {
+        throw std::runtime_error("failed to create surface!");
+    }
 }
 
-void EngineWindow::setWindowDimensions() {
-  int w, h;
+void EngineWindow::setWindowDimensions()
+{
+    int w, h;
 
-  SDL_GetWindowSizeInPixels(window, &w, &h);
+    SDL_GetWindowSizeInPixels(window, &w, &h);
 
-  width = w;
-  height = h;
+    width = w;
+    height = h;
 }
-} // namespace GameEngine
+}  // namespace GameEngine

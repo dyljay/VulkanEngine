@@ -1,71 +1,86 @@
 #include "system.hpp"
-#include "engine_device.hpp"
-#include "vulkan/vulkan_core.h"
+
 #include <cassert>
 #include <cstdint>
 #include <vector>
 
+#include "engine_device.hpp"
+#include "vulkan/vulkan_core.h"
+
 namespace GameEngine {
 
 RenderSystem::RenderSystem(
-    EngineDevice &geDevice, const Shader shaders,
+    EngineDevice& geDevice,
+    const Shader shaders,
     const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
-    uint32_t sizeOfPushConstants, VkRenderPass renderPass,
-    const PipeLineSettings &pipelineSettings)
-    : geDevice{geDevice} {
-  createPipelineLayout(descriptorSetLayouts, sizeOfPushConstants);
-  createPipeline(renderPass, shaders, pipelineSettings);
+    uint32_t sizeOfPushConstants,
+    VkRenderPass renderPass,
+    const PipeLineSettings& pipelineSettings)
+    : geDevice{geDevice}
+{
+    createPipelineLayout(descriptorSetLayouts, sizeOfPushConstants);
+    createPipeline(renderPass, shaders, pipelineSettings);
 }
 
-RenderSystem::~RenderSystem() {
-  vkDestroyPipelineLayout(geDevice.device(), pipelineLayout, nullptr);
+RenderSystem::~RenderSystem()
+{
+    vkDestroyPipelineLayout(geDevice.device(), pipelineLayout, nullptr);
 }
 
 void RenderSystem::createPipelineLayout(
     const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
-    uint32_t pushConstantSize) {
+    uint32_t pushConstantSize)
+{
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+    VkPushConstantRange pushConstantRange{};
 
-  VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-  VkPushConstantRange pushConstantRange{};
+    if (pushConstantSize > 0) {
+        pushConstantRange.stageFlags =
+            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+        pushConstantRange.offset = 0;
+        pushConstantRange.size = pushConstantSize;
+        pipelineLayoutInfo.pushConstantRangeCount = 1;
+        pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
+    }
 
-  if (pushConstantSize > 0) {
-    pushConstantRange.stageFlags =
-        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-    pushConstantRange.offset = 0;
-    pushConstantRange.size = pushConstantSize;
-    pipelineLayoutInfo.pushConstantRangeCount = 1;
-    pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
-  }
+    pipelineLayoutInfo.sType =
+        VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutInfo.setLayoutCount =
+        static_cast<uint32_t>(descriptorSetLayouts.size());
+    pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
 
-  pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  pipelineLayoutInfo.setLayoutCount =
-      static_cast<uint32_t>(descriptorSetLayouts.size());
-  pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
-
-  if (vkCreatePipelineLayout(geDevice.device(), &pipelineLayoutInfo, nullptr,
-                             &pipelineLayout) != VK_SUCCESS) {
-    throw std::runtime_error("failed to create pipeline layout!");
-  }
+    if (vkCreatePipelineLayout(geDevice.device(),
+                               &pipelineLayoutInfo,
+                               nullptr,
+                               &pipelineLayout) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to create pipeline layout!");
+    }
 }
 
-void RenderSystem::createPipeline(VkRenderPass renderPass, const Shader shaders,
-                                  const PipeLineSettings &pipelineSettings) {
-  assert(pipelineLayout != nullptr &&
-         "Cannot create pipeline before pipeline layout");
+void RenderSystem::createPipeline(VkRenderPass renderPass,
+                                  const Shader shaders,
+                                  const PipeLineSettings& pipelineSettings)
+{
+    assert(pipelineLayout != nullptr &&
+           "Cannot create pipeline before pipeline layout");
 
-  PipelineConfigInfo pipelineConfig{};
-  GraphicsPipeline::defaultPipelineConfigInfo(pipelineConfig);
-  pipelineConfig.depthStencilInfo.depthCompareOp = pipelineSettings.comparison;
-  pipelineConfig.multisampleInfo.rasterizationSamples =
-      pipelineSettings.sampleCount;
-  if (pipelineSettings.clearDescriptions) {
-    pipelineConfig.bindingDescriptions.clear();
-    pipelineConfig.attributeDescriptions.clear();
-  }
+    PipelineConfigInfo pipelineConfig{};
+    GraphicsPipeline::defaultPipelineConfigInfo(pipelineConfig);
+    pipelineConfig.depthStencilInfo.depthCompareOp =
+        pipelineSettings.comparison;
+    pipelineConfig.multisampleInfo.rasterizationSamples =
+        pipelineSettings.sampleCount;
+    if (pipelineSettings.clearDescriptions) {
+        pipelineConfig.bindingDescriptions.clear();
+        pipelineConfig.attributeDescriptions.clear();
+    }
 
-  pipelineConfig.renderPass = renderPass;
-  pipelineConfig.pipelineLayout = pipelineLayout;
-  gePipeline = std::make_unique<GraphicsPipeline>(
-      geDevice, shaders.vertexShader, shaders.fragShader, pipelineConfig);
+    pipelineConfig.renderPass = renderPass;
+    pipelineConfig.pipelineLayout = pipelineLayout;
+    gePipeline = std::make_unique<GraphicsPipeline>(geDevice,
+                                                    shaders.vertexShader,
+                                                    shaders.fragShader,
+                                                    pipelineConfig);
 }
-} // namespace GameEngine
+}  // namespace GameEngine
