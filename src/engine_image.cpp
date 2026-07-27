@@ -66,16 +66,13 @@ void EngineImage::createImageView(ImageViewConfigInfo imageViewConfigInfo)
     viewInfo.subresourceRange.aspectMask = imageViewConfigInfo.aspectMask;
     viewInfo.subresourceRange.baseArrayLayer =
         imageViewConfigInfo.baseArrayLayer;
-    viewInfo.subresourceRange.baseMipLevel =
-        imageViewConfigInfo.baseMipLevel;
+    viewInfo.subresourceRange.baseMipLevel = imageViewConfigInfo.baseMipLevel;
     viewInfo.subresourceRange.layerCount = layerCount;
     viewInfo.subresourceRange.levelCount = imageViewConfigInfo.levelCount;
     viewInfo.pNext = imageViewConfigInfo.pNext;
 
-    if (vkCreateImageView(geDevice.device(),
-                          &viewInfo,
-                          nullptr,
-                          &imageView) != VK_SUCCESS)
+    if (vkCreateImageView(geDevice.device(), &viewInfo, nullptr, &imageView) !=
+        VK_SUCCESS)
     {
         throw std::runtime_error("failed to create image view");
     }
@@ -108,21 +105,17 @@ void EngineImage::imageMemoryBarrier(VkCommandBuffer commandBuffer,
     if ((newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) ||
         (format == VK_FORMAT_D16_UNORM) ||
         (format == VK_FORMAT_X8_D24_UNORM_PACK32) ||
-        (format == VK_FORMAT_D32_SFLOAT) ||
-        (format == VK_FORMAT_S8_UINT) ||
+        (format == VK_FORMAT_D32_SFLOAT) || (format == VK_FORMAT_S8_UINT) ||
         (format == VK_FORMAT_D16_UNORM_S8_UINT) ||
         (format == VK_FORMAT_D24_UNORM_S8_UINT))
     {
         barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
 
-        if (hasStencilComponent(format))
-        {
-            barrier.subresourceRange.aspectMask |=
-                VK_IMAGE_ASPECT_STENCIL_BIT;
+        if (hasStencilComponent(format)) {
+            barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
         }
     }
-    else
-    {
+    else {
         barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     }
 
@@ -177,9 +170,8 @@ void EngineImage::imageMemoryBarrier(VkCommandBuffer commandBuffer,
              newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
     {
         barrier.srcAccessMask = 0;
-        barrier.dstAccessMask =
-            VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
-            VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+                                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
         srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
         dstStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
@@ -221,18 +213,15 @@ void EngineImage::imageMemoryBarrier(VkCommandBuffer commandBuffer,
              newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
     {
         barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-        barrier.dstAccessMask =
-            VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
         srcStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
         dstStage = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
     } /* Convert from updateable depth texture to shader read-only */
-    else if (oldLayout ==
-                 VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL &&
+    else if (oldLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL &&
              newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
     {
-        barrier.srcAccessMask =
-            VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
         barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
         srcStage = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
@@ -274,8 +263,7 @@ void EngineImage::imageMemoryBarrier(VkCommandBuffer commandBuffer,
         srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
         dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
     }
-    else
-    {
+    else {
         throw std::runtime_error(
             "attempting to transition to an unsupported layout "
             "configuration");

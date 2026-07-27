@@ -30,10 +30,9 @@ void GraphicsPipeline::createGraphicsPipeline(
     const std::string& fragPath,
     const PipelineConfigInfo& configInfo)
 {
-    assert(
-        configInfo.pipelineLayout != VK_NULL_HANDLE &&
-        "Cannot create graphics pipeline:: no pipelineLayout provided in "
-        "configInfo");
+    assert(configInfo.pipelineLayout != VK_NULL_HANDLE &&
+           "Cannot create graphics pipeline:: no pipelineLayout provided in "
+           "configInfo");
     assert(configInfo.renderPass != VK_NULL_HANDLE &&
            "Cannot create graphics pipeline:: no renderPass provided in "
            "configInfo");
@@ -159,8 +158,7 @@ void GraphicsPipeline::defaultPipelineConfigInfo(
     configInfo.multisampleInfo.sType =
         VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     configInfo.multisampleInfo.sampleShadingEnable = VK_FALSE;
-    configInfo.multisampleInfo.rasterizationSamples =
-        VK_SAMPLE_COUNT_4_BIT;
+    configInfo.multisampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_4_BIT;
     configInfo.multisampleInfo.minSampleShading = 1.0f;
     configInfo.multisampleInfo.pSampleMask = nullptr;
     configInfo.multisampleInfo.alphaToCoverageEnable = VK_FALSE;

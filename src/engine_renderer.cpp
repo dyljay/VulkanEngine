@@ -1,25 +1,30 @@
 #include "engine_renderer.hpp"
-#include "SDL3/SDL_events.h"
-#include "SDL3/SDL_video.h"
-#include "src/engine_device.hpp"
-#include "src/engine_image.hpp"
-#include "vulkan/vulkan_core.h"
+
 #include <cstdint>
 #include <iostream>
 #include <memory>
 #include <stdexcept>
 
+#include "SDL3/SDL_events.h"
+#include "SDL3/SDL_video.h"
+#include "src/engine_device.hpp"
+#include "src/engine_image.hpp"
+#include "vulkan/vulkan_core.h"
+
 namespace GameEngine {
 
-EngineRenderer::EngineRenderer(EngineWindow &window, EngineDevice &device)
-    : geWindow{window}, geDevice{device} {
+EngineRenderer::EngineRenderer(EngineWindow& window, EngineDevice& device)
+    : geWindow{window},
+      geDevice{device}
+{
   recreateSwapChain();
   createCommandBuffers();
 }
 
 EngineRenderer::~EngineRenderer() { freeCommandBuffers(); }
 
-void EngineRenderer::createCommandBuffers() {
+void EngineRenderer::createCommandBuffers()
+{
   commandBuffers.resize(EngineSwapChain::MAX_FRAMES_IN_FLIGHT);
   VkCommandBufferAllocateInfo allocInfo{};
 
@@ -28,20 +33,25 @@ void EngineRenderer::createCommandBuffers() {
   allocInfo.commandPool = geDevice.getCommandPool();
   allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
 
-  if (vkAllocateCommandBuffers(geDevice.device(), &allocInfo,
-                               commandBuffers.data()) != VK_SUCCESS) {
+  if (vkAllocateCommandBuffers(geDevice.device(),
+                               &allocInfo,
+                               commandBuffers.data()) != VK_SUCCESS)
+  {
     throw std::runtime_error("failed to allocate command buffer");
   }
 }
 
-void EngineRenderer::freeCommandBuffers() {
-  vkFreeCommandBuffers(geDevice.device(), geDevice.getCommandPool(),
+void EngineRenderer::freeCommandBuffers()
+{
+  vkFreeCommandBuffers(geDevice.device(),
+                       geDevice.getCommandPool(),
                        static_cast<uint32_t>(commandBuffers.size()),
                        commandBuffers.data());
   commandBuffers.clear();
 }
 
-void EngineRenderer::recreateSwapChain() {
+void EngineRenderer::recreateSwapChain()
+{
   int width = 0, height = 0;
   SDL_GetWindowSizeInPixels(geWindow.getSDLWindow(), &width, &height);
 
@@ -57,19 +67,22 @@ void EngineRenderer::recreateSwapChain() {
 
   if (geSwapChain == nullptr) {
     geSwapChain = std::make_unique<EngineSwapChain>(geDevice, extent);
-  } else {
+  }
+  else {
     std::shared_ptr<EngineSwapChain> oldSwapChain = std::move(geSwapChain);
     geSwapChain =
         std::make_unique<EngineSwapChain>(geDevice, extent, oldSwapChain);
 
     if (!oldSwapChain->compareSwapFormats(*geSwapChain.get())) {
       throw std::runtime_error(
-          "swap chain image (or depth) format has changed!");
+          "swap chain image (or depth) format has "
+          "changed!");
     }
   }
 }
 
-VkCommandBuffer EngineRenderer::beginFrame() {
+VkCommandBuffer EngineRenderer::beginFrame()
+{
   assert(!isFrameStarted && "Can't call beginFrame while already in progress");
 
   if (geWindow.wasWindowResized()) {
@@ -103,9 +116,11 @@ VkCommandBuffer EngineRenderer::beginFrame() {
   return commandBuffer;
 }
 
-void EngineRenderer::endFrame() {
+void EngineRenderer::endFrame()
+{
   assert(isFrameStarted &&
-         "Can't call endFrame while frame is not in progress");
+         "Can't call endFrame while frame is not in "
+         "progress");
 
   auto commandBuffer = getCurrentCommandBuffer();
   if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
@@ -117,7 +132,8 @@ void EngineRenderer::endFrame() {
 
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
     recreateSwapChain();
-  } else if (result != VK_SUCCESS) {
+  }
+  else if (result != VK_SUCCESS) {
     throw std::runtime_error("failed to present swap chain image");
   }
 
@@ -126,11 +142,29 @@ void EngineRenderer::endFrame() {
       (currentFrameIndex + 1) % EngineSwapChain::MAX_FRAMES_IN_FLIGHT;
 }
 
-void EngineRenderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer) {
+void EngineRenderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer)
+{
   assert(isFrameStarted &&
-         "Can't call beginSwapChainRenderPass if frame is not in progress");
+         "Can't call beginSwapChainRenderPass if frame "
+         "is not in "
+         "progress");
+
   assert(commandBuffer == getCurrentCommandBuffer() &&
-         "Can't begin render pass on a command buffer from a different frame");
+         "Can't begin render pass on a command buffer "
+         "from a "
+         "different "
+         "frame");
+
+  VkRenderingInfo renderInfo{};
+  renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+  renderInfo.renderArea.extent = geSwapChain->getSwapChainExtent();
+  renderInfo.renderArea.offset = {0, 0};
+  renderInfo.layerCount = 1;
+  // FIXME: update these two
+  renderInfo.viewMask = 0;
+  renderInfo.colorAttachmentCount = 2;
+  renderInfo.pColorAttachments = nullptr;
+  renderInfo.pDepthAttachment = nullptr;
 
   VkRenderPassBeginInfo renderPassInfo{};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -147,7 +181,8 @@ void EngineRenderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer) {
   renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
   renderPassInfo.pClearValues = clearValues.data();
 
-  vkCmdBeginRenderPass(commandBuffer, &renderPassInfo,
+  vkCmdBeginRenderPass(commandBuffer,
+                       &renderPassInfo,
                        VK_SUBPASS_CONTENTS_INLINE);
 
   VkViewport viewport{};
@@ -163,27 +198,35 @@ void EngineRenderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer) {
   vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }
 
-void EngineRenderer::endSwapChainRenderPass(VkCommandBuffer commandBuffer) {
+void EngineRenderer::endSwapChainRenderPass(VkCommandBuffer commandBuffer)
+{
   assert(isFrameStarted &&
-         "Can't call endSwapChainRenderPass if frame is not in progress");
+         "Can't call endSwapChainRenderPass if frame is "
+         "not in "
+         "progress");
   assert(commandBuffer == getCurrentCommandBuffer() &&
-         "Can't end render pass on a command buffer from a different frame");
+         "Can't end render pass on a command buffer from a "
+         "different frame");
 
   vkCmdEndRenderPass(commandBuffer);
 }
 
 /// ----- Offscreen Renderer ----- ///
-OffScreenRenderer::OffScreenRenderer(EngineWindow &window, EngineDevice &device)
-    : geWindow{window}, geDevice{device} {
+OffScreenRenderer::OffScreenRenderer(EngineWindow& window, EngineDevice& device)
+    : geWindow{window},
+      geDevice{device}
+{
   init();
 }
 
-OffScreenRenderer::~OffScreenRenderer() {
+OffScreenRenderer::~OffScreenRenderer()
+{
   freeResources();
   freeCommandBuffer();
 }
 
-void OffScreenRenderer::init() {
+void OffScreenRenderer::init()
+{
   createOffscreenImage();
   createDepthResources();
   createRenderPass();
@@ -192,7 +235,8 @@ void OffScreenRenderer::init() {
   createCommandBuffer();
 }
 
-void OffScreenRenderer::createCommandBuffer() {
+void OffScreenRenderer::createCommandBuffer()
+{
   VkCommandBufferAllocateInfo allocInfo{};
 
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -201,12 +245,14 @@ void OffScreenRenderer::createCommandBuffer() {
   allocInfo.commandBufferCount = 1;
 
   if (vkAllocateCommandBuffers(geDevice.device(), &allocInfo, &commandBuffer) !=
-      VK_SUCCESS) {
+      VK_SUCCESS)
+  {
     throw std::runtime_error("failed to allocate command buffer");
   }
 }
 
-void OffScreenRenderer::freeResources() {
+void OffScreenRenderer::freeResources()
+{
   vkDestroyFramebuffer(geDevice.device(), frameBuffer, nullptr);
 
   vkDestroyRenderPass(geDevice.device(), renderPass, nullptr);
@@ -214,14 +260,20 @@ void OffScreenRenderer::freeResources() {
   vkDestroyFence(geDevice.device(), imageRenderedFence, nullptr);
 }
 
-void OffScreenRenderer::freeCommandBuffer() {
-  vkFreeCommandBuffers(geDevice.device(), geDevice.getCommandPool(), 1,
+void OffScreenRenderer::freeCommandBuffer()
+{
+  vkFreeCommandBuffers(geDevice.device(),
+                       geDevice.getCommandPool(),
+                       1,
                        &commandBuffer);
 }
 
-void OffScreenRenderer::beginRenderPass(VkCommandBuffer commandBuffer) {
+void OffScreenRenderer::beginRenderPass(VkCommandBuffer commandBuffer)
+{
   assert(isFrameStarted &&
-         "Can't call beginSwapChainRenderPass if frame is not in progress");
+         "Can't call beginSwapChainRenderPass if frame "
+         "is not in "
+         "progress");
 
   VkRenderPassBeginInfo renderPassInfo{};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -238,7 +290,8 @@ void OffScreenRenderer::beginRenderPass(VkCommandBuffer commandBuffer) {
   renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
   renderPassInfo.pClearValues = clearValues.data();
 
-  vkCmdBeginRenderPass(commandBuffer, &renderPassInfo,
+  vkCmdBeginRenderPass(commandBuffer,
+                       &renderPassInfo,
                        VK_SUBPASS_CONTENTS_INLINE);
 
   VkViewport viewport{};
@@ -254,13 +307,18 @@ void OffScreenRenderer::beginRenderPass(VkCommandBuffer commandBuffer) {
   vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }
 
-void OffScreenRenderer::endRenderPass(VkCommandBuffer commandBuffer) {
+void OffScreenRenderer::endRenderPass(VkCommandBuffer commandBuffer)
+{
   vkCmdEndRenderPass(commandBuffer);
 }
 
-VkResult OffScreenRenderer::submitCommandBuffer() {
+VkResult OffScreenRenderer::submitCommandBuffer()
+{
   if (imageRenderedFence != VK_NULL_HANDLE) {
-    vkWaitForFences(geDevice.device(), 1, &imageRenderedFence, VK_TRUE,
+    vkWaitForFences(geDevice.device(),
+                    1,
+                    &imageRenderedFence,
+                    VK_TRUE,
                     UINT64_MAX);
   }
 
@@ -271,12 +329,15 @@ VkResult OffScreenRenderer::submitCommandBuffer() {
   submitInfo.pCommandBuffers = &commandBuffer;
 
   vkResetFences(geDevice.device(), 1, &imageRenderedFence);
-  auto result = vkQueueSubmit(geDevice.graphicsQueue(), 1, &submitInfo,
+  auto result = vkQueueSubmit(geDevice.graphicsQueue(),
+                              1,
+                              &submitInfo,
                               imageRenderedFence);
   return result;
 }
 
-VkCommandBuffer OffScreenRenderer::beginFrame() {
+VkCommandBuffer OffScreenRenderer::beginFrame()
+{
   assert(!isFrameStarted && "Can't call beginFrame while already in progress");
 
   // FIXME: account for resized window
@@ -299,9 +360,11 @@ VkCommandBuffer OffScreenRenderer::beginFrame() {
   return commandBuffer;
 }
 
-void OffScreenRenderer::endFrame() {
+void OffScreenRenderer::endFrame()
+{
   assert(isFrameStarted &&
-         "Can't call endFrame while frame is not in progress");
+         "Can't call endFrame while frame is not in "
+         "progress");
 
   if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
     throw std::runtime_error("failed to record command buffer");
@@ -311,14 +374,16 @@ void OffScreenRenderer::endFrame() {
 
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
     init();
-  } else if (result != VK_SUCCESS) {
+  }
+  else if (result != VK_SUCCESS) {
     throw std::runtime_error("failed to present swap chain image");
   }
 
   isFrameStarted = false;
 }
 
-void OffScreenRenderer::createOffscreenImage() {
+void OffScreenRenderer::createOffscreenImage()
+{
   int w, h;
   SDL_GetWindowSizeInPixels(geWindow.getSDLWindow(), &w, &h);
   imageExtent.width = w;
@@ -339,7 +404,8 @@ void OffScreenRenderer::createOffscreenImage() {
       std::make_unique<EngineImage>(geDevice, imageInfo, imageViewInfo);
 }
 
-void OffScreenRenderer::createDepthResources() {
+void OffScreenRenderer::createDepthResources()
+{
   ImageConfigInfo imageInfo{};
   imageInfo.extent.width = imageExtent.width;
   imageInfo.extent.height = imageExtent.height;
@@ -354,7 +420,8 @@ void OffScreenRenderer::createDepthResources() {
   depthImage = std::make_unique<EngineImage>(geDevice, imageInfo, viewInfo);
 }
 
-void OffScreenRenderer::createFramebuffer() {
+void OffScreenRenderer::createFramebuffer()
+{
   std::array<VkImageView, 2> attachments = {offscreenImage->getImageView(),
                                             depthImage->getImageView()};
 
@@ -367,13 +434,17 @@ void OffScreenRenderer::createFramebuffer() {
   framebufferInfo.height = imageExtent.height;
   framebufferInfo.layers = 1;
 
-  if (vkCreateFramebuffer(geDevice.device(), &framebufferInfo, nullptr,
-                          &frameBuffer) != VK_SUCCESS) {
+  if (vkCreateFramebuffer(geDevice.device(),
+                          &framebufferInfo,
+                          nullptr,
+                          &frameBuffer) != VK_SUCCESS)
+  {
     throw std::runtime_error("failed to create framebuffer!");
   }
 }
 
-void OffScreenRenderer::createRenderPass() {
+void OffScreenRenderer::createRenderPass()
+{
   VkAttachmentDescription depthAttachment{};
 
   depthAttachment.format = VK_FORMAT_D32_SFLOAT;
@@ -432,21 +503,30 @@ void OffScreenRenderer::createRenderPass() {
   renderPassInfo.dependencyCount = 1;
   renderPassInfo.pDependencies = &dependency;
 
-  if (auto result = vkCreateRenderPass(geDevice.device(), &renderPassInfo,
-                                       nullptr, &renderPass) != VK_SUCCESS) {
+  if (auto result = vkCreateRenderPass(geDevice.device(),
+                                       &renderPassInfo,
+                                       nullptr,
+                                       &renderPass) != VK_SUCCESS)
+  {
     std::cout << result << std::endl;
     throw std::runtime_error("failed to create render pass!");
   }
 }
 
-void OffScreenRenderer::createSyncObject() {
+void OffScreenRenderer::createSyncObject()
+{
   VkFenceCreateInfo fenceInfo{};
   fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
   fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-  if (vkCreateFence(geDevice.device(), &fenceInfo, nullptr,
-                    &imageRenderedFence) != VK_SUCCESS) {
-    throw std::runtime_error("failed to create fence for off-screen renderer");
+  if (vkCreateFence(geDevice.device(),
+                    &fenceInfo,
+                    nullptr,
+                    &imageRenderedFence) != VK_SUCCESS)
+  {
+    throw std::runtime_error(
+        "failed to create fence for off-screen "
+        "renderer");
   }
 }
-} // namespace GameEngine
+}  // namespace GameEngine
