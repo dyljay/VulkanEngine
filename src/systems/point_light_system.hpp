@@ -10,20 +10,20 @@
 
 namespace GameEngine {
 class PointLightSystem : RenderSystem {
-   public:
-    PointLightSystem(
-        EngineDevice& device,
-        Shader shaders,
-        const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
-        VkRenderPass renderPass);
+ public:
+  PointLightSystem(
+      EngineDevice& device,
+      Shader shaders,
+      const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
+      VkPipelineRenderingCreateInfo attachmentInfo);
 
-    ~PointLightSystem();
+  ~PointLightSystem();
 
-    PointLightSystem(const PointLightSystem&) = delete;
-    PointLightSystem& operator=(const PointLightSystem&) = delete;
+  PointLightSystem(const PointLightSystem&) = delete;
+  PointLightSystem& operator=(const PointLightSystem&) = delete;
 
-    void update(FrameInfo& frameinfo, GlobalUbo& ubo);
+  void update(FrameInfo& frameinfo, GlobalUbo& ubo);
 
-    void render(FrameInfo& frameinfo, DescriptorSets& descriptorSets);
+  void render(FrameInfo& frameinfo, DescriptorSets& descriptorSets);
 };
 }  // namespace GameEngine

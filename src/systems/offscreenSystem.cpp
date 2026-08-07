@@ -12,22 +12,22 @@
 namespace GameEngine {
 
 struct OffscreenPushConstants {
-    glm::mat4 modelMatrix{1.f};
-    glm::mat4 normalMatrix{1.f};
-    VkDeviceAddress vertexBuffer;
-    glm::uint32 id;
+  glm::mat4 modelMatrix{1.f};
+  glm::mat4 normalMatrix{1.f};
+  VkDeviceAddress vertexBuffer;
+  glm::uint32 id;
 };
 
 OffscreenSystem::OffscreenSystem(
     EngineDevice& geDevice,
     Shader shaders,
     const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
-    VkRenderPass renderPass)
+    VkPipelineRenderingCreateInfo attachmentInfo)
     : RenderSystem(geDevice,
                    shaders,
                    descriptorSetLayouts,
                    sizeof(OffscreenPushConstants),
-                   renderPass,
+                   attachmentInfo,
                    {.sampleCount = VK_SAMPLE_COUNT_1_BIT})
 {}
 
@@ -36,39 +36,39 @@ OffscreenSystem::~OffscreenSystem() {}
 void OffscreenSystem::render(FrameInfo& frameInfo,
                              DescriptorSets& descriptorSets)
 {
-    getPipeline()->bind(frameInfo.commandBuffer);
+  getPipeline()->bind(frameInfo.commandBuffer);
 
-    vkCmdBindDescriptorSets(frameInfo.commandBuffer,
-                            VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            getPipelineLayout(),
-                            0,
-                            1,
-                            &descriptorSets.uboSets[frameInfo.frameIndex],
-                            0,
-                            nullptr);
+  vkCmdBindDescriptorSets(frameInfo.commandBuffer,
+                          VK_PIPELINE_BIND_POINT_GRAPHICS,
+                          getPipelineLayout(),
+                          0,
+                          1,
+                          &descriptorSets.uboSets[frameInfo.frameIndex],
+                          0,
+                          nullptr);
 
-    for (auto& kv : frameInfo.gameObjects) {
-        auto& obj = kv.second;
-        if (obj.model == nullptr) continue;
+  for (auto& kv : frameInfo.gameObjects) {
+    auto& obj = kv.second;
+    if (obj.model == nullptr) continue;
 
-        OffscreenPushConstants pushData{};
-        pushData.modelMatrix = obj.transform.mat4();
-        pushData.normalMatrix = obj.transform.normalMatrix();
-        pushData.id = obj.getID();
+    OffscreenPushConstants pushData{};
+    pushData.modelMatrix = obj.transform.mat4();
+    pushData.normalMatrix = obj.transform.normalMatrix();
+    pushData.id = obj.getID();
 
-        for (auto& mesh : obj.model->meshes) {
-            pushData.vertexBuffer = mesh->getVertexBufferAddress();
-            vkCmdPushConstants(
-                frameInfo.commandBuffer,
-                getPipelineLayout(),
-                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                0,
-                sizeof(OffscreenPushConstants),
-                &pushData);
+    for (auto& mesh : obj.model->meshes) {
+      pushData.vertexBuffer = mesh->getVertexBufferAddress();
+      vkCmdPushConstants(
+          frameInfo.commandBuffer,
+          getPipelineLayout(),
+          VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+          0,
+          sizeof(OffscreenPushConstants),
+          &pushData);
 
-            mesh->bind(frameInfo.commandBuffer);
-            mesh->draw(frameInfo.commandBuffer);
-        }
+      mesh->bind(frameInfo.commandBuffer);
+      mesh->draw(frameInfo.commandBuffer);
     }
+  }
 }
 }  // namespace GameEngine

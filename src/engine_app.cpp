@@ -118,7 +118,7 @@ void EngineApp::run()
   SimpleRenderSystem simpleRenderSystem{geDevice,
                                         mainShaderFiles,
                                         mainLayouts,
-                                        geRenderer.getSwapChainRenderPass()};
+                                        geRenderer.getPipelineRenderingInfo()};
 
   // only need to pass in the uboSetLayout to this because no material or
   // texture data is needed
@@ -127,7 +127,7 @@ void EngineApp::run()
   PointLightSystem pointLightSystem{geDevice,
                                     pointLightShaderFiles,
                                     pointLightLayouts,
-                                    geRenderer.getSwapChainRenderPass()};
+                                    geRenderer.getPipelineRenderingInfo()};
 
   // only need ubo and cubemap textures
   std::vector<VkDescriptorSetLayout> cubeMapLayouts{mainLayouts[0],
@@ -135,12 +135,13 @@ void EngineApp::run()
   CubeMapRenderSystem cubeMapRender{geDevice,
                                     cubeMapShaderFiles,
                                     cubeMapLayouts,
-                                    geRenderer.getSwapChainRenderPass()};
-
-  OffscreenSystem offScreenSystem{geDevice,
-                                  offscreenShaderFiles,
-                                  pointLightLayouts,
-                                  offscreenRenderer.getRenderPass()};
+                                    geRenderer.getPipelineRenderingInfo()};
+  /*
+    OffscreenSystem offScreenSystem{geDevice,
+                                    offscreenShaderFiles,
+                                    pointLightLayouts,
+                                    offscreenRenderer.getRenderPass()};
+  */
 
   EngineCamera camera{};
   camera.setViewDirection(glm::vec3(0.0f), glm::vec3(0.f, 0.f, 1.f));
@@ -243,12 +244,13 @@ void EngineApp::run()
       uboBuffers[frameIndex]->flush();
 
       // draw calls
-      geRenderer.beginSwapChainRenderPass(commandBuffer);
+      geRenderer.beginRender(commandBuffer);
       simpleRenderSystem.render(frameInfo, descriptorSets);
       pointLightSystem.render(frameInfo, descriptorSets);
       cubeMapRender.render(frameInfo, descriptorSets);
 
       if (hasClicked) {
+        /*
         if (auto commandBuffer_off = offscreenRenderer.beginFrame()) {
           offscreenRenderer.beginRenderPass(commandBuffer_off);
           frameInfo.commandBuffer = commandBuffer_off;
@@ -264,6 +266,7 @@ void EngineApp::run()
 
           hasClicked = false;
         }
+        */
       }
 
       // ui
@@ -292,7 +295,7 @@ void EngineApp::run()
       }
       // ui end
 
-      geRenderer.endSwapChainRenderPass(commandBuffer);
+      geRenderer.endRender(commandBuffer);
       geRenderer.endFrame();
     }
   }

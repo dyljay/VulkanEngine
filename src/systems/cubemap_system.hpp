@@ -12,18 +12,18 @@
 namespace GameEngine {
 
 class CubeMapRenderSystem : RenderSystem {
-   public:
-    CubeMapRenderSystem(
-        EngineDevice& device,
-        Shader shaders,
-        const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
-        VkRenderPass renderPass);
+ public:
+  CubeMapRenderSystem(
+      EngineDevice& device,
+      Shader shaders,
+      const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
+      VkPipelineRenderingCreateInfo attachmentInfo);
 
-    ~CubeMapRenderSystem();
+  ~CubeMapRenderSystem();
 
-    CubeMapRenderSystem(const CubeMapRenderSystem&) = delete;
-    CubeMapRenderSystem& operator=(const CubeMapRenderSystem&) = delete;
+  CubeMapRenderSystem(const CubeMapRenderSystem&) = delete;
+  CubeMapRenderSystem& operator=(const CubeMapRenderSystem&) = delete;
 
-    void render(FrameInfo& frameinfo, DescriptorSets& descriptorSets);
+  void render(FrameInfo& frameinfo, DescriptorSets& descriptorSets);
 };
 }  // namespace GameEngine

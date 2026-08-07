@@ -11,17 +11,16 @@
 namespace GameEngine {
 
 class OffscreenSystem : RenderSystem {
-   public:
-    OffscreenSystem(
-        EngineDevice& geDevice,
-        Shader shaders,
-        const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
-        VkRenderPass renderPass);
-    ~OffscreenSystem();
+ public:
+  OffscreenSystem(EngineDevice& geDevice,
+                  Shader shaders,
+                  const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
+                  VkPipelineRenderingCreateInfo attachmentInfo);
+  ~OffscreenSystem();
 
-    OffscreenSystem(const OffscreenSystem&) = delete;
-    OffscreenSystem& operator=(const OffscreenSystem&) = delete;
+  OffscreenSystem(const OffscreenSystem&) = delete;
+  OffscreenSystem& operator=(const OffscreenSystem&) = delete;
 
-    void render(FrameInfo& frameinfo, DescriptorSets& DescriptorSets);
+  void render(FrameInfo& frameinfo, DescriptorSets& DescriptorSets);
 };
 }  // namespace GameEngine

@@ -7,6 +7,7 @@
 
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_video.h"
+#include "sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
 #include "src/engine_device.hpp"
 #include "src/engine_image.hpp"
 #include "vulkan/vulkan_core.h"
@@ -19,6 +20,7 @@ EngineRenderer::EngineRenderer(EngineWindow& window, EngineDevice& device)
 {
   recreateSwapChain();
   createCommandBuffers();
+  createPipelineCreateInfo();
 }
 
 EngineRenderer::~EngineRenderer() { freeCommandBuffers(); }
@@ -40,6 +42,22 @@ void EngineRenderer::createCommandBuffers()
     throw std::runtime_error("failed to allocate command buffer");
   }
 }
+
+void EngineRenderer::createPipelineCreateInfo()
+{
+  pipelineCreate.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
+  pipelineCreate.pNext = VK_NULL_HANDLE;
+
+  colorAttachmentFormats = {geSwapChain->getSwapChainImageFormat()};
+
+  pipelineCreate.colorAttachmentCount = colorAttachmentFormats.size();
+  pipelineCreate.pColorAttachmentFormats = colorAttachmentFormats.data();
+  pipelineCreate.depthAttachmentFormat = geSwapChain->getDepthImageFormat();
+
+  if (EngineImage::HasStencilComponent(geSwapChain->getDepthImageFormat())) {
+    pipelineCreate.stencilAttachmentFormat = geSwapChain->getDepthImageFormat();
+  }
+}  // namespace GameEngine
 
 void EngineRenderer::freeCommandBuffers()
 {
@@ -123,6 +141,9 @@ void EngineRenderer::endFrame()
          "progress");
 
   auto commandBuffer = getCurrentCommandBuffer();
+
+  geSwapChain->transitionPresentImageLayout(commandBuffer, currentImageIndex);
+
   if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
     throw std::runtime_error("failed to record command buffer");
   }
@@ -142,7 +163,7 @@ void EngineRenderer::endFrame()
       (currentFrameIndex + 1) % EngineSwapChain::MAX_FRAMES_IN_FLIGHT;
 }
 
-void EngineRenderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer)
+void EngineRenderer::beginRender(VkCommandBuffer commandBuffer)
 {
   assert(isFrameStarted &&
          "Can't call beginSwapChainRenderPass if frame "
@@ -155,35 +176,44 @@ void EngineRenderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer)
          "different "
          "frame");
 
+  geSwapChain->transitionImageLayouts(commandBuffer, currentImageIndex);
+
+  VkRenderingAttachmentInfo colorAttachmentInfos = {
+      .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+      .imageView = geSwapChain->getResourceView(currentImageIndex),
+      .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      .resolveMode = VK_RESOLVE_MODE_AVERAGE_BIT,
+      .resolveImageView = geSwapChain->getImageView(currentImageIndex),
+      .resolveImageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+      .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+      .clearValue = {0.0, 0.0, 0.0},
+  };
+
+  VkRenderingAttachmentInfo depthAttachmentInfos = {
+      .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+      .imageView = geSwapChain->getDepthView(currentImageIndex),
+      .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+      .resolveMode = VK_RESOLVE_MODE_NONE,
+      .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+      .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+      .clearValue = {1.0, 0.0},
+  };
+
   VkRenderingInfo renderInfo{};
   renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
   renderInfo.renderArea.extent = geSwapChain->getSwapChainExtent();
   renderInfo.renderArea.offset = {0, 0};
   renderInfo.layerCount = 1;
-  // FIXME: update these two
   renderInfo.viewMask = 0;
-  renderInfo.colorAttachmentCount = 2;
-  renderInfo.pColorAttachments = nullptr;
-  renderInfo.pDepthAttachment = nullptr;
+  std::vector<VkRenderingAttachmentInfo> colorAttachments = {
+      colorAttachmentInfos};
 
-  VkRenderPassBeginInfo renderPassInfo{};
-  renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-  renderPassInfo.renderPass = geSwapChain->getRenderPass();
-  renderPassInfo.framebuffer = geSwapChain->getFrameBuffer(currentImageIndex);
+  renderInfo.colorAttachmentCount = colorAttachments.size();
+  renderInfo.pColorAttachments = colorAttachments.data();
+  renderInfo.pDepthAttachment = &depthAttachmentInfos;
 
-  renderPassInfo.renderArea.offset = {0, 0};
-  renderPassInfo.renderArea.extent = geSwapChain->getSwapChainExtent();
-
-  std::array<VkClearValue, 3> clearValues{};
-  clearValues[0].color = {0.0f, 0.0f, 0.0f, 0.0f};
-  clearValues[1].depthStencil = {1.0f, 0};
-  clearValues[2].color = {0.0f, 0.0f, 0.0f, 0.0f};
-  renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-  renderPassInfo.pClearValues = clearValues.data();
-
-  vkCmdBeginRenderPass(commandBuffer,
-                       &renderPassInfo,
-                       VK_SUBPASS_CONTENTS_INLINE);
+  vkCmdBeginRendering(commandBuffer, &renderInfo);
 
   VkViewport viewport{};
   viewport.x = 0.0f;
@@ -198,7 +228,7 @@ void EngineRenderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer)
   vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }
 
-void EngineRenderer::endSwapChainRenderPass(VkCommandBuffer commandBuffer)
+void EngineRenderer::endRender(VkCommandBuffer commandBuffer)
 {
   assert(isFrameStarted &&
          "Can't call endSwapChainRenderPass if frame is "
@@ -208,7 +238,7 @@ void EngineRenderer::endSwapChainRenderPass(VkCommandBuffer commandBuffer)
          "Can't end render pass on a command buffer from a "
          "different frame");
 
-  vkCmdEndRenderPass(commandBuffer);
+  vkCmdEndRendering(commandBuffer);
 }
 
 /// ----- Offscreen Renderer ----- ///

@@ -14,144 +14,140 @@
 
 namespace GameEngine {
 class EngineRenderer {
-   public:
-    EngineRenderer(EngineWindow& window, EngineDevice& device);
-    ~EngineRenderer();
+ public:
+  EngineRenderer(EngineWindow& window, EngineDevice& device);
+  ~EngineRenderer();
 
-    EngineDevice& getDevice() const { return geDevice; }
-    EngineWindow& getWindow() const { return geWindow; }
+  EngineDevice& getDevice() const { return geDevice; }
+  EngineWindow& getWindow() const { return geWindow; }
 
-    EngineRenderer(const EngineRenderer&) = delete;
-    EngineRenderer& operator=(const EngineRenderer&) = delete;
+  EngineRenderer(const EngineRenderer&) = delete;
+  EngineRenderer& operator=(const EngineRenderer&) = delete;
 
-    VkRenderPass getSwapChainRenderPass() const
-    {
-        return geSwapChain->getRenderPass();
-    }
-    float getAspectRatio() const
-    {
-        return geSwapChain->extentAspectRatio();
-    }
-    bool isFrameInProgress() const { return isFrameStarted; }
+  float getAspectRatio() const { return geSwapChain->extentAspectRatio(); }
+  bool isFrameInProgress() const { return isFrameStarted; }
 
-    VkCommandBuffer getCurrentCommandBuffer() const
-    {
-        assert(isFrameStarted &&
-               "Cannot get command buffer when frame is not in "
-               "progress");
-        return commandBuffers[currentFrameIndex];
-    }
+  VkCommandBuffer getCurrentCommandBuffer() const
+  {
+    assert(isFrameStarted &&
+           "Cannot get command buffer when frame is not in "
+           "progress");
+    return commandBuffers[currentFrameIndex];
+  }
 
-    int getFrameIndex() const
-    {
-        assert(
-            isFrameStarted &&
-            "Cannot get frame index when frame is not in progress");
-        return currentFrameIndex;
-    }
+  int getFrameIndex() const
+  {
+    assert(isFrameStarted &&
+           "Cannot get frame index when frame is not in progress");
+    return currentFrameIndex;
+  }
 
-    VkCommandBuffer beginFrame();
-    void endFrame();
-    void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
-    void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
+  VkPipelineRenderingCreateInfo getPipelineRenderingInfo() const
+  {
+    return pipelineCreate;
+  };
 
-   private:
-    void createCommandBuffers();
-    void freeCommandBuffers();
-    void recreateSwapChain();
+  VkCommandBuffer beginFrame();
+  void endFrame();
+  void beginRender(VkCommandBuffer commandBuffer);
+  void endRender(VkCommandBuffer commandBuffer);
 
-    EngineWindow& geWindow;
-    EngineDevice& geDevice;
-    std::unique_ptr<EngineSwapChain> geSwapChain;
-    std::vector<VkCommandBuffer> commandBuffers;
+ private:
+  void createCommandBuffers();
+  void createPipelineCreateInfo();
+  void freeCommandBuffers();
+  void recreateSwapChain();
 
-    uint32_t currentImageIndex;
-    int currentFrameIndex = 0;
-    bool isFrameStarted = false;
+  EngineWindow& geWindow;
+  EngineDevice& geDevice;
+  std::unique_ptr<EngineSwapChain> geSwapChain;
+  std::vector<VkCommandBuffer> commandBuffers;
+  VkPipelineRenderingCreateInfo pipelineCreate{};
+  std::vector<VkFormat> colorAttachmentFormats;
+
+  uint32_t currentImageIndex;
+  int currentFrameIndex = 0;
+  bool isFrameStarted = false;
 };
 
 class OffScreenRenderer {
-   public:
-    OffScreenRenderer(EngineWindow& geWindow, EngineDevice& geDevice);
-    ~OffScreenRenderer();
+ public:
+  OffScreenRenderer(EngineWindow& geWindow, EngineDevice& geDevice);
+  ~OffScreenRenderer();
 
-    EngineDevice& getDevice() const { return geDevice; }
-    EngineWindow& getWindow() const { return geWindow; }
+  EngineDevice& getDevice() const { return geDevice; }
+  EngineWindow& getWindow() const { return geWindow; }
 
-    OffScreenRenderer(const OffScreenRenderer&) = delete;
-    OffScreenRenderer& operator=(const OffScreenRenderer&) = delete;
+  OffScreenRenderer(const OffScreenRenderer&) = delete;
+  OffScreenRenderer& operator=(const OffScreenRenderer&) = delete;
 
-    VkRenderPass getRenderPass() const { return renderPass; }
-    std::unique_ptr<EngineImage>& getImage()
-    {
-        return offscreenImage;
-    }
+  std::unique_ptr<EngineImage>& getImage() { return offscreenImage; }
 
-    VkCommandBuffer beginFrame();
-    void endFrame();
-    void beginRenderPass(VkCommandBuffer commandBuffer);
-    void endRenderPass(VkCommandBuffer commandBuffer);
+  VkCommandBuffer beginFrame();
+  void endFrame();
+  void beginRenderPass(VkCommandBuffer commandBuffer);
+  void endRenderPass(VkCommandBuffer commandBuffer);
 
-    template <typename T>
-    T* getPixelData(uint32_t x, uint32_t y)
-    {
-        assert(offscreenImage->getTiling() ==
-                   VK_IMAGE_TILING_LINEAR &&
-               "Tiling must be linear to read directly from image");
+  template <typename T>
+  T* getPixelData(uint32_t x, uint32_t y)
+  {
+    assert(offscreenImage->getTiling() == VK_IMAGE_TILING_LINEAR &&
+           "Tiling must be linear to read directly from image");
 
-        vkWaitForFences(geDevice.device(),
-                        1,
-                        &imageRenderedFence,
-                        VK_TRUE,
-                        UINT64_MAX);
+    vkWaitForFences(geDevice.device(),
+                    1,
+                    &imageRenderedFence,
+                    VK_TRUE,
+                    UINT64_MAX);
 
-        void* mapped = nullptr;
-        vmaMapMemory(geDevice.getAllocator(),
-                     offscreenImage->getAllocation(),
-                     &mapped);
-        T* data_t = static_cast<T*>(mapped);
-        T* dataPoint = &data_t[y * imageExtent.width + x];
-        vmaUnmapMemory(geDevice.getAllocator(),
-                       offscreenImage->getAllocation());
+    void* mapped = nullptr;
+    vmaMapMemory(geDevice.getAllocator(),
+                 offscreenImage->getAllocation(),
+                 &mapped);
 
-        return dataPoint;
-    }
+    T* data_t = static_cast<T*>(mapped);
+    T* dataPoint = &data_t[y * imageExtent.width + x];
 
-    VkResult submitCommandBuffers(const VkCommandBuffer* buffers,
-                                  uint32_t* imageIndex);
+    vmaUnmapMemory(geDevice.getAllocator(), offscreenImage->getAllocation());
 
-    VkResult copyImageToBuffer();
+    return dataPoint;
+  }
 
-   private:
-    void init();
+  VkResult submitCommandBuffers(const VkCommandBuffer* buffers,
+                                uint32_t* imageIndex);
 
-    void createOffscreenImage();
-    void createDepthResources();
-    void createFramebuffer();
-    void createRenderPass();
-    void createSyncObject();
-    void createCommandBuffer();
+  VkResult copyImageToBuffer();
 
-    void freeResources();
-    void freeCommandBuffer();
+ private:
+  void init();
 
-    VkResult submitCommandBuffer();
+  void createOffscreenImage();
+  void createDepthResources();
+  void createFramebuffer();
+  void createRenderPass();
+  void createSyncObject();
+  void createCommandBuffer();
 
-    EngineDevice& geDevice;
-    EngineWindow& geWindow;
+  void freeResources();
+  void freeCommandBuffer();
 
-    VkRenderPass renderPass;
-    VkCommandBuffer commandBuffer;
+  VkResult submitCommandBuffer();
 
-    std::unique_ptr<EngineImage> offscreenImage;
-    std::unique_ptr<EngineImage> depthImage;
+  EngineDevice& geDevice;
+  EngineWindow& geWindow;
 
-    VkExtent2D imageExtent;
+  VkRenderPass renderPass;
+  VkCommandBuffer commandBuffer;
 
-    VkFramebuffer frameBuffer;
+  std::unique_ptr<EngineImage> offscreenImage;
+  std::unique_ptr<EngineImage> depthImage;
 
-    VkFence imageRenderedFence;
+  VkExtent2D imageExtent;
 
-    bool isFrameStarted = false;
+  VkFramebuffer frameBuffer;
+
+  VkFence imageRenderedFence;
+
+  bool isFrameStarted = false;
 };
 }  // namespace GameEngine
