@@ -16,75 +16,71 @@
 namespace GameEngine {
 
 struct GeoSurface {
-    uint32_t startIndex;
-    uint32_t count;
+  uint32_t startIndex;
+  uint32_t count;
 
-    unsigned int materialIndex{0};
+  unsigned int materialIndex{0};
 };
 
 class EngineMesh {
-   public:
-    struct Vertex {
-        glm::vec3 position{};
-        float uv_x;
-        glm::vec3 normal{};
-        float uv_y;
-        glm::vec4 color{};
+ public:
+  struct Vertex {
+    glm::vec3 position{};
+    float uv_x;
+    glm::vec3 normal{};
+    float uv_y;
+    glm::vec4 color{};
 
-        static std::vector<VkVertexInputBindingDescription>
-        getBindingDescriptions();
-        static std::vector<VkVertexInputAttributeDescription>
-        getAttributeDescriptions();
+    static std::vector<VkVertexInputBindingDescription>
+    getBindingDescriptions();
+    static std::vector<VkVertexInputAttributeDescription>
+    getAttributeDescriptions();
 
-        bool operator==(const Vertex& other) const
-        {
-            return position == other.position && color == other.color &&
-                   normal == other.normal && uv_x == other.uv_x &&
-                   uv_y == other.uv_y;
-        }
-    };
-
-    EngineMesh(EngineDevice& geDevice,
-               const std::vector<Vertex>& vertices,
-               const std::vector<uint32_t>& indices,
-               const std::vector<GeoSurface>& surfaces);
-
-    ~EngineMesh();
-
-    EngineMesh(const EngineMesh&) = delete;
-    EngineMesh& operator=(const EngineMesh&) = delete;
-
-    static std::unique_ptr<EngineMesh> createModelFromFile(
-        EngineDevice& device,
-        const std::string& filePath);
-
-    void bind(VkCommandBuffer commandBuffer);
-    void draw(VkCommandBuffer commandBuffer);
-
-    VkDeviceAddress getVertexBufferAddress() const
+    bool operator==(const Vertex& other) const
     {
-        return vertexBufferAddress;
+      return position == other.position && color == other.color &&
+             normal == other.normal && uv_x == other.uv_x && uv_y == other.uv_y;
     }
-    std::vector<GeoSurface>& getSurfaces() { return surfaces_; }
+  };
 
-   private:
-    void createVertexBuffers(const std::vector<Vertex>& vertices);
-    void createIndexBuffers(const std::vector<uint32_t>& indices);
-    void createBuffer(EngineDevice& geDevice,
-                      std::vector<uint32_t> indices,
-                      std::vector<Vertex> vertices);
+  EngineMesh(EngineDevice& geDevice,
+             const std::vector<Vertex>& vertices,
+             const std::vector<uint32_t>& indices,
+             const std::vector<GeoSurface>& surfaces);
 
-    void totalIndexCount();
+  ~EngineMesh();
 
-    std::vector<GeoSurface> surfaces_;
+  EngineMesh(const EngineMesh&) = delete;
+  EngineMesh& operator=(const EngineMesh&) = delete;
 
-    std::unique_ptr<EngineBuffer> vertexBuffer;
-    uint32_t vertexCount;
-    VkDeviceAddress vertexBufferAddress;
+  static std::unique_ptr<EngineMesh> createModelFromFile(
+      EngineDevice& device,
+      const std::string& filePath);
 
-    bool hasIndexBuffer = false;
-    std::unique_ptr<EngineBuffer> indexBuffer;
-    uint32_t indexCount;
+  void bind(VkCommandBuffer commandBuffer);
+  void draw(VkCommandBuffer commandBuffer);
+
+  VkDeviceAddress getVertexBufferAddress() const { return vertexBufferAddress; }
+  std::vector<GeoSurface>& getSurfaces() { return surfaces_; }
+
+ private:
+  void createVertexBuffers(const std::vector<Vertex>& vertices);
+  void createIndexBuffers(const std::vector<uint32_t>& indices);
+  void createBuffer(EngineDevice& geDevice,
+                    std::vector<uint32_t> indices,
+                    std::vector<Vertex> vertices);
+
+  void totalIndexCount();
+
+  std::vector<GeoSurface> surfaces_;
+
+  std::unique_ptr<EngineBuffer> vertexBuffer;
+  uint32_t vertexCount;
+  VkDeviceAddress vertexBufferAddress;
+
+  bool hasIndexBuffer = false;
+  std::unique_ptr<EngineBuffer> indexBuffer;
+  uint32_t indexCount;
 };
 
 }  // namespace GameEngine

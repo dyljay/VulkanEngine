@@ -123,8 +123,6 @@ class OffScreenRenderer {
 
   void createOffscreenImage();
   void createDepthResources();
-  void createFramebuffer();
-  void createRenderPass();
   void createSyncObject();
   void createCommandBuffer();
 
