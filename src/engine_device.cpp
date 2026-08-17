@@ -545,7 +545,8 @@ void EngineDevice::createBuffer(VkDeviceSize size,
                                 VmaMemoryUsage memoryUsage,
                                 VkBuffer& buffer,
                                 VmaAllocation& allocation,
-                                VmaAllocationInfo& allocInfo)
+                                VmaAllocationInfo& allocInfo,
+                                VmaAllocationCreateFlags vmaFlags)
 {
   VkBufferCreateInfo bufferInfo{};
   bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -555,7 +556,7 @@ void EngineDevice::createBuffer(VkDeviceSize size,
 
   VmaAllocationCreateInfo vmaAllocInfo{};
   vmaAllocInfo.usage = memoryUsage;
-  vmaAllocInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+  vmaAllocInfo.flags = vmaFlags;
 
   vmaCreateBuffer(allocator_,
                   &bufferInfo,
@@ -602,13 +603,14 @@ void EngineDevice::endSingleTimeCommands(VkCommandBuffer commandBuffer)
 void EngineDevice::copyBuffer(VkBuffer srcBuffer,
                               VkBuffer dstBuffer,
                               VkDeviceSize size,
-                              VkDeviceSize srcOffset)
+                              VkDeviceSize srcOffset,
+                              VkDeviceSize dstOffset)
 {
   VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
   VkBufferCopy copyRegion{};
-  copyRegion.srcOffset = srcOffset;  // Optional
-  copyRegion.dstOffset = 0;          // Optional
+  copyRegion.srcOffset = srcOffset;
+  copyRegion.dstOffset = dstOffset;
   copyRegion.size = size;
   vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 

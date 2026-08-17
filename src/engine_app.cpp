@@ -11,6 +11,7 @@
 #include "SDL3/SDL_keycode.h"
 #include "SDL3/SDL_mouse.h"
 #include "SDL3/SDL_video.h"
+#include "bvh.hpp"
 #include "cubemap_system.hpp"
 #include "engine_buffer.hpp"
 #include "engine_camera.hpp"
@@ -107,6 +108,10 @@ void EngineApp::run()
 
   // initializing ui object
   EngineUI ui{geRenderer};
+
+  // FIXME:---------//FIXME:
+  BVHAccel testBVHCopy{geObjects, geDevice};
+  //---------//
 
   std::vector<VkDescriptorSetLayout> mainLayouts{
       descriptorSetLayouts.uboSetLayout->getDescriptorSetLayout(),

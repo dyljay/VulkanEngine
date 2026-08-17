@@ -62,6 +62,7 @@ class EngineMesh {
 
   VkDeviceAddress getVertexBufferAddress() const { return vertexBufferAddress; }
   std::vector<GeoSurface>& getSurfaces() { return surfaces_; }
+  std::unique_ptr<EngineBuffer>& getVertexBuffer() { return vertexBuffer; }
 
  private:
   void createVertexBuffers(const std::vector<Vertex>& vertices);

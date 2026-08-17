@@ -27,11 +27,10 @@ namespace GameEngine {
 VkDeviceSize EngineBuffer::getAlignment(VkDeviceSize instanceSize,
                                         VkDeviceSize minOffsetAlignment)
 {
-    if (minOffsetAlignment > 0) {
-        return (instanceSize + minOffsetAlignment - 1) &
-               ~(minOffsetAlignment - 1);
-    }
-    return instanceSize;
+  if (minOffsetAlignment > 0) {
+    return (instanceSize + minOffsetAlignment - 1) & ~(minOffsetAlignment - 1);
+  }
+  return instanceSize;
 }
 
 EngineBuffer::EngineBuffer(EngineDevice& device,
@@ -39,28 +38,30 @@ EngineBuffer::EngineBuffer(EngineDevice& device,
                            uint32_t instanceCount,
                            VkBufferUsageFlags usageFlags,
                            VmaMemoryUsage memoryUsage,
-                           VkDeviceSize minOffsetAlignment)
+                           VkDeviceSize minOffsetAlignment,
+                           VmaAllocationCreateFlags vmaFlags)
     : lveDevice{device},
       instanceSize{instanceSize},
       instanceCount{instanceCount},
       usageFlags{usageFlags},
       memoryUsage{memoryUsage}
 {
-    alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
-    bufferSize = alignmentSize * instanceCount;
-    device.createBuffer(bufferSize,
-                        usageFlags,
-                        memoryUsage,
-                        buffer,
-                        allocation_,
-                        allocInfo);
+  alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
+  bufferSize = alignmentSize * instanceCount;
+  device.createBuffer(bufferSize,
+                      usageFlags,
+                      memoryUsage,
+                      buffer,
+                      allocation_,
+                      allocInfo,
+                      vmaFlags);
 }
 
 EngineBuffer::~EngineBuffer()
 {
-    unmap();
-    // handles both freeing memory and destroying buffer
-    vmaDestroyBuffer(lveDevice.getAllocator(), buffer, allocation_);
+  unmap();
+  // handles both freeing memory and destroying buffer
+  vmaDestroyBuffer(lveDevice.getAllocator(), buffer, allocation_);
 }
 
 /**
@@ -74,9 +75,9 @@ EngineBuffer::~EngineBuffer()
  */
 void EngineBuffer::map(VkDeviceSize size, VkDeviceSize offset)
 {
-    assert(buffer && allocation_->GetMemory() &&
-           "Called map on buffer before create");
-    vmaMapMemory(lveDevice.getAllocator(), allocation_, &mapped);
+  assert(buffer && allocation_->GetMemory() &&
+         "Called map on buffer before create");
+  vmaMapMemory(lveDevice.getAllocator(), allocation_, &mapped);
 }
 
 /**
@@ -86,10 +87,10 @@ void EngineBuffer::map(VkDeviceSize size, VkDeviceSize offset)
  */
 void EngineBuffer::unmap()
 {
-    if (mapped) {
-        vmaUnmapMemory(lveDevice.getAllocator(), allocation_);
-        mapped = nullptr;
-    }
+  if (mapped) {
+    vmaUnmapMemory(lveDevice.getAllocator(), allocation_);
+    mapped = nullptr;
+  }
 }
 
 /**
@@ -106,15 +107,16 @@ void EngineBuffer::writeToBuffer(void* data,
                                  VkDeviceSize size,
                                  VkDeviceSize offset)
 {
-    assert(mapped && "Cannot copy to unmapped buffer");
+  assert(mapped && "Cannot copy to unmapped buffer");
 
-    if (size == VK_WHOLE_SIZE) {
-        memcpy(mapped, data, bufferSize);
-    } else {
-        char* memOffset = (char*)mapped;
-        memOffset += offset;
-        memcpy(memOffset, data, size);
-    }
+  if (size == VK_WHOLE_SIZE) {
+    memcpy(mapped, data, bufferSize);
+  }
+  else {
+    char* memOffset = (char*)mapped;
+    memOffset += offset;
+    memcpy(memOffset, data, size);
+  }
 }
 
 /**
@@ -130,10 +132,10 @@ void EngineBuffer::writeToBuffer(void* data,
  */
 VkResult EngineBuffer::flush(VkDeviceSize size, VkDeviceSize offset)
 {
-    return vmaFlushAllocation(lveDevice.getAllocator(),
-                              allocation_,
-                              offset,
-                              size);
+  return vmaFlushAllocation(lveDevice.getAllocator(),
+                            allocation_,
+                            offset,
+                            size);
 }
 
 /**
@@ -149,10 +151,10 @@ VkResult EngineBuffer::flush(VkDeviceSize size, VkDeviceSize offset)
  */
 VkResult EngineBuffer::invalidate(VkDeviceSize size, VkDeviceSize offset)
 {
-    return vmaInvalidateAllocation(lveDevice.getAllocator(),
-                                   allocation_,
-                                   offset,
-                                   size);
+  return vmaInvalidateAllocation(lveDevice.getAllocator(),
+                                 allocation_,
+                                 offset,
+                                 size);
 }
 
 /**
@@ -166,11 +168,11 @@ VkResult EngineBuffer::invalidate(VkDeviceSize size, VkDeviceSize offset)
 VkDescriptorBufferInfo EngineBuffer::descriptorInfo(VkDeviceSize size,
                                                     VkDeviceSize offset)
 {
-    return VkDescriptorBufferInfo{
-        buffer,
-        offset,
-        size,
-    };
+  return VkDescriptorBufferInfo{
+      buffer,
+      offset,
+      size,
+  };
 }
 
 /**
@@ -183,7 +185,7 @@ VkDescriptorBufferInfo EngineBuffer::descriptorInfo(VkDeviceSize size,
  */
 void EngineBuffer::writeToIndex(void* data, int index)
 {
-    writeToBuffer(data, instanceSize, index * alignmentSize);
+  writeToBuffer(data, instanceSize, index * alignmentSize);
 }
 
 /**
@@ -195,7 +197,7 @@ void EngineBuffer::writeToIndex(void* data, int index)
  */
 VkResult EngineBuffer::flushIndex(int index)
 {
-    return flush(alignmentSize, index * alignmentSize);
+  return flush(alignmentSize, index * alignmentSize);
 }
 
 /**
@@ -207,7 +209,7 @@ VkResult EngineBuffer::flushIndex(int index)
  */
 VkDescriptorBufferInfo EngineBuffer::descriptorInfoForIndex(int index)
 {
-    return descriptorInfo(alignmentSize, index * alignmentSize);
+  return descriptorInfo(alignmentSize, index * alignmentSize);
 }
 
 /**
@@ -221,7 +223,7 @@ VkDescriptorBufferInfo EngineBuffer::descriptorInfoForIndex(int index)
  */
 VkResult EngineBuffer::invalidateIndex(int index)
 {
-    return invalidate(alignmentSize, index * alignmentSize);
+  return invalidate(alignmentSize, index * alignmentSize);
 }
 
 }  // namespace GameEngine

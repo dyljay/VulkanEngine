@@ -21,19 +21,19 @@ namespace std {
 template <>
 
 struct hash<GameEngine::EngineMesh::Vertex> {
-    size_t operator()(GameEngine::EngineMesh::Vertex const& vertex) const
-    {
-        size_t seed = 0;
+  size_t operator()(GameEngine::EngineMesh::Vertex const& vertex) const
+  {
+    size_t seed = 0;
 
-        GameEngine::hashCombine(seed,
-                                vertex.position,
-                                vertex.color,
-                                vertex.normal,
-                                vertex.uv_x,
-                                vertex.uv_y);
+    GameEngine::hashCombine(seed,
+                            vertex.position,
+                            vertex.color,
+                            vertex.normal,
+                            vertex.uv_x,
+                            vertex.uv_y);
 
-        return seed;
-    }
+    return seed;
+  }
 };
 }  // namespace std
 
@@ -45,9 +45,9 @@ EngineMesh::EngineMesh(EngineDevice& geDevice,
                        const std::vector<GeoSurface>& surfaces)
     : surfaces_{surfaces}
 {
-    createBuffer(geDevice, indices, vertices);
+  createBuffer(geDevice, indices, vertices);
 
-    totalIndexCount();
+  totalIndexCount();
 }
 
 EngineMesh::~EngineMesh() {}
@@ -119,85 +119,83 @@ void EngineMesh::createIndexBuffers(const std::vector<uint32_t> &indices) {
 
 void EngineMesh::totalIndexCount()
 {
-    for (auto& surface : surfaces_) {
-        indexCount += surface.count;
-    }
+  for (auto& surface : surfaces_) {
+    indexCount += surface.count;
+  }
 }
 
 void EngineMesh::createBuffer(EngineDevice& geDevice,
                               std::vector<uint32_t> indices,
                               std::vector<Vertex> vertices)
 {
-    const size_t vertexBufferSize = vertices.size() * sizeof(Vertex);
+  const size_t vertexBufferSize = vertices.size() * sizeof(Vertex);
 
-    const size_t indexBufferSize = indices.size() * sizeof(uint32_t);
+  const size_t indexBufferSize = indices.size() * sizeof(uint32_t);
 
-    hasIndexBuffer = indexBufferSize > 0;
+  hasIndexBuffer = indexBufferSize > 0;
 
-    vertexBuffer = std::make_unique<EngineBuffer>(
-        geDevice,
-        vertexBufferSize,
-        1,
-        VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
-            VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-            VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-        VMA_MEMORY_USAGE_GPU_ONLY);
+  vertexBuffer = std::make_unique<EngineBuffer>(
+      geDevice,
+      vertexBufferSize,
+      1,
+      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+          VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+      VMA_MEMORY_USAGE_GPU_ONLY);
 
-    VkBufferDeviceAddressInfo deviceAddressInfo{};
-    deviceAddressInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
-    deviceAddressInfo.buffer = vertexBuffer->getBuffer();
-    vertexBufferAddress =
-        vkGetBufferDeviceAddress(geDevice.device(), &deviceAddressInfo);
+  VkBufferDeviceAddressInfo deviceAddressInfo{};
+  deviceAddressInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+  deviceAddressInfo.buffer = vertexBuffer->getBuffer();
+  vertexBufferAddress =
+      vkGetBufferDeviceAddress(geDevice.device(), &deviceAddressInfo);
 
-    indexBuffer = std::make_unique<EngineBuffer>(
-        geDevice,
-        indexBufferSize,
-        1,
-        VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
-            VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-        VMA_MEMORY_USAGE_GPU_ONLY);
+  indexBuffer = std::make_unique<EngineBuffer>(
+      geDevice,
+      indexBufferSize,
+      1,
+      VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+      VMA_MEMORY_USAGE_GPU_ONLY);
 
-    EngineBuffer stagingBuffer{
-        geDevice,
-        vertexBufferSize + indexBufferSize,
-        1,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VMA_MEMORY_USAGE_CPU_ONLY,
-    };
+  EngineBuffer stagingBuffer{
+      geDevice,
+      vertexBufferSize + indexBufferSize,
+      1,
+      VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+      VMA_MEMORY_USAGE_CPU_ONLY,
+  };
 
-    stagingBuffer
-        .map();  // = stagingBuffer.getAllocation()->GetMappedData();
-    stagingBuffer.writeToBuffer((void*)vertices.data(), vertexBufferSize);
-    stagingBuffer.writeToBuffer((void*)indices.data(),
-                                indexBufferSize,
-                                vertexBufferSize);
+  stagingBuffer.map();  // = stagingBuffer.getAllocation()->GetMappedData();
+  stagingBuffer.writeToBuffer((void*)vertices.data(), vertexBufferSize);
+  stagingBuffer.writeToBuffer((void*)indices.data(),
+                              indexBufferSize,
+                              vertexBufferSize);
 
-    geDevice.copyBuffer(stagingBuffer.getBuffer(),
-                        vertexBuffer->getBuffer(),
-                        vertexBufferSize);
-    geDevice.copyBuffer(stagingBuffer.getBuffer(),
-                        indexBuffer->getBuffer(),
-                        indexBufferSize,
-                        vertexBufferSize);
+  geDevice.copyBuffer(stagingBuffer.getBuffer(),
+                      vertexBuffer->getBuffer(),
+                      vertexBufferSize);
+  geDevice.copyBuffer(stagingBuffer.getBuffer(),
+                      indexBuffer->getBuffer(),
+                      indexBufferSize,
+                      vertexBufferSize);
 }
 
 void EngineMesh::draw(VkCommandBuffer commandBuffer)
 {
-    vkCmdDrawIndexed(commandBuffer, indexCount, surfaces_.size(), 0, 0, 0);
+  vkCmdDrawIndexed(commandBuffer, indexCount, surfaces_.size(), 0, 0, 0);
 }
 
 void EngineMesh::bind(VkCommandBuffer commandBuffer)
 {
-    // VkBuffer buffers[] = {vertexBuffer->getBuffer()};
-    // VkDeviceSize offsets[] = {0};
-    //  vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
+  // VkBuffer buffers[] = {vertexBuffer->getBuffer()};
+  // VkDeviceSize offsets[] = {0};
+  //  vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
 
-    if (hasIndexBuffer) {
-        vkCmdBindIndexBuffer(commandBuffer,
-                             indexBuffer->getBuffer(),
-                             0,
-                             VK_INDEX_TYPE_UINT32);
-    }
+  if (hasIndexBuffer) {
+    vkCmdBindIndexBuffer(commandBuffer,
+                         indexBuffer->getBuffer(),
+                         0,
+                         VK_INDEX_TYPE_UINT32);
+  }
 }
 /*
 std::vector<VkVertexInputBindingDescription>

@@ -1,0 +1,57 @@
+#version 450
+
+// bindings: 0 = primitive AABBs (in), 1 = morton codes (out), 2 = primitive indices (out)
+
+layout(local_size_x = 256) in;
+
+layout(push_constant) uniform PushConstants {
+  vec3 sceneMinBound;
+  uint numPrimitives;
+  vec3 sceneDiffBound;
+} pc;
+
+struct AABB {
+  vec3 min; 
+  float pad0;
+  vec3 max; 
+  float pad1;
+};
+
+layout(std430, binding = 0) readonly buffer PrimitiveAABBs { AABB primitiveAABBs[]; };
+layout(std430, binding = 1) writeonly buffer MortonCodesOut { uint mortonCodes[]; };
+layout(std430, binding = 2) writeonly buffer PrimitiveIndicesOut { uint primitiveIndices[]; };
+
+// You'll also need the overall scene bounds to normalize centroids into
+// [0,1]^3 before encoding. Add a uniform/push constant for that as needed.
+
+uint expandBits(uint x) {
+  x = (x | (x << 16)) & 0x030000FF;
+  x = (x | (x <<  8)) & 0x0300F00F;
+  x = (x | (x <<  4)) & 0x030C30C3;
+  x = (x | (x <<  2)) & 0x09249249;  
+  return x;
+}
+
+uint morton3D(vec3 p) {
+  uint x = expandBits(min(uint(p.x * 1024.0), 1023u));
+  uint y = expandBits(min(uint(p.y * 1024.0), 1023u));
+  uint z = expandBits(min(uint(p.z * 1024.0), 1023u));
+  
+  uint mortonCode = (x << 2) | (y << 1) | z;
+
+  return mortonCode;
+}
+
+void main() {
+  uint i = gl_GlobalInvocationID.x;
+  if (i >= pc.numPrimitives) return;
+
+  // TODO: compute centroid from primitiveAABBs[i], normalize against scene
+  // bounds, encode with morton3D(), write to mortonCodes[i].
+  vec3 centroid = (primitiveAABBs[i].min + primitiveAABBs[i].max) / 2;
+  centroid = (centroid - sceneMinBound) / sceneDiffBound;
+  uint mortonCode = morton3D(centroid);
+
+  mortonCodes[i] = mortonCodes;
+  primitiveIndices[i] = i;
+}

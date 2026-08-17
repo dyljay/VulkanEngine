@@ -1,8 +1,9 @@
 #pragma once
 
+#include <cstdint>
+
 #include "engine_window.hpp"
 #include "vulkan/vulkan_core.h"
-#include <cstdint>
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wnullability-completeness"
@@ -29,21 +30,21 @@ struct QueueFamilyIndices {
 };
 
 class EngineDevice {
-public:
+ public:
 #ifdef NDEBUG
   const bool enableValidationLayers = false;
 #else
   const bool enableValidationLayers = true;
 #endif
 
-  EngineDevice(EngineWindow &window);
+  EngineDevice(EngineWindow& window);
   ~EngineDevice();
 
   // Not copyable or movable
-  EngineDevice(const EngineDevice &) = delete;
-  EngineDevice &operator=(const EngineDevice &) = delete;
-  EngineDevice(EngineDevice &&) = delete;
-  EngineDevice &operator=(EngineDevice &&) = delete;
+  EngineDevice(const EngineDevice&) = delete;
+  EngineDevice& operator=(const EngineDevice&) = delete;
+  EngineDevice(EngineDevice&&) = delete;
+  EngineDevice& operator=(EngineDevice&&) = delete;
 
   VkCommandPool getCommandPool() { return commandPool; }
   VkDevice device() { return device_; }
@@ -57,41 +58,58 @@ public:
   // for use in multisampling
   VkSampleCountFlagBits getSampleCount() { return msaaSamples_; }
 
-  SwapChainSupportDetails getSwapChainSupport() {
+  SwapChainSupportDetails getSwapChainSupport()
+  {
     return querySwapChainSupport(physicalDevice);
   }
   uint32_t findMemoryType(uint32_t typeFilter,
                           VkMemoryPropertyFlags properties);
-  QueueFamilyIndices findPhysicalQueueFamilies() {
+  QueueFamilyIndices findPhysicalQueueFamilies()
+  {
     return findQueueFamilies(physicalDevice);
   }
-  VkFormat findSupportedFormat(const std::vector<VkFormat> &candidates,
+  VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates,
                                VkImageTiling tiling,
                                VkFormatFeatureFlags features);
 
   // Buffer Helper Functions
-  void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
-                    VmaMemoryUsage memoryUsage, VkBuffer &buffer,
-                    VmaAllocation &allocation, VmaAllocationInfo &allocInfo);
+  void createBuffer(VkDeviceSize size,
+                    VkBufferUsageFlags usage,
+                    VmaMemoryUsage memoryUsage,
+                    VkBuffer& buffer,
+                    VmaAllocation& allocation,
+                    VmaAllocationInfo& allocInfo,
+                    VmaAllocationCreateFlags vmaFlags);
+
   VkCommandBuffer beginSingleTimeCommands();
   void endSingleTimeCommands(VkCommandBuffer commandBuffer);
-  void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size,
-                  VkDeviceSize srcOffset = 0);
-  void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width,
-                         uint32_t height, uint32_t layerCount);
+  void copyBuffer(VkBuffer srcBuffer,
+                  VkBuffer dstBuffer,
+                  VkDeviceSize size,
+                  VkDeviceSize srcOffset = 0,
+                  VkDeviceSize dstOffset = 0);
+  void copyBufferToImage(VkBuffer buffer,
+                         VkImage image,
+                         uint32_t width,
+                         uint32_t height,
+                         uint32_t layerCount);
 
-  void createImageWithInfo(const VkImageCreateInfo &imageInfo,
-                           VkMemoryPropertyFlags properties, VkImage &image,
-                           VmaAllocation &allocation,
+  void createImageWithInfo(const VkImageCreateInfo& imageInfo,
+                           VkMemoryPropertyFlags properties,
+                           VkImage& image,
+                           VmaAllocation& allocation,
                            VmaMemoryUsage usage = VMA_MEMORY_USAGE_GPU_ONLY);
 
-  void copyImageToBuffer(VkImage image, VkBuffer buffer,
-                         VkImageLayout imageLayout, uint32_t width,
-                         uint32_t height, uint32_t layerCount);
+  void copyImageToBuffer(VkImage image,
+                         VkBuffer buffer,
+                         VkImageLayout imageLayout,
+                         uint32_t width,
+                         uint32_t height,
+                         uint32_t layerCount);
 
   VkPhysicalDeviceProperties properties;
 
-private:
+ private:
   void createInstance();
   void setupDebugMessenger();
   void createSurface();
@@ -103,11 +121,11 @@ private:
 
   // helper functions
   bool isDeviceSuitable(VkPhysicalDevice device);
-  std::vector<const char *> getRequiredExtensions();
+  std::vector<const char*> getRequiredExtensions();
   bool checkValidationLayerSupport();
   QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
   void populateDebugMessengerCreateInfo(
-      VkDebugUtilsMessengerCreateInfoEXT &createInfo);
+      VkDebugUtilsMessengerCreateInfoEXT& createInfo);
   void hasSDL3RequiredInstanceExtensions();
   bool checkDeviceExtensionSupport(VkPhysicalDevice device);
   SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
@@ -115,7 +133,7 @@ private:
   VkInstance instance_;
   VkDebugUtilsMessengerEXT debugMessenger;
   VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-  EngineWindow &window;
+  EngineWindow& window;
   VkCommandPool commandPool;
 
   VkDevice device_;
@@ -127,13 +145,14 @@ private:
 
   VmaAllocator allocator_;
 
-  const std::vector<const char *> validationLayers = {
+  const std::vector<const char*> validationLayers = {
       "VK_LAYER_KHRONOS_validation"};
-  const std::vector<const char *> deviceExtensions = {
-      VK_KHR_SWAPCHAIN_EXTENSION_NAME, "VK_KHR_portability_subset",
+  const std::vector<const char*> deviceExtensions = {
+      VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+      "VK_KHR_portability_subset",
       VK_KHR_MAINTENANCE_3_EXTENSION_NAME,
       VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
       VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME};
 };
 
-} // namespace GameEngine
+}  // namespace GameEngine

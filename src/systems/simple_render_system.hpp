@@ -3,7 +3,6 @@
 #include "engine_device.hpp"
 #include "engine_frame_info.hpp"
 #include "system.hpp"
-#include "vulkan/vulkan_core.h"
 
 // std
 #include <vector>
