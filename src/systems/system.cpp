@@ -69,10 +69,13 @@ void RenderSystem::createPipeline(VkPipelineRenderingCreateInfo attachmentInfo,
   pipelineConfig.depthStencilInfo.depthCompareOp = pipelineSettings.comparison;
   pipelineConfig.multisampleInfo.rasterizationSamples =
       pipelineSettings.sampleCount;
+  pipelineConfig.rasterizationInfo.polygonMode = pipelineSettings.polyMode;
+
   if (pipelineSettings.clearDescriptions) {
     pipelineConfig.bindingDescriptions.clear();
     pipelineConfig.attributeDescriptions.clear();
   }
+
   pipelineConfig.colorBlendInfo.attachmentCount =
       attachmentInfo.colorAttachmentCount;
 

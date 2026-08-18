@@ -51,6 +51,13 @@ struct AABB : Primitive {
   }
 };
 
+struct AABBPush {
+  glm::vec3 min;
+  float padding0;
+  glm::vec3 max;
+  float padding1;
+};
+
 struct SphereBound : Primitive {};
 
 }  // namespace GameEngine

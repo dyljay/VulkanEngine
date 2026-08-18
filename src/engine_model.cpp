@@ -83,6 +83,7 @@ void EngineModel::loadVertices()
     indices.clear();
     vertices.clear();
     surfaces.clear();
+    AABB bbox;
 
     for (auto&& p : mesh.primitives) {
       GeoSurface newSurface;
@@ -122,6 +123,7 @@ void EngineModel::loadVertices()
               vertex.uv_y = 0;
               vertices[initialVertex + index] = vertex;
               modelBoundingBox.testBounds(v);
+              bbox.testBounds(v);
             });
       }
 
@@ -162,16 +164,12 @@ void EngineModel::loadVertices()
 
       surfaces.push_back(newSurface);
     }
-    meshes.emplace_back(
-        std::make_shared<EngineMesh>(geDevice, vertices, indices, surfaces));
+    meshes.emplace_back(std::make_shared<EngineMesh>(geDevice,
+                                                     vertices,
+                                                     indices,
+                                                     surfaces,
+                                                     bbox));
   }
-  std::cout << "min boundingBox:" << "(" << modelBoundingBox.min.x << ", "
-            << modelBoundingBox.min.y << ", " << modelBoundingBox.min.z << ")"
-            << std::endl;
-
-  std::cout << "max boundingBox:" << "(" << modelBoundingBox.max.x << ", "
-            << modelBoundingBox.max.y << ", " << modelBoundingBox.max.z << ")"
-            << std::endl;
 }
 
 void EngineModel::buildDescriptorPool(uint32_t numSets)

@@ -11,6 +11,7 @@
 #include "SDL3/SDL_keycode.h"
 #include "SDL3/SDL_mouse.h"
 #include "SDL3/SDL_video.h"
+#include "bbox_system.hpp"
 #include "bvh.hpp"
 #include "cubemap_system.hpp"
 #include "engine_buffer.hpp"
@@ -109,10 +110,6 @@ void EngineApp::run()
   // initializing ui object
   EngineUI ui{geRenderer};
 
-  // FIXME:---------//FIXME:
-  BVHAccel testBVHCopy{geObjects, geDevice};
-  //---------//
-
   std::vector<VkDescriptorSetLayout> mainLayouts{
       descriptorSetLayouts.uboSetLayout->getDescriptorSetLayout(),
       descriptorSetLayouts.materialSetLayout->getDescriptorSetLayout(),
@@ -147,6 +144,12 @@ void EngineApp::run()
                                     pointLightLayouts,
                                     offscreenRenderer.getRenderPass()};
   */
+
+  std::vector<VkDescriptorSetLayout> bboxLayout{mainLayouts[0]};
+  BboxRenderer bboxRender{geDevice,
+                          bboxShaderFiles,
+                          bboxLayout,
+                          geRenderer.getPipelineRenderingInfo()};
 
   EngineCamera camera{};
   camera.setViewDirection(glm::vec3(0.0f), glm::vec3(0.f, 0.f, 1.f));
@@ -250,9 +253,14 @@ void EngineApp::run()
 
       // draw calls
       geRenderer.beginRender(commandBuffer);
+
       simpleRenderSystem.render(frameInfo, descriptorSets);
       pointLightSystem.render(frameInfo, descriptorSets);
       cubeMapRender.render(frameInfo, descriptorSets);
+
+      if (showbbox) {
+        bboxRender.render(frameInfo, descriptorSets);
+      }
 
       if (hasClicked) {
         /*
@@ -277,6 +285,7 @@ void EngineApp::run()
       // ui
       if (userSeeMouse) {
         ui.newFrame();
+        ui.bvhUI(showbbox);
 
         for (auto& kv : geObjects) {
           auto& obj = kv.second;
@@ -433,6 +442,15 @@ void EngineApp::loadGameObjects()
   girl.transform.rotation = {glm::radians(-90.f), glm::radians(180.f), 0.0f};
 
   geObjects.emplace(girl.getID(), std::move(girl));
+
+  geModel = EngineModel::createModelFromFile(geDevice, "./models/floor.glb");
+  auto floor = GameObject::createGameObject();
+  floor.model = geModel;
+  floor.transform.scale = {3.f, 3.f, 0.1f};
+  floor.transform.translation = {0.0f, -1.f, 0.0f};
+  floor.transform.rotation = {glm::radians(90.f), 0.0f, 0.0f};
+
+  geObjects.emplace(floor.getID(), std::move(floor));
 
   std::vector<glm::vec3> lightColors = {{0.2f, 0.2f, .7f}, {0.2f, 0.2f, .7f}};
 

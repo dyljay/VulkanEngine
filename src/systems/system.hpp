@@ -22,6 +22,7 @@ struct PipeLineSettings {
   bool clearDescriptions = false;
   VkCompareOp comparison = VK_COMPARE_OP_LESS;
   VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_4_BIT;
+  VkPolygonMode polyMode = VK_POLYGON_MODE_FILL;
 };
 
 class RenderSystem {

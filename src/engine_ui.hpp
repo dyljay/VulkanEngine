@@ -18,36 +18,38 @@ namespace GameEngine {
 
 static void check_vk_result(VkResult err)
 {
-    if (err == 0) return;
+  if (err == 0) return;
 
-    fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
+  fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
 
-    if (err < 0) abort();
+  if (err < 0) abort();
 }
 
 class EngineUI {
-   public:
-    EngineUI(EngineRenderer& geRenderer);
-    ~EngineUI();
+ public:
+  EngineUI(EngineRenderer& geRenderer);
+  ~EngineUI();
 
-    void initImGUIPool();
+  void initImGUIPool();
 
-    void initUI();
+  void initUI();
 
-    void newFrame();
+  void newFrame();
 
-    void renderLightUI(glm::vec3& color, float& intensity);
+  void renderLightUI(glm::vec3& color, float& intensity);
 
-    void renderModelUI(TransformComponent& transform);
+  void renderModelUI(TransformComponent& transform);
 
-    void render(VkCommandBuffer commandBuffer);
+  void bvhUI(bool& showBVH);
 
-    void endFrame();
+  void render(VkCommandBuffer commandBuffer);
 
-   private:
-    EngineRenderer& geRenderer;
+  void endFrame();
 
-    std::unique_ptr<EngineDescriptorPool> imguiPool;
+ private:
+  EngineRenderer& geRenderer;
+
+  std::unique_ptr<EngineDescriptorPool> imguiPool;
 };
 
 }  // namespace GameEngine

@@ -13,48 +13,47 @@
 namespace GameEngine {
 
 class EngineApp {
-   public:
-    static constexpr int MAX_DESCRIPTOR_SET = 100;
+ public:
+  static constexpr int MAX_DESCRIPTOR_SET = 100;
 
-    void run();
-    void updateGameObjects(float deltaTime);
-    static constexpr int WIDTH = 1080;
-    static constexpr int HEIGHT = 780;
+  void run();
+  void updateGameObjects(float deltaTime);
+  static constexpr int WIDTH = 1080;
+  static constexpr int HEIGHT = 780;
 
-    EngineApp();
-    ~EngineApp();
+  EngineApp();
+  ~EngineApp();
 
-    EngineApp(const EngineApp&) = delete;
-    EngineApp& operator=(const EngineApp&) = delete;
+  EngineApp(const EngineApp&) = delete;
+  EngineApp& operator=(const EngineApp&) = delete;
 
-   private:
-    void loadGameObjects();
+ private:
+  void loadGameObjects();
 
-    void populateDescriptorSetLayouts(
-        DescriptorSetLayouts& descriptorSetLayouts);
+  void populateDescriptorSetLayouts(DescriptorSetLayouts& descriptorSetLayouts);
 
-    void populateMatTexDescriptorSets(
-        DescriptorSets& descriptorSets,
-        DescriptorSetLayouts& descriptorSetLayouts);
+  void populateMatTexDescriptorSets(DescriptorSets& descriptorSets,
+                                    DescriptorSetLayouts& descriptorSetLayouts);
 
-    EngineWindow geWindow{WIDTH, HEIGHT, "WIT Engine"};
-    EngineDevice geDevice{geWindow};
-    EngineRenderer geRenderer{geWindow, geDevice};
+  EngineWindow geWindow{WIDTH, HEIGHT, "WIT Engine"};
+  EngineDevice geDevice{geWindow};
+  EngineRenderer geRenderer{geWindow, geDevice};
 
-    OffScreenRenderer offscreenRenderer{geWindow, geDevice};
+  OffScreenRenderer offscreenRenderer{geWindow, geDevice};
 
-    std::unique_ptr<EngineDescriptorPoolGrowable> globalPool{};
-    GameObject::Map geObjects;
+  std::unique_ptr<EngineDescriptorPoolGrowable> globalPool{};
+  GameObject::Map geObjects;
 
-    const std::array<std::string, 6> cubeTextureFilePaths = {
-        "./textures/px.jpg",
-        "./textures/nx.jpg",
-        "./textures/py.jpg",
-        "./textures/ny.jpg",
-        "./textures/pz.jpg",
-        "./textures/nz.jpg",
-    };
+  const std::array<std::string, 6> cubeTextureFilePaths = {
+      "./textures/px.jpg",
+      "./textures/nx.jpg",
+      "./textures/py.jpg",
+      "./textures/ny.jpg",
+      "./textures/pz.jpg",
+      "./textures/nz.jpg",
+  };
 
-    bool hasClicked = false;
+  bool hasClicked = false;
+  bool showbbox = true;
 };
 }  // namespace GameEngine

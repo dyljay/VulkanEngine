@@ -24,4 +24,9 @@ const Shader offscreenShaderFiles{
     .fragShader = "shaders/id_obj.frag.spv",
 };
 
+const Shader bboxShaderFiles{
+    .vertexShader = "shaders/bbox.vert.spv",
+    .fragShader = "shaders/bbox.frag.spv",
+};
+
 }  // namespace GameEngine

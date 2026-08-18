@@ -6,6 +6,7 @@
 #include "engine_buffer.hpp"
 #include "engine_device.hpp"
 #include "glm/fwd.hpp"
+#include "primitive.hpp"
 #include "vulkan/vulkan_core.h"
 
 #define GLM_FORCE_RADIANS
@@ -46,7 +47,8 @@ class EngineMesh {
   EngineMesh(EngineDevice& geDevice,
              const std::vector<Vertex>& vertices,
              const std::vector<uint32_t>& indices,
-             const std::vector<GeoSurface>& surfaces);
+             const std::vector<GeoSurface>& surfaces,
+             AABB bbox);
 
   ~EngineMesh();
 
@@ -60,6 +62,7 @@ class EngineMesh {
   void bind(VkCommandBuffer commandBuffer);
   void draw(VkCommandBuffer commandBuffer);
 
+  AABB getBBox() const { return meshBbox; }
   VkDeviceAddress getVertexBufferAddress() const { return vertexBufferAddress; }
   std::vector<GeoSurface>& getSurfaces() { return surfaces_; }
   std::unique_ptr<EngineBuffer>& getVertexBuffer() { return vertexBuffer; }
@@ -82,6 +85,7 @@ class EngineMesh {
   bool hasIndexBuffer = false;
   std::unique_ptr<EngineBuffer> indexBuffer;
   uint32_t indexCount;
+  AABB meshBbox;
 };
 
 }  // namespace GameEngine

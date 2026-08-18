@@ -12,8 +12,8 @@ namespace GameEngine {
 class BboxRenderer : RenderSystem {
  public:
   BboxRenderer(EngineDevice& geDevice,
-               Shader shaders,
-               const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
+               const Shader& shaders,
+               const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
                VkPipelineRenderingCreateInfo attachmentInfo);
 
   ~BboxRenderer();

@@ -118,5 +118,13 @@ void EngineUI::renderModelUI(TransformComponent& transform)
   }
 }
 
+void EngineUI::bvhUI(bool& showbbox)
+{
+  if (ImGui::Begin("Bounding Volume")) {
+    ImGui::Checkbox("Show AABBs?", &showbbox);
+    ImGui::End();
+  }
+}
+
 void EngineUI::endFrame() { ImGui::EndFrame(); }
 }  // namespace GameEngine
