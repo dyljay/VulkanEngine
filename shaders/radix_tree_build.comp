@@ -6,24 +6,32 @@
 layout(local_size_x = 256) in;
 
 layout(push_constant) uniform PushConstants {
-    uint numPrimitives; // n
+  uint numPrimitives; // n
 } pc;
 
-layout(std430, binding = 0) readonly buffer SortedKeys { uint keys[]; };
-
-struct InternalNode {
-    int left;
-    int right;
-    uint leftIsLeaf;
-    uint rightIsLeaf;
-    int parent;
-    uint visited;
+layout(std430, binding = 0) readonly buffer SortedKeys {
+  uint keys[];
 };
 
-struct LeafNode { int parent; };
+struct InternalNode {
+  int left;
+  int right;
+  uint leftIsLeaf;
+  uint rightIsLeaf;
+  int parent;
+  uint visited;
+};
 
-layout(std430, binding = 1) buffer InternalNodes { InternalNode internalNodes[]; };
-layout(std430, binding = 2) buffer LeafNodes { LeafNode leafNodes[]; };
+struct LeafNode {
+  int parent;
+};
+
+layout(std430, binding = 1) buffer InternalNodes {
+  InternalNode internalNodes[];
+};
+layout(std430, binding = 2) buffer LeafNodes {
+  LeafNode leafNodes[];
+};
 
 // delta(i, j): length of the longest common prefix between keys[i] and
 // keys[j]. Return -1 when j is outside [0, n-1] (paper, Figure 4 caption).
@@ -33,9 +41,9 @@ layout(std430, binding = 2) buffer LeafNodes { LeafNode leafNodes[]; };
 int delta(int i, int j) {
   int n = int(pc.numPrimitives);
 
-  if ((j > n-1) || (j < 0)) return -1;
-  
-  int bitXOR = keys[i]^^keys[j];
+  if ((j > n - 1) || (j < 0)) return -1;
+
+  int bitXOR = keys[i] ^^ keys[j];
   if (bitXOR == 0u) return 32;
   return 31 - int(findMSB(bitXOR));
 }
@@ -44,73 +52,72 @@ void main() {
   int i = int(gl_GlobalInvocationID.x);
   int n = int(pc.numPrimitives);
   if (i >= n - 1) return;
-  
+
   //   1. direction d via delta(i,i+1) vs delta(i,i-1)
-  int d = sign(delta(i,i+1) - delta(i,i-1));
+  int d = sign(delta(i, i + 1) - delta(i, i - 1));
 
   //   2. upper bound on range length, then binary search for the far end j
-  int deltaMin = delta(i, i-d);
+  int deltaMin = delta(i, i - d);
   int l_max = 2;
 
-  while(delta(i,i+l_max*d) > deltaMin) {
+  while (delta(i, i + l_max * d) > deltaMin) {
     l_max = l_max * 2;
   }
 
   //   3. binary search for the split position gamma
   //   other end
   int l = 0;
-  int t = l_max / 2; 
+  int t = l_max / 2;
   while (t >= 1) {
-    if (delta(i,i+(l+t)*d) > deltaMin) {
-      l = l+t;
+    if (delta(i, i + (l + t) * d) > deltaMin) {
+      l = l + t;
     }
-    t = t / 2; 
+    t = t / 2;
   }
-  int j = i + l*d;
-  
+  int j = i + l * d;
+
   // Find split position
-  int deltaNode = delta(i,j);
+  int deltaNode = delta(i, j);
   int s = 0;
-  t = ceil(l/2); 
+  t = ceil(l / 2);
   while (t >= 1) {
-    if (delta(i,i+(s+t)*d) > deltaNode) {
-      s = s+t;
+    if (delta(i, i + (s + t) * d) > deltaNode) {
+      s = s + t;
     }
-    t = ceil(t/2);
+    t = ceil(t / 2);
   }
 
-  int gamma = i + s*d + min(d,0);
-  
+  int gamma = i + s * d + min(d, 0);
 
   //update nodes
-   
+
   uint leftIsLeaf = 0;
-  uint rightIsLeaf = 0; 
-  if (min(i,j) == gamma) {
+  uint rightIsLeaf = 0;
+  if (min(i, j) == gamma) {
     leafNodes[gamma].parent = i;
     leftIsLeaf = 1;
   } else {
     internalNodes[gamma].parent = i;
   }
 
-  if (max(i,j) == gamma+1) {
-    leafNodes[gamma+1].parent = i;
+  if (max(i, j) == gamma + 1) {
+    leafNodes[gamma + 1].parent = i;
     rightIsLeaf = 1;
   } else {
-    internalNodes[gamma+1].parent = i;
+    internalNodes[gamma + 1].parent = i;
   }
 
   internalNodes[i].left = gamma;
-  internalNodes[i].right = gamma+1;
+  internalNodes[i].right = gamma + 1;
   internalNodes[i].leftIsLeaf = leftIsLeaf;
   internalNodes[i].rightIsLeaf = rightIsLeaf;
 
-    // TODO: implement Figure 4 —
-    //   1. direction d via delta(i,i+1) vs delta(i,i-1)
-    //   2. upper bound on range length, then binary search for the far end j
-    //   3. binary search for the split position gamma
-    //   4. write internalNodes[i].{left,right,leftIsLeaf,rightIsLeaf}
-    //   5. set the parent pointer of whichever child you just linked to
-    //      (internalNodes[child].parent or leafNodes[child].parent = i) —
-    //      the AABB pass depends on this being set here.
+  // TODO: implement Figure 4 —
+  //   1. direction d via delta(i,i+1) vs delta(i,i-1)
+  //   2. upper bound on range length, then binary search for the far end j
+  //   3. binary search for the split position gamma
+  //   4. write internalNodes[i].{left,right,leftIsLeaf,rightIsLeaf}
+  //   5. set the parent pointer of whichever child you just linked to
+  //      (internalNodes[child].parent or leafNodes[child].parent = i) —
+  //      the AABB pass depends on this being set here.
 }

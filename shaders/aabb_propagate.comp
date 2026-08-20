@@ -8,13 +8,13 @@
 layout(local_size_x = 256) in;
 
 layout(push_constant) uniform PushConstants {
-    uint numPrimitives;
+  uint numPrimitives;
 } pc;
 
 struct AABB {
-  vec3 min; 
+  vec3 min;
   float pad0;
-  vec3 max; 
+  vec3 max;
   float pad1;
 };
 struct InternalNode {
@@ -26,13 +26,25 @@ struct InternalNode {
   uint visited;
 };
 
-struct LeafNode { int parent; };
+struct LeafNode {
+  int parent;
+};
 
-layout(std430, binding = 0) readonly buffer PrimitiveAABBs { AABB primitiveAABBs[]; };
-layout(std430, binding = 1) readonly buffer SortedPrimitiveIndices { uint primitiveIndices[]; };
-layout(std430, binding = 2) buffer InternalNodes { InternalNode internalNodes[]; };
-layout(std430, binding = 3) readonly buffer LeafNodes { LeafNode leafNodes[]; };
-layout(std430, binding = 4) buffer NodeAABBs { AABB nodeAABBs[]; };
+layout(std430, binding = 0) readonly buffer PrimitiveAABBs {
+  AABB primitiveAABBs[];
+};
+layout(std430, binding = 1) readonly buffer SortedPrimitiveIndices {
+  uint primitiveIndices[];
+};
+layout(std430, binding = 2) buffer InternalNodes {
+  InternalNode internalNodes[];
+};
+layout(std430, binding = 3) readonly buffer LeafNodes {
+  LeafNode leafNodes[];
+};
+layout(std430, binding = 4) buffer NodeAABBs {
+  AABB nodeAABBs[];
+};
 
 AABB mergeAABB(AABB a, AABB b) {
   AABB r;
@@ -44,10 +56,10 @@ AABB mergeAABB(AABB a, AABB b) {
 void main() {
   uint leafIdx = gl_GlobalInvocationID.x;
   if (leafIdx >= pc.numPrimitives) return;
-  
+
   int node = leafNodes[leafIdx].parent;
   if (node == -1) return;
-  
+
   while (atomicAdd(internalNodes[node], 1) == 1) {
     AABB nodeBbox = mergeAABB(node.left, node.right);
 
@@ -55,12 +67,12 @@ void main() {
 
     node = node.parent;
   }
-    // TODO: implement the bottom-up walk from Section 4 (BVHs) —
-    //   1. start from leafNodes[leafIdx]'s AABB (via primitiveAABBs[primitiveIndices[leafIdx]])
-    //   2. climb to .parent, using atomicAdd (or atomicExchange/atomicCompSwap)
-    //      on internalNodes[node].visited so only the *second* thread to
-    //      arrive at a node continues past it — the first terminates.
-    //   3. the continuing thread merges its child AABBs with mergeAABB()
-    //      and writes nodeAABBs[node], then moves to node's parent.
-    //   4. stop once you've processed the root (parent == -1).
+  // TODO: implement the bottom-up walk from Section 4 (BVHs) —
+  //   1. start from leafNodes[leafIdx]'s AABB (via primitiveAABBs[primitiveIndices[leafIdx]])
+  //   2. climb to .parent, using atomicAdd (or atomicExchange/atomicCompSwap)
+  //      on internalNodes[node].visited so only the *second* thread to
+  //      arrive at a node continues past it — the first terminates.
+  //   3. the continuing thread merges its child AABBs with mergeAABB()
+  //      and writes nodeAABBs[node], then moves to node's parent.
+  //   4. stop once you've processed the root (parent == -1).
 }

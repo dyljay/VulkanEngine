@@ -1,29 +1,113 @@
 #include "bvh.hpp"
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <limits>
 #include <memory>
+#include <vector>
 
+#include "engine_buffer.hpp"
+#include "engine_descriptor.hpp"
 #include "engine_device.hpp"
 #include "engine_game_object.hpp"
+#include "engine_pipeline.hpp"
+#include "primitive.hpp"
 #include "vulkan/vulkan_core.h"
 
 namespace GameEngine {
 
-TreeNode::TreeNode() {}
-TreeNode::TreeNode(AABB& bbox)
-    : bbox{bbox}
-{}
-
 BVHAccel::BVHAccel(const GameObject::Map& geObjects, EngineDevice& geDevice)
     : geDevice{geDevice}
-{
-  copyVertexData(geObjects);
-}
+{}
 
 BVHAccel::~BVHAccel() {}
 
-void BVHAccel::copyVertexData(const GameObject::Map& geObjects)
+// TODO: come back and fix after finishing the compute pipeline class
+void BVHAccel::createComputePipelines()
 {
-  uint64_t totalSize;
+  mortonGeneration =
+      std::make_unique<ComputePipeline>(geDevice, "./shaders/morton_code.comp");
+
+  radixSortPipeline =
+      std::make_unique<ComputePipeline>(geDevice,
+                                        "./shaders/single_radixsort.comp");
+
+  treeGeneration =
+      std::make_unique<ComputePipeline>(geDevice,
+                                        "./shaders/radix_tree_build.comp");
+
+  mergeAABBPipeline =
+      std::make_unique<ComputePipeline>(geDevice,
+                                        "./shaders/aabb_propagate.comp");
+}
+
+void BVHAccel::createMortonCompPipeline()
+{
+  auto descriptorSetLayout = EngineDescriptorSetLayout::Builder(geDevice)
+                                 .addBinding(0,
+                                             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                             VK_SHADER_STAGE_COMPUTE_BIT)
+                                 .addBinding(1,
+                                             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                             VK_SHADER_STAGE_COMPUTE_BIT)
+                                 .addBinding(2,
+                                             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                             VK_SHADER_STAGE_COMPUTE_BIT)
+                                 .build();
+}
+
+void BVHAccel::createSortingPipeline()
+{
+  auto descriptorSetLayout = EngineDescriptorSetLayout::Builder(geDevice)
+                                 .addBinding(0,
+                                             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                             VK_SHADER_STAGE_COMPUTE_BIT)
+                                 .addBinding(1,
+                                             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                             VK_SHADER_STAGE_COMPUTE_BIT)
+                                 .build();
+}
+
+void BVHAccel::createTreeGenCompPipeline()
+{
+  auto descriptorSetLayout = EngineDescriptorSetLayout::Builder(geDevice)
+                                 .addBinding(0,
+                                             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                             VK_SHADER_STAGE_COMPUTE_BIT)
+                                 .addBinding(1,
+                                             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                             VK_SHADER_STAGE_COMPUTE_BIT)
+                                 .addBinding(2,
+                                             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                             VK_SHADER_STAGE_COMPUTE_BIT)
+                                 .build();
+}
+
+void BVHAccel::createMergeCompPipeline()
+{
+  auto descriptorSetLayout = EngineDescriptorSetLayout::Builder(geDevice)
+                                 .addBinding(0,
+                                             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                             VK_SHADER_STAGE_COMPUTE_BIT)
+                                 .addBinding(1,
+                                             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                             VK_SHADER_STAGE_COMPUTE_BIT)
+                                 .addBinding(2,
+                                             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                             VK_SHADER_STAGE_COMPUTE_BIT)
+                                 .addBinding(3,
+                                             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                             VK_SHADER_STAGE_COMPUTE_BIT)
+                                 .addBinding(4,
+                                             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                             VK_SHADER_STAGE_COMPUTE_BIT)
+                                 .build();
+}
+
+void BVHAccel::copyAABBData(const GameObject::Map& geObjects)
+{
+  std::vector<AABBPush> aabbVec;
 
   for (auto& kv : geObjects) {
     auto& obj = kv.second;
@@ -31,47 +115,84 @@ void BVHAccel::copyVertexData(const GameObject::Map& geObjects)
     if (obj.model == nullptr) continue;
 
     for (auto& mesh : obj.model->meshes) {
-      totalSize += mesh->getVertexBuffer()->getInstanceCount() *
-                   mesh->getVertexBuffer()->getBufferSize();
+      aabbVec.emplace_back(
+          AABBPush{.min = mesh->getBBox().min, .max = mesh->getBBox().max});
     }
   }
 
-  culminatedVertexBuffer = std::make_unique<EngineBuffer>(
+  EngineBuffer stagingBuffer = EngineBuffer(geDevice,
+                                            sizeof(AABBPush),
+                                            aabbVec.size(),
+                                            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                            VMA_MEMORY_USAGE_AUTO_PREFER_HOST);
+  stagingBuffer.map();
+  stagingBuffer.writeToBuffer((void*)aabbVec.data());
+
+  primitiveAABBs = std::make_unique<EngineBuffer>(
       geDevice,
-      totalSize,
-      1,
-      VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
-          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-      VMA_MEMORY_USAGE_AUTO,
-      1,
-      VMA_MEMORY_USAGE_GPU_ONLY);
+      sizeof(AABBPush),
+      aabbVec.size(),
+      VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+      VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
 
-  totalSize = 0;
-
-  for (auto& kv : geObjects) {
-    auto& obj = kv.second;
-
-    if (obj.model == nullptr) continue;
-
-    for (auto& mesh : obj.model->meshes) {
-      uint64_t size = mesh->getVertexBuffer()->getInstanceCount() *
-                      mesh->getVertexBuffer()->getInstanceSize();
-
-      geDevice.copyBuffer(mesh->getVertexBuffer()->getBuffer(),
-                          culminatedVertexBuffer->getBuffer(),
-                          size,
-                          0,
-                          totalSize);
-
-      totalSize += size;
-    }
-  }
+  geDevice.copyBuffer(stagingBuffer.getBuffer(),
+                      primitiveAABBs->getBuffer(),
+                      sizeof(AABBPush) * aabbVec.size());
 }
 
-TreeNode* BVHAccel::createTree(TreeNode* node, uint32_t indexCount)
+void BVHAccel::initializeMortonCodeBuffers()
 {
-  return new TreeNode;
+  primitiveIndices = std::make_unique<EngineBuffer>(
+      geDevice,
+      sizeof(uint32_t),
+      primitiveCount,
+      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+      VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
+
+  mortonCodes = std::make_unique<EngineBuffer>(
+      geDevice,
+      sizeof(uint32_t),
+      primitiveCount,
+      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+          VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+      VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
+
+  sortedMortonCodes = std::make_unique<EngineBuffer>(
+      geDevice,
+      sizeof(uint32_t),
+      primitiveCount,
+      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+          VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+      VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
 }
 
-TreeNode* BVHAccel::createTreeHelper() { return new TreeNode; }
+void BVHAccel::initializeNodeBuffers()
+{
+  leafNodes = std::make_unique<EngineBuffer>(
+      geDevice,
+      sizeof(LeafNode),
+      primitiveCount,
+      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+          VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+      VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
+
+  internalNodes = std::make_unique<EngineBuffer>(
+      geDevice,
+      sizeof(InternalNode),
+      primitiveCount,
+      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+          VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+      VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
+
+  nodeAABBs = std::make_unique<EngineBuffer>(
+      geDevice,
+      sizeof(AABBPush),
+      primitiveCount + primitiveCount - 1,
+      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+          VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+      VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
+}
+
+void BVHAccel::createSemaphores() {}
+
 }  // namespace GameEngine

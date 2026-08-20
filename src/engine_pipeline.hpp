@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "engine_device.hpp"
+#include "sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
 #include "vulkan/vulkan_core.h"
 
 namespace GameEngine {
@@ -44,6 +45,12 @@ class GraphicsPipeline {
   static void defaultPipelineConfigInfo(PipelineConfigInfo& configInfo);
   static void enableAlphaBlending(PipelineConfigInfo& configInfo);
 
+  static std::vector<char> readFile(const std::string& fileName);
+
+  static void createShaderModule(EngineDevice& geDevice,
+                                 const std::vector<char>& code,
+                                 VkShaderModule* shaderModule);
+
   void bind(VkCommandBuffer commandBuffer);
 
  private:
@@ -51,15 +58,35 @@ class GraphicsPipeline {
                               const std::string& fragPath,
                               const PipelineConfigInfo& configInfo);
 
-  void createShaderModule(const std::vector<char>& code,
-                          VkShaderModule* shaderModule);
-
-  static std::vector<char> readFile(const std::string& fileName);
-
   EngineDevice& geDevice;
   VkPipeline graphicsPipeline;
   VkShaderModule vertShaderModule;
   VkShaderModule fragShaderModule;
+};
+
+class ComputePipeline {
+ public:
+  ComputePipeline(EngineDevice& geDevice, const std::string& shader);
+
+  ~ComputePipeline();
+
+  ComputePipeline(const ComputePipeline&) = delete;
+  ComputePipeline& operator=(const ComputePipeline&) = delete;
+
+  void bind(VkCommandBuffer commadBuffer);
+
+  void dispatch(VkCommandBuffer commandBuffer,
+                std::vector<VkDescriptorSet> descroptorSets);
+
+ private:
+  void createComputePipeline(
+      const std::string& shader,
+      std::vector<VkDescriptorSetLayout> descriptorSetLayouts);
+
+  EngineDevice& geDevice;
+  VkShaderModule compShaderModule;
+  VkPipeline computePipeline;
+  VkPipelineLayout computePipelineLayout;
 };
 
 }  // namespace GameEngine

@@ -61,7 +61,7 @@ void BboxRenderer::render(FrameInfo& frameInfo, DescriptorSets& descriptorSets)
           sizeof(BboxPushConstant),
           &push);
 
-      vkCmdDraw(frameInfo.commandBuffer, 8, 1, 0, 0);
+      vkCmdDraw(frameInfo.commandBuffer, 36, 1, 0, 0);
     }
   }
 }

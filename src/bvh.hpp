@@ -4,17 +4,28 @@
 
 #include "engine_device.hpp"
 #include "engine_game_object.hpp"
-#include "primitive.hpp"
+#include "engine_pipeline.hpp"
+#include "glm/fwd.hpp"
+#include "sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
+#include "vulkan/vulkan_core.h"
 
 namespace GameEngine {
 
-class TreeNode {
- public:
-  TreeNode(AABB& bbox);
-  TreeNode();
+struct InternalNode {
+  int left;
+  int right;
+  uint leftIsLeaf;
+  uint rightIsLeaf;
+  int parent;
+  uint visited;
+};
 
- private:
-  AABB bbox;
+struct LeafNode {
+  int parent;
+};
+
+struct PushConstantBVH {
+  uint32_t numPrimitives;
 };
 
 class BVHAccel {
@@ -24,14 +35,47 @@ class BVHAccel {
   ~BVHAccel();
 
  private:
-  TreeNode* createTree(TreeNode* node, uint32_t indexCount);
-  TreeNode* createTreeHelper();
+  void createMortonCompPipeline();
+  void createSortingPipeline();
+  void createTreeGenCompPipeline();
+  void createMergeCompPipeline();
+  void copyAABBData(const GameObject::Map& geObjects);
+  void initializeMortonCodeBuffers();
+  void initializeNodeBuffers();
+  void createDescriptorLayouts();
+  void createSemaphores();
 
-  void copyVertexData(const GameObject::Map& geObjects);
+  std::unique_ptr<EngineBuffer> primitiveAABBs;
+  std::unique_ptr<EngineBuffer> mortonCodes;
+  std::unique_ptr<EngineBuffer> sortedMortonCodes;
+  std::unique_ptr<EngineBuffer> primitiveIndices;
+  std::unique_ptr<EngineBuffer> leafNodes;
+  std::unique_ptr<EngineBuffer> internalNodes;
+  std::unique_ptr<EngineBuffer> nodeAABBs;
 
-  std::unique_ptr<EngineBuffer> culminatedVertexBuffer;
-  TreeNode* root;
+  std::unique_ptr<ComputePipeline> mortonGeneration;
+  std::unique_ptr<ComputePipeline> radixSortPipeline;
+  std::unique_ptr<ComputePipeline> treeGeneration;
+  std::unique_ptr<ComputePipeline> mergeAABBPipeline;
+
+  VkSemaphore mortonCodesGenerated;
+  VkSemaphore mortonCodesSorted;
+  VkSemaphore internalNodesCreated;
+
+  VkFence canDraw;
 
   EngineDevice& geDevice;
+
+  VkDescriptorSet primitiveAABBsBuffer;
+  VkDescriptorSet mortonCodesBuffer;
+  VkDescriptorSet sortedMortonCodesBuffer;
+  VkDescriptorSet primitiveIndicesBuffer;
+  VkDescriptorSet leafNodesBuffer;
+  VkDescriptorSet internalNodesBuffer;
+  VkDescriptorSet nodeAABBBuffer;
+
+  uint32_t primitiveCount;
+  glm::vec3 sceneMinBound{std::numeric_limits<float>::max()};
+  glm::vec3 sceneDiffBound{std::numeric_limits<float>::lowest()};
 };
 }  // namespace GameEngine

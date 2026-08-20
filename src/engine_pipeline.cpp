@@ -4,6 +4,8 @@
 #include <fstream>
 #include <stdexcept>
 
+#include "engine_device.hpp"
+#include "sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
 #include "vulkan/vulkan_core.h"
 
 namespace GameEngine {
@@ -41,8 +43,8 @@ void GraphicsPipeline::createGraphicsPipeline(
   auto vertShaderCode = readFile(vertPath);
   auto fragShaderCode = readFile(fragPath);
 
-  createShaderModule(vertShaderCode, &vertShaderModule);
-  createShaderModule(fragShaderCode, &fragShaderModule);
+  createShaderModule(geDevice, vertShaderCode, &vertShaderModule);
+  createShaderModule(geDevice, fragShaderCode, &fragShaderModule);
 
   VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
   vertShaderStageInfo.sType =
@@ -110,7 +112,8 @@ void GraphicsPipeline::bind(VkCommandBuffer commandBuffer)
                     graphicsPipeline);
 }
 
-void GraphicsPipeline::createShaderModule(const std::vector<char>& code,
+void GraphicsPipeline::createShaderModule(EngineDevice& geDevice,
+                                          const std::vector<char>& code,
                                           VkShaderModule* shaderModule)
 {
   VkShaderModuleCreateInfo createInfo{};
@@ -243,4 +246,54 @@ std::vector<char> GraphicsPipeline::readFile(const std::string& fileName)
   return buffer;
 }
 
+// ---- Compute Pipeline ----- //
+ComputePipeline::ComputePipeline(EngineDevice& geDevice,
+                                 const std::string& shader)
+    : geDevice{geDevice}
+{
+  createComputePipeline(shader);
+}
+
+ComputePipeline::~ComputePipeline()
+{
+  vkDestroyShaderModule(geDevice.device(), compShaderModule, nullptr);
+
+  vkDestroyPipeline(geDevice.device(), computePipeline, nullptr);
+}
+
+void ComputePipeline::createComputePipeline(const std::string& shader)
+{
+  auto compShaderCode = GraphicsPipeline::readFile(shader);
+  GraphicsPipeline::createShaderModule(geDevice,
+                                       compShaderCode,
+                                       &compShaderModule);
+
+  VkPipelineShaderStageCreateInfo computeShaderStageInfo{};
+  computeShaderStageInfo.sType =
+      VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  computeShaderStageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+  computeShaderStageInfo.module = compShaderModule;
+  computeShaderStageInfo.pName = "main";
+
+  VkComputePipelineCreateInfo pipelineInfo{};
+  pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+  pipelineInfo.stage = computeShaderStageInfo;
+
+  if (vkCreateComputePipelines(geDevice.device(),
+                               VK_NULL_HANDLE,
+                               1,
+                               &pipelineInfo,
+                               nullptr,
+                               &computePipeline))
+  {
+    throw std::runtime_error("failed to create compute pipeline");
+  }
+}
+
+void ComputePipeline::bind(VkCommandBuffer commandBuffer)
+{
+  vkCmdBindPipeline(commandBuffer,
+                    VK_PIPELINE_BIND_POINT_COMPUTE,
+                    computePipeline);
+}
 }  // namespace GameEngine

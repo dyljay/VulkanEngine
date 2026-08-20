@@ -57,7 +57,7 @@ void EngineRenderer::createPipelineCreateInfo()
   if (EngineImage::HasStencilComponent(geSwapChain->getDepthImageFormat())) {
     pipelineCreate.stencilAttachmentFormat = geSwapChain->getDepthImageFormat();
   }
-}  // namespace GameEngine
+}
 
 void EngineRenderer::freeCommandBuffers()
 {

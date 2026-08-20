@@ -55,7 +55,7 @@ void main() {
   // TODO: compute centroid from primitiveAABBs[i], normalize against scene
   // bounds, encode with morton3D(), write to mortonCodes[i].
   vec3
-  centroid = ( primitiveAABBs[i] . min + primitiveAABBs[i] . max ) / 2 ;
+  centroid = ( primitiveAABBs[i] . min + primitiveAABBs[i] . max ) / 2.0 ;
 centroid = ( centroid - sceneMinBound ) / sceneDiffBound;
 uint mortonCode = morton3D(centroid );
 

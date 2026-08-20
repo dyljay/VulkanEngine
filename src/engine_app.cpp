@@ -49,7 +49,7 @@ EngineApp::EngineApp()
   std::vector<PoolSizeRatio> sizes = {
       {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3},
       {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3},
-      {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1}};
+      {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4}};
 
   globalPool = EngineDescriptorPoolGrowable::Builder(geDevice)
                    .setNumSets(MAX_DESCRIPTOR_SET)
@@ -150,6 +150,11 @@ void EngineApp::run()
                           bboxShaderFiles,
                           bboxLayout,
                           geRenderer.getPipelineRenderingInfo()};
+
+  // FIXME:
+  // BVHAccel bvhaccel{geObjects, geDevice};
+
+  // FIXME:
 
   EngineCamera camera{};
   camera.setViewDirection(glm::vec3(0.0f), glm::vec3(0.f, 0.f, 1.f));
@@ -257,10 +262,7 @@ void EngineApp::run()
       simpleRenderSystem.render(frameInfo, descriptorSets);
       pointLightSystem.render(frameInfo, descriptorSets);
       cubeMapRender.render(frameInfo, descriptorSets);
-
-      if (showbbox) {
-        bboxRender.render(frameInfo, descriptorSets);
-      }
+      bboxRender.render(frameInfo, descriptorSets);
 
       if (hasClicked) {
         /*

@@ -2,7 +2,7 @@
 
 #extension GL_EXT_buffer_reference : require
 
-const vec3 positions[8] = vec3[](
+const vec3 positions[36] = vec3[](
     // +X face
     vec3(1, -1, -1), vec3(1, -1, 1), vec3(1, 1, 1),
     vec3(1, 1, 1), vec3(1, 1, -1), vec3(1, -1, -1),
@@ -49,18 +49,12 @@ layout(push_constant) uniform Push {
   AABB tlas;
 } push;
 
-layout(location = 0) out vec4 outPositionLin;
-
 void main() {
   vec4 position = vec4(positions[gl_VertexIndex], 1.0);
 
-  position.x = (sign(position.x) == 1.0) ? push.tlas.min.x : push.tlas.max.x;
-  position.y = (sign(position.y) == 1.0) ? push.tlas.min.y : push.tlas.max.y;
-  position.x = (sign(position.z) == 1.0) ? push.tlas.min.z : push.tlas.max.z;
+  position.x = (sign(position.x) < 0) ? push.tlas.min.x : push.tlas.max.x;
+  position.y = (sign(position.y) < 0) ? push.tlas.min.y : push.tlas.max.y;
+  position.z = (sign(position.z) < 0) ? push.tlas.min.z : push.tlas.max.z;
 
-  vec4 position_mat = ubo.projection * ubo.view * push.model * position;
-
-  outPositionFlat = position;
-  outPositionLin = position;
-  gl_Position = position;
+  gl_Position = ubo.projection * ubo.view * push.model * position;
 }
