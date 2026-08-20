@@ -1,3 +1,11 @@
 [submodule "lib/fastgltf"]
 	path = lib/fastgltf
 	url = https://github.com/spnda/fastgltf
+
+[submodule "lib/sdl/vendored/SDL"]
+  path = lib/sdl/vendored/SDL
+  url = https://github.com/libsdl-org/SDL
+
+[submodule "lib/imgui"]
+  path = lib/imgui
+  url = https://github.com/ocornut/imgui
