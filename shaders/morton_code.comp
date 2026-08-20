@@ -49,6 +49,7 @@ uint morton3D(vec3 p) {
 }
 
 void main() {
+  // global invocation
   uint i = gl_GlobalInvocationID.x;
   if (i >= pc.numPrimitives) return;
 
