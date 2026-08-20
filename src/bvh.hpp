@@ -6,7 +6,6 @@
 #include "engine_game_object.hpp"
 #include "engine_pipeline.hpp"
 #include "glm/fwd.hpp"
-#include "sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
 #include "vulkan/vulkan_core.h"
 
 namespace GameEngine {
@@ -34,6 +33,10 @@ class BVHAccel {
 
   ~BVHAccel();
 
+  bool doesIntersect();
+
+  void inOrderTraversal();
+
  private:
   void createMortonCompPipeline();
   void createSortingPipeline();
@@ -42,7 +45,6 @@ class BVHAccel {
   void copyAABBData(const GameObject::Map& geObjects);
   void initializeMortonCodeBuffers();
   void initializeNodeBuffers();
-  void createDescriptorLayouts();
   void createSemaphores();
 
   std::unique_ptr<EngineBuffer> primitiveAABBs;

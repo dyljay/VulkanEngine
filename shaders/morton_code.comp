@@ -52,13 +52,14 @@ void main() {
   uint i = gl_GlobalInvocationID.x;
   if (i >= pc.numPrimitives) return;
 
-  // TODO: compute centroid from primitiveAABBs[i], normalize against scene
-  // bounds, encode with morton3D(), write to mortonCodes[i].
-  vec3
-  centroid = ( primitiveAABBs[i] . min + primitiveAABBs[i] . max ) / 2.0 ;
-centroid = ( centroid - sceneMinBound ) / sceneDiffBound;
-uint mortonCode = morton3D(centroid );
+  // find center
+  vec3 center = (primitiveAABBs[i].min + primitiveAABBs[i].max) / 2.0;
+  center = (center - pc.sceneMinBound) / pc.sceneDiffBound;
 
-mortonCodes[i] = mortonCodes;
-primitiveIndices[i] = i;
+  // encode
+  uint mortonCode = morton3D(center);
+
+  // write
+  mortonCodes[i] = mortonCode;
+  primitiveIndices[i] = i;
 }

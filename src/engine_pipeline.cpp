@@ -246,11 +246,16 @@ std::vector<char> GraphicsPipeline::readFile(const std::string& fileName)
   return buffer;
 }
 
+/////////////////////////////////
 // ---- Compute Pipeline ----- //
+/////////////////////////////////
+
 ComputePipeline::ComputePipeline(EngineDevice& geDevice,
-                                 const std::string& shader)
+                                 const std::string& shader,
+                                 VkDescriptorSetLayout descriptorSetLayout)
     : geDevice{geDevice}
 {
+  createPipelineLayout(descriptorSetLayout);
   createComputePipeline(shader);
 }
 
@@ -261,9 +266,27 @@ ComputePipeline::~ComputePipeline()
   vkDestroyPipeline(geDevice.device(), computePipeline, nullptr);
 }
 
+void ComputePipeline::createPipelineLayout(
+    VkDescriptorSetLayout descriptorSetLayout)
+{
+  VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+  pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+  pipelineLayoutInfo.setLayoutCount = 1;
+  pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
+
+  if (vkCreatePipelineLayout(geDevice.device(),
+                             &pipelineLayoutInfo,
+                             nullptr,
+                             &computePipelineLayout))
+  {
+    throw std::runtime_error("failed to create compute pipeline layout");
+  }
+}
+
 void ComputePipeline::createComputePipeline(const std::string& shader)
 {
   auto compShaderCode = GraphicsPipeline::readFile(shader);
+
   GraphicsPipeline::createShaderModule(geDevice,
                                        compShaderCode,
                                        &compShaderModule);
@@ -278,6 +301,7 @@ void ComputePipeline::createComputePipeline(const std::string& shader)
   VkComputePipelineCreateInfo pipelineInfo{};
   pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
   pipelineInfo.stage = computeShaderStageInfo;
+  pipelineInfo.layout = computePipelineLayout;
 
   if (vkCreateComputePipelines(geDevice.device(),
                                VK_NULL_HANDLE,

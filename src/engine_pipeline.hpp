@@ -66,7 +66,9 @@ class GraphicsPipeline {
 
 class ComputePipeline {
  public:
-  ComputePipeline(EngineDevice& geDevice, const std::string& shader);
+  ComputePipeline(EngineDevice& geDevice,
+                  const std::string& shader,
+                  VkDescriptorSetLayout descriptorSetLayout);
 
   ~ComputePipeline();
 
@@ -79,9 +81,9 @@ class ComputePipeline {
                 std::vector<VkDescriptorSet> descroptorSets);
 
  private:
-  void createComputePipeline(
-      const std::string& shader,
-      std::vector<VkDescriptorSetLayout> descriptorSetLayouts);
+  void createPipelineLayout(VkDescriptorSetLayout descriptorSetLayout);
+
+  void createComputePipeline(const std::string& shader);
 
   EngineDevice& geDevice;
   VkShaderModule compShaderModule;

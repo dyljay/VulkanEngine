@@ -19,28 +19,17 @@ namespace GameEngine {
 
 BVHAccel::BVHAccel(const GameObject::Map& geObjects, EngineDevice& geDevice)
     : geDevice{geDevice}
-{}
+{
+  copyAABBData(geObjects);
+  initializeMortonCodeBuffers();
+  initializeNodeBuffers();
+  createMortonCompPipeline();
+  createSortingPipeline();
+  createTreeGenCompPipeline();
+  createMergeCompPipeline();
+}
 
 BVHAccel::~BVHAccel() {}
-
-// TODO: come back and fix after finishing the compute pipeline class
-void BVHAccel::createComputePipelines()
-{
-  mortonGeneration =
-      std::make_unique<ComputePipeline>(geDevice, "./shaders/morton_code.comp");
-
-  radixSortPipeline =
-      std::make_unique<ComputePipeline>(geDevice,
-                                        "./shaders/single_radixsort.comp");
-
-  treeGeneration =
-      std::make_unique<ComputePipeline>(geDevice,
-                                        "./shaders/radix_tree_build.comp");
-
-  mergeAABBPipeline =
-      std::make_unique<ComputePipeline>(geDevice,
-                                        "./shaders/aabb_propagate.comp");
-}
 
 void BVHAccel::createMortonCompPipeline()
 {
@@ -55,6 +44,11 @@ void BVHAccel::createMortonCompPipeline()
                                              VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
                                              VK_SHADER_STAGE_COMPUTE_BIT)
                                  .build();
+
+  mortonGeneration = std::make_unique<ComputePipeline>(
+      geDevice,
+      "./shaders/morton_code.comp",
+      descriptorSetLayout->getDescriptorSetLayout());
 }
 
 void BVHAccel::createSortingPipeline()
@@ -67,6 +61,10 @@ void BVHAccel::createSortingPipeline()
                                              VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
                                              VK_SHADER_STAGE_COMPUTE_BIT)
                                  .build();
+  radixSortPipeline = std::make_unique<ComputePipeline>(
+      geDevice,
+      "./shaders/single_radixsort.comp",
+      descriptorSetLayout->getDescriptorSetLayout());
 }
 
 void BVHAccel::createTreeGenCompPipeline()
@@ -82,6 +80,11 @@ void BVHAccel::createTreeGenCompPipeline()
                                              VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
                                              VK_SHADER_STAGE_COMPUTE_BIT)
                                  .build();
+
+  treeGeneration = std::make_unique<ComputePipeline>(
+      geDevice,
+      "./shaders/radix_tree_build.comp",
+      descriptorSetLayout->getDescriptorSetLayout());
 }
 
 void BVHAccel::createMergeCompPipeline()
@@ -103,6 +106,11 @@ void BVHAccel::createMergeCompPipeline()
                                              VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
                                              VK_SHADER_STAGE_COMPUTE_BIT)
                                  .build();
+
+  mergeAABBPipeline = std::make_unique<ComputePipeline>(
+      geDevice,
+      "./shaders/aabb_propagate.comp",
+      descriptorSetLayout->getDescriptorSetLayout());
 }
 
 void BVHAccel::copyAABBData(const GameObject::Map& geObjects)
