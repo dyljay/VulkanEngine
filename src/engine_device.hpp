@@ -7,7 +7,7 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wnullability-completeness"
-#include "vk_mem_alloc.h"
+#include "vk_mem_alloc.hpp"
 #pragma clang diagnostic pop
 
 // std lib headers
