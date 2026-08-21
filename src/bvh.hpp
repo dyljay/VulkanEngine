@@ -51,6 +51,7 @@ class BVHAccel {
   std::unique_ptr<EngineBuffer> mortonCodes;
   std::unique_ptr<EngineBuffer> sortedMortonCodes;
   std::unique_ptr<EngineBuffer> primitiveIndices;
+  std::unique_ptr<EngineBuffer> primitiveIndicesOut;
   std::unique_ptr<EngineBuffer> leafNodes;
   std::unique_ptr<EngineBuffer> internalNodes;
   std::unique_ptr<EngineBuffer> nodeAABBs;

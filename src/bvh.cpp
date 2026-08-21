@@ -12,7 +12,9 @@
 #include "engine_device.hpp"
 #include "engine_game_object.hpp"
 #include "engine_pipeline.hpp"
+#include "fastgltf/types.hpp"
 #include "primitive.hpp"
+#include "sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
 #include "vulkan/vulkan_core.h"
 
 namespace GameEngine {
@@ -161,7 +163,16 @@ void BVHAccel::initializeMortonCodeBuffers()
       geDevice,
       sizeof(uint32_t),
       primitiveCount,
-      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+      VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
+
+  primitiveIndicesOut = std::make_unique<EngineBuffer>(
+      geDevice,
+      sizeof(uint32_t),
+      primitiveCount,
+      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+          VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
       VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
 
   mortonCodes = std::make_unique<EngineBuffer>(
@@ -198,6 +209,23 @@ void BVHAccel::initializeNodeBuffers()
       VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
           VK_BUFFER_USAGE_TRANSFER_DST_BIT,
       VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
+
+  // initializing internalNodes[0].parent = -1 for the root node so terminating
+  // condition can be met
+  EngineBuffer internalWrite{geDevice,
+                             sizeof(InternalNode),
+                             1,
+                             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                             VMA_MEMORY_USAGE_AUTO_PREFER_HOST};
+  InternalNode rootNode{};
+  rootNode.parent = -1;
+  internalWrite.map();
+  internalWrite.writeToBuffer(&rootNode);
+  internalWrite.unmap();
+
+  geDevice.copyBuffer(internalNodes->getBuffer(),
+                      internalWrite.getBuffer(),
+                      sizeof(InternalNode));
 
   nodeAABBs = std::make_unique<EngineBuffer>(
       geDevice,
