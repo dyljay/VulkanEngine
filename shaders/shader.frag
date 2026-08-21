@@ -154,6 +154,5 @@ void main() {
 
   vec3 ambient = (ubo.ambientLightColor.xyz * ubo.ambientLightColor.w + ambientLight) * albedo.rgb;
 
-  // total sum
   outColor = vec4(Lo + ambientSpecular + ambient, albedo.a);
 }

@@ -1,40 +1,38 @@
 #pragma once
 
-#include "engine_mesh.hpp"
-#include "glm/fwd.hpp"
 #include <memory>
 #include <vector>
 
+#include "engine_mesh.hpp"
+#include "glm/fwd.hpp"
+
 namespace GameEngine {
 
-struct DrawContext;
-
 class IRenderable {
-  virtual void Draw(const glm::mat4 transform, DrawContext &ctx) = 0;
+  virtual void Draw(const glm::mat4 transform) = 0;
 };
 
 class Node : public IRenderable {
-public:
-  std::unique_ptr<Node> parent;
-  std::vector<std::unique_ptr<Node>> children;
+ public:
+  std::weak_ptr<Node> parent;
+  std::vector<std::shared_ptr<Node>> children;
 
   Node();
   ~Node();
 
-  void refreshTransform(const glm::mat4 &parentMatrix);
+  void refreshTransform(const glm::mat4& parentMatrix);
 
-  virtual void Draw(const glm::mat4 &transform, DrawContext &ctx);
+  virtual void Draw(const glm::mat4& transform);
 
-private:
   glm::mat4 localTransform;
   glm::mat4 worldTransform;
 };
 
 class MeshNode : public Node {
-public:
-  virtual void Draw(const glm::mat4 transform, DrawContext &ctx) override;
+ public:
+  virtual void Draw(const glm::mat4& transform) override;
 
-private:
-  std::unique_ptr<EngineMesh> mesh;
+ private:
+  std::shared_ptr<EngineMesh> mesh;
 };
-} // namespace GameEngine
+}  // namespace GameEngine

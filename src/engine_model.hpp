@@ -47,8 +47,8 @@ class EngineModel {
   void loadTextures();
   void loadVertices();
 
-  VkFilter getMinFilter();
-  VkFilter getMagFilter();
+  VkFilter getFilter(fastgltf::Filter filter);
+  VkSamplerMipmapMode getSampler(fastgltf::Filter filter);
 
   EngineDevice& geDevice;
   fastgltf::Asset gltf;

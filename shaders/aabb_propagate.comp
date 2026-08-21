@@ -12,10 +12,8 @@ layout(push_constant) uniform PushConstants {
 } pc;
 
 struct AABB {
-  vec3 min;
-  float pad0;
-  vec3 max;
-  float pad1;
+  vec4 min;
+  vec4 max;
 };
 struct InternalNode {
   int left;

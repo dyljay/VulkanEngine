@@ -143,7 +143,9 @@ void EngineMesh::createBuffer(EngineDevice& geDevice,
       VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT |
           VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
           VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-      VMA_MEMORY_USAGE_GPU_ONLY);
+      VMA_MEMORY_USAGE_GPU_ONLY,
+      1,
+      VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT);
 
   VkBufferDeviceAddressInfo deviceAddressInfo{};
   deviceAddressInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
@@ -156,7 +158,9 @@ void EngineMesh::createBuffer(EngineDevice& geDevice,
       indexBufferSize,
       1,
       VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-      VMA_MEMORY_USAGE_GPU_ONLY);
+      VMA_MEMORY_USAGE_GPU_ONLY,
+      1,
+      VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT);
 
   EngineBuffer stagingBuffer{
       geDevice,

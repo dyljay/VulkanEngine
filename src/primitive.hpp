@@ -1,7 +1,9 @@
 #pragma once
 
+#include <cassert>
 #include <iostream>
 #include <limits>
+#include <vector>
 
 #include "glm/fwd.hpp"
 #include "glm/glm.hpp"
@@ -11,8 +13,8 @@ namespace GameEngine {
 struct Primitive {};
 
 struct AABB : Primitive {
-  glm::vec3 min{std::numeric_limits<float>::max()};
-  glm::vec3 max{std::numeric_limits<float>::lowest()};
+  glm::vec4 min{std::numeric_limits<float>::max()};
+  glm::vec4 max{std::numeric_limits<float>::lowest()};
 
   void testBounds(const glm::vec3& bounds)
   {
@@ -37,6 +39,15 @@ struct AABB : Primitive {
     }
   }
 
+  void recomputeBoundsWorldSpace(const glm::mat4& model)
+  {
+    assert(min.x == std::numeric_limits<float>::max() &&
+           "Cannot recompute bounds before min is set");
+
+    assert(max.x == std::numeric_limits<float>::lowest() &&
+           "Cannot recompute bounds before max is set");
+  }
+
   void expandBBox(const AABB& bbox)
   {
     min = glm::min(min, bbox.min);
@@ -52,12 +63,8 @@ struct AABB : Primitive {
 };
 
 struct AABBPush {
-  glm::vec3 min;
-  float padding0;
-  glm::vec3 max;
-  float padding1;
+  glm::vec4 min;
+  glm::vec4 max;
 };
-
-struct SphereBound : Primitive {};
 
 }  // namespace GameEngine

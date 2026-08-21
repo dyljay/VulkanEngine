@@ -5,16 +5,14 @@
 layout(local_size_x = 256) in;
 
 layout(push_constant) uniform PushConstants {
-  vec3 sceneMinBound;
+  vec4 sceneMinBound;
   uint numPrimitives;
-  vec3 sceneDiffBound;
+  vec4 sceneDiffBound;
 } pc;
 
 struct AABB {
-  vec3 min;
-  float pad0;
-  vec3 max;
-  float pad1;
+  vec4 min;
+  vec4 max;
 };
 
 layout(std430, binding = 0) readonly buffer PrimitiveAABBs {
@@ -35,7 +33,7 @@ uint expandBits(uint x) {
   return x;
 }
 
-uint morton3D(vec3 p) {
+uint morton3D(vec4 p) {
   uint x = expandBits(min(uint(p.x * 1024.0), 1023u));
   uint y = expandBits(min(uint(p.y * 1024.0), 1023u));
   uint z = expandBits(min(uint(p.z * 1024.0), 1023u));
@@ -51,7 +49,7 @@ void main() {
   if (i >= pc.numPrimitives) return;
 
   // find center
-  vec3 center = (primitiveAABBs[i].min + primitiveAABBs[i].max) / 2.0;
+  vec4 center = (primitiveAABBs[i].min + primitiveAABBs[i].max) / 2.0;
   center = (center - pc.sceneMinBound) / pc.sceneDiffBound;
 
   // encode

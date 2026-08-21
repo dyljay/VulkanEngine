@@ -262,8 +262,9 @@ void EngineApp::run()
       simpleRenderSystem.render(frameInfo, descriptorSets);
       pointLightSystem.render(frameInfo, descriptorSets);
       cubeMapRender.render(frameInfo, descriptorSets);
-      bboxRender.render(frameInfo, descriptorSets);
-
+      if (showbbox) {
+        bboxRender.render(frameInfo, descriptorSets);
+      }
       if (hasClicked) {
         /*
         if (auto commandBuffer_off = offscreenRenderer.beginFrame()) {
@@ -457,7 +458,7 @@ void EngineApp::loadGameObjects()
   std::vector<glm::vec3> lightColors = {{0.2f, 0.2f, .7f}, {0.2f, 0.2f, .7f}};
 
   for (int i = 0; i < lightColors.size(); i++) {
-    auto pointLight = GameObject::makePointLight(1.f);
+    auto pointLight = GameObject::makePointLight(10.f);
     pointLight.color = lightColors[i];
 
     auto rotateLight =

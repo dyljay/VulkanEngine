@@ -2,11 +2,9 @@
 
 #include <sys/types.h>
 
-#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
-#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <variant>
@@ -208,15 +206,17 @@ void EngineModel::loadTextures()
                                           &nrChannels,
                                           STBI_rgb_alpha);
 
-              VkFilter minFilter = getMinFilter();
-              VkFilter magFilter = getMagFilter();
+              VkFilter minFilter = VK_FILTER_LINEAR;
+              VkFilter magFilter = VK_FILTER_LINEAR;
               VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB;
+              VkSamplerMipmapMode mipMapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
               texture->Init(width,
                             height,
                             imageFormat,
                             pixels,
                             minFilter,
-                            magFilter);
+                            magFilter,
+                            mipMapMode);
 
               stbi_image_free(pixels);
             },
@@ -231,15 +231,17 @@ void EngineModel::loadTextures()
                   &nrChannels,
                   STBI_rgb_alpha);
 
-              VkFilter minFilter = getMinFilter();
-              VkFilter magFilter = getMagFilter();
+              VkFilter minFilter = VK_FILTER_LINEAR;
+              VkFilter magFilter = VK_FILTER_LINEAR;
               VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB;
+              VkSamplerMipmapMode mipMapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
               texture->Init(width,
                             height,
                             imageFormat,
                             pixels,
                             minFilter,
-                            magFilter);
+                            magFilter,
+                            mipMapMode);
 
               stbi_image_free(pixels);
             },
@@ -265,15 +267,18 @@ void EngineModel::loadTextures()
                             &nrChannels,
                             STBI_rgb_alpha);
 
-                        VkFilter minFilter = getMinFilter();
-                        VkFilter magFilter = getMagFilter();
+                        VkFilter minFilter = VK_FILTER_LINEAR;
+                        VkFilter magFilter = VK_FILTER_LINEAR;
                         VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB;
+                        VkSamplerMipmapMode mipMapMode =
+                            VK_SAMPLER_MIPMAP_MODE_LINEAR;
                         texture->Init(width,
                                       height,
                                       imageFormat,
                                       pixels,
                                       minFilter,
-                                      magFilter);
+                                      magFilter,
+                                      mipMapMode);
 
                         stbi_image_free(pixels);
                       }},
@@ -340,8 +345,38 @@ void EngineModel::loadMaterials()
   }
 }
 
-VkFilter EngineModel::getMinFilter() { return VK_FILTER_NEAREST; }
-VkFilter EngineModel::getMagFilter() { return VK_FILTER_NEAREST; }
+VkFilter EngineModel::getFilter(fastgltf::Filter filter)
+{
+  switch (filter) {
+    // nearest samplers
+    case fastgltf::Filter::Nearest:
+    case fastgltf::Filter::NearestMipMapNearest:
+    case fastgltf::Filter::NearestMipMapLinear:
+      return VK_FILTER_NEAREST;
+
+    // linear samplers
+    case fastgltf::Filter::Linear:
+    case fastgltf::Filter::LinearMipMapNearest:
+    case fastgltf::Filter::LinearMipMapLinear:
+
+    default:
+      return VK_FILTER_LINEAR;
+  }
+}
+
+VkSamplerMipmapMode EngineModel::getSampler(fastgltf::Filter filter)
+{
+  switch (filter) {
+    case fastgltf::Filter::NearestMipMapNearest:
+    case fastgltf::Filter::LinearMipMapNearest:
+      return VK_SAMPLER_MIPMAP_MODE_NEAREST;
+
+    case fastgltf::Filter::NearestMipMapLinear:
+    case fastgltf::Filter::LinearMipMapLinear:
+    default:
+      return VK_SAMPLER_MIPMAP_MODE_LINEAR;
+  }
+}
 
 void EngineModel::bind(VkCommandBuffer commandBuffer)
 {

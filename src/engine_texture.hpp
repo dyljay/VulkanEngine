@@ -36,7 +36,8 @@ class EngineTexture {
             VkFormat imageFormat,
             stbi_uc* pixels,
             VkFilter minFilter,
-            VkFilter magFilter);
+            VkFilter magFilter,
+            VkSamplerMipmapMode mipMapMode);
 
   VkDescriptorImageInfo getDescriptorInfo();
   VkImageView getImageView() const { return textureImageView; }
@@ -61,7 +62,8 @@ class EngineTexture {
                        VkFormat format);
   void createSampler(VkSamplerAddressMode addressMode,
                      VkFilter minFilter = VK_FILTER_LINEAR,
-                     VkFilter magFilter = VK_FILTER_LINEAR);
+                     VkFilter magFilter = VK_FILTER_LINEAR,
+                     VkSamplerMipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR);
 
   void upload2D(int w, int h, stbi_uc* pixels);
   void uploadCube(const std::array<std::string, 6>& cubePaths);

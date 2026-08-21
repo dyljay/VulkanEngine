@@ -137,11 +137,15 @@ void BVHAccel::copyAABBData(const GameObject::Map& geObjects)
     }
   }
 
-  EngineBuffer stagingBuffer = EngineBuffer(geDevice,
-                                            sizeof(AABBPush),
-                                            aabbVec.size(),
-                                            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                                            VMA_MEMORY_USAGE_AUTO_PREFER_HOST);
+  EngineBuffer stagingBuffer =
+      EngineBuffer(geDevice,
+                   sizeof(AABBPush),
+                   aabbVec.size(),
+                   VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                   VMA_MEMORY_USAGE_AUTO_PREFER_HOST,
+                   1,
+                   VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+
   stagingBuffer.map();
   stagingBuffer.writeToBuffer((void*)aabbVec.data());
   stagingBuffer.unmap();
@@ -151,7 +155,10 @@ void BVHAccel::copyAABBData(const GameObject::Map& geObjects)
       sizeof(AABBPush),
       aabbVec.size(),
       VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-      VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
+      VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
+      1,
+      VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+          VMA_ALLOCATION_CREATE_MAPPED_BIT);
 
   geDevice.copyBuffer(stagingBuffer.getBuffer(),
                       primitiveAABBs->getBuffer(),
