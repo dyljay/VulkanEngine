@@ -12,6 +12,6 @@
 
 # compute shaders
 /opt/homebrew/bin/glslang -V shaders/morton_code.comp -o shaders/morton_code.comp.spv
-/opt/homebrew/bin/glslang -V shaders/single_radixsort.comp -o shaders/single_radixsort.comp.spv
+/opt/homebrew/bin/glslang -V --target-env vulkan1.1 shaders/single_radixsort.comp -o shaders/single_radixsort.comp.spv
 /opt/homebrew/bin/glslang -V shaders/radix_tree_build.comp -o shaders/radix_tree_build.comp.spv
 /opt/homebrew/bin/glslang -V shaders/aabb_propagate.comp -o shaders/aabb_propagate.comp.spv

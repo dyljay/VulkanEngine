@@ -60,7 +60,14 @@ void BVHAccel::createSortingPipeline()
                                  .addBinding(1,
                                              VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
                                              VK_SHADER_STAGE_COMPUTE_BIT)
+                                 .addBinding(2,
+                                             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                             VK_SHADER_STAGE_COMPUTE_BIT)
+                                 .addBinding(3,
+                                             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                             VK_SHADER_STAGE_COMPUTE_BIT)
                                  .build();
+
   radixSortPipeline = std::make_unique<ComputePipeline>(
       geDevice,
       "./shaders/single_radixsort.comp",
@@ -195,7 +202,7 @@ void BVHAccel::initializeNodeBuffers()
   nodeAABBs = std::make_unique<EngineBuffer>(
       geDevice,
       sizeof(AABBPush),
-      primitiveCount + primitiveCount - 1,
+      primitiveCount - 1,
       VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
           VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
       VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
