@@ -144,6 +144,7 @@ void BVHAccel::copyAABBData(const GameObject::Map& geObjects)
                                             VMA_MEMORY_USAGE_AUTO_PREFER_HOST);
   stagingBuffer.map();
   stagingBuffer.writeToBuffer((void*)aabbVec.data());
+  stagingBuffer.unmap();
 
   primitiveAABBs = std::make_unique<EngineBuffer>(
       geDevice,

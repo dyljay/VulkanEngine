@@ -18,8 +18,8 @@ class EngineApp {
 
   void run();
   void updateGameObjects(float deltaTime);
-  static constexpr int WIDTH = 1080;
-  static constexpr int HEIGHT = 780;
+  static constexpr int WIDTH = 1180;
+  static constexpr int HEIGHT = 980;
 
   EngineApp();
   ~EngineApp();
