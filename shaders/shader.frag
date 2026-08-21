@@ -106,12 +106,10 @@ void main() {
   float roughness = matProperties.roughness;
   float metallic = matProperties.metallic;
   if (bool(matProperties.numFeatures & GLSL_HAS_METAL_MAP)) {
-    // gltf packs roughness in G and metallic in B
     vec4 metalRough = texture(bindlessTextures[(matProperties.metallicRoughness + matProperties.offset)], fragUV);
     roughness *= metalRough.g;
     metallic *= metalRough.b;
   }
-  // a roughness of 0 collapses the highlight to zero width and it vanishes
   roughness = clamp(roughness, 0.045, 1.0);
   float alpha = roughness * roughness;
 
@@ -121,7 +119,6 @@ void main() {
   vec3 cameraPosWorld = ubo.invView[3].xyz;
   vec3 viewDirection = normalize(cameraPosWorld - fragPosWorld);
 
-  // dielectrics reflect ~4% head on, metals reflect their own albedo
   vec3 f0 = mix(vec3(0.04), albedo.rgb, metallic);
   float nDotV = max(dot(surfaceNormal, viewDirection), 0.0);
 
@@ -136,7 +133,6 @@ void main() {
     float nDotL = max(dot(surfaceNormal, directionToLight), 0);
     vec3 intensity = light.color.xyz * light.color.w * attenuation;
 
-    // cook-torrance specular
     vec3 halfAngle = normalize(directionToLight + viewDirection);
 
     float D = normalDistribution(surfaceNormal, halfAngle, alpha);
@@ -145,19 +141,15 @@ void main() {
 
     vec3 specular = (D * G * F) / max(4.0 * nDotV * nDotL, 0.001);
 
-    // whatever fresnel reflects is not refracted, and metals have no diffuse lobe
     vec3 kD = (vec3(1.0) - F) * (1.0 - metallic);
 
     Lo += (kD * albedo.rgb / PI + specular) * intensity * nDotL;
   }
 
-  // reflection of cubemap
   vec3 I = normalize(fragPosWorld - cameraPosWorld);
   vec3 R = reflect(I, surfaceNormal);
   vec3 fragSkybox = texture(cubeMap, R).rgb;
 
-  // ambient specular component from cubemap - stopgap until the cubemap has a
-  // prefiltered mip chain, fade the mirror out as the surface roughens
   vec3 ambientSpecular = fragSkybox * f0 * (1.0 - roughness);
 
   vec3 ambient = (ubo.ambientLightColor.xyz * ubo.ambientLightColor.w + ambientLight) * albedo.rgb;
