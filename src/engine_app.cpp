@@ -28,6 +28,7 @@
 #include "glm/fwd.hpp"
 #include "glm/trigonometric.hpp"
 #include "imgui_impl_sdl3.h"
+#include "offscreenSystem.hpp"
 #include "pbrMaterials.hpp"
 #include "point_light_system.hpp"
 #include "shaderList.hpp"
@@ -136,12 +137,11 @@ void EngineApp::run()
                                     cubeMapShaderFiles,
                                     cubeMapLayouts,
                                     geRenderer.getPipelineRenderingInfo()};
-  /*
-    OffscreenSystem offScreenSystem{geDevice,
-                                    offscreenShaderFiles,
-                                    pointLightLayouts,
-                                    offscreenRenderer.getRenderPass()};
-  */
+
+  OffscreenSystem offScreenSystem{geDevice,
+                                  offscreenShaderFiles,
+                                  pointLightLayouts,
+                                  offscreenRenderer.getPipelineRenderingInfo()};
 
   std::vector<VkDescriptorSetLayout> bboxLayout{mainLayouts[0]};
   BboxRenderer bboxRender{geDevice,
@@ -264,15 +264,16 @@ void EngineApp::run()
         bboxRender.render(frameInfo, descriptorSets);
       }
       if (hasClicked) {
-        /*
         if (auto commandBuffer_off = offscreenRenderer.beginFrame()) {
-          offscreenRenderer.beginRenderPass(commandBuffer_off);
+          offscreenRenderer.beginRender(commandBuffer_off);
           frameInfo.commandBuffer = commandBuffer_off;
           offScreenSystem.render(frameInfo, descriptorSets);
-          offscreenRenderer.endRenderPass(commandBuffer_off);
+          offscreenRenderer.endRender(commandBuffer_off);
           offscreenRenderer.endFrame();
 
           id_t objIDFromPixel = *offscreenRenderer.getPixelData<uint32_t>(x, y);
+
+          std::cout << objIDFromPixel << std::endl;
 
           if (objIDFromPixel > 0) {
             geObjects.at(objIDFromPixel).isSelected = true;
@@ -280,7 +281,6 @@ void EngineApp::run()
 
           hasClicked = false;
         }
-        */
       }
 
       // ui

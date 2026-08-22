@@ -261,6 +261,7 @@ void OffScreenRenderer::init()
   createDepthResources();
   createSyncObject();
   createCommandBuffer();
+  createPipelineRenderingCreateInfo();
 }
 
 void OffScreenRenderer::createCommandBuffer()
@@ -292,7 +293,7 @@ void OffScreenRenderer::freeCommandBuffer()
                        &commandBuffer);
 }
 
-void OffScreenRenderer::beginRenderPass(VkCommandBuffer commandBuffer)
+void OffScreenRenderer::beginRender(VkCommandBuffer commandBuffer)
 {
   assert(isFrameStarted &&
          "Can't call beginSwapChainRenderPass if frame "
@@ -312,24 +313,43 @@ void OffScreenRenderer::beginRenderPass(VkCommandBuffer commandBuffer)
       VK_IMAGE_LAYOUT_UNDEFINED,
       VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
-  VkRenderPassBeginInfo renderPassInfo{};
-  renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-  renderPassInfo.renderPass = renderPass;
-  renderPassInfo.framebuffer = frameBuffer;
+  VkRenderingAttachmentInfo colorAttachmentInfos = {
+      .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+      .imageView = offscreenImage->getImageView(),
+      .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      .resolveMode = VK_RESOLVE_MODE_NONE,
+      .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+      .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+      .clearValue = {0.0, 0.0, 0.0},
+  };
 
-  renderPassInfo.renderArea.offset = {0, 0};
-  renderPassInfo.renderArea.extent = {offscreenImage->getWidth(),
-                                      offscreenImage->getHeight()};
+  VkRenderingAttachmentInfo depthAttachmentInfos = {
+      .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+      .imageView = depthImage->getImageView(),
+      .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+      .resolveMode = VK_RESOLVE_MODE_NONE,
+      .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+      .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+      .clearValue = {1.0, 0.0},
+
+  };
+
+  VkRenderingInfo renderInfo{};
+  renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+  renderInfo.renderArea.offset = {0, 0};
+  renderInfo.renderArea.extent = {offscreenImage->getWidth(),
+                                  offscreenImage->getHeight()};
+  renderInfo.layerCount = 1;
+  renderInfo.viewMask = 0;
+  renderInfo.colorAttachmentCount = 1;
+  renderInfo.pColorAttachments = &colorAttachmentInfos;
+  renderInfo.pDepthAttachment = &depthAttachmentInfos;
 
   std::array<VkClearValue, 2> clearValues{};
   clearValues[0].color = {0.0f, 0.0f, 0.0f, 0.0f};
   clearValues[1].depthStencil = {1.0f, 0};
-  renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-  renderPassInfo.pClearValues = clearValues.data();
 
-  vkCmdBeginRenderPass(commandBuffer,
-                       &renderPassInfo,
-                       VK_SUBPASS_CONTENTS_INLINE);
+  vkCmdBeginRendering(commandBuffer, &renderInfo);
 
   VkViewport viewport{};
   viewport.x = 0.0f;
@@ -344,9 +364,9 @@ void OffScreenRenderer::beginRenderPass(VkCommandBuffer commandBuffer)
   vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }
 
-void OffScreenRenderer::endRenderPass(VkCommandBuffer commandBuffer)
+void OffScreenRenderer::endRender(VkCommandBuffer commandBuffer)
 {
-  vkCmdEndRenderPass(commandBuffer);
+  vkCmdEndRendering(commandBuffer);
 }
 
 VkResult OffScreenRenderer::submitCommandBuffer()
@@ -377,14 +397,11 @@ VkCommandBuffer OffScreenRenderer::beginFrame()
 {
   assert(!isFrameStarted && "Can't call beginFrame while already in progress");
 
-  // FIXME: account for resized window
-  /*
   if (geWindow.wasWindowResized()) {
     geWindow.resetWindowResizedFlag();
     init();
     return nullptr;
   }
-  */
   isFrameStarted = true;
 
   VkCommandBufferBeginInfo beginInfo{};
@@ -439,6 +456,18 @@ void OffScreenRenderer::createOffscreenImage()
 
   offscreenImage =
       std::make_unique<EngineImage>(geDevice, imageInfo, imageViewInfo);
+}
+
+void OffScreenRenderer::createPipelineRenderingCreateInfo()
+{
+  pipelineCreate.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
+  pipelineCreate.pNext = VK_NULL_HANDLE;
+
+  attachmentFormat = offscreenImage->getImageFormat();
+
+  pipelineCreate.colorAttachmentCount = 1;
+  pipelineCreate.pColorAttachmentFormats = &attachmentFormat;
+  pipelineCreate.depthAttachmentFormat = depthImage->getImageFormat();
 }
 
 void OffScreenRenderer::createDepthResources()

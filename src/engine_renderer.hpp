@@ -73,6 +73,7 @@ class EngineRenderer {
 class OffScreenRenderer {
  public:
   OffScreenRenderer(EngineWindow& geWindow, EngineDevice& geDevice);
+
   ~OffScreenRenderer();
 
   EngineDevice& getDevice() const { return geDevice; }
@@ -81,12 +82,17 @@ class OffScreenRenderer {
   OffScreenRenderer(const OffScreenRenderer&) = delete;
   OffScreenRenderer& operator=(const OffScreenRenderer&) = delete;
 
+  VkPipelineRenderingCreateInfo getPipelineRenderingInfo() const
+  {
+    return pipelineCreate;
+  }
+
   std::unique_ptr<EngineImage>& getImage() { return offscreenImage; }
 
   VkCommandBuffer beginFrame();
   void endFrame();
-  void beginRenderPass(VkCommandBuffer commandBuffer);
-  void endRenderPass(VkCommandBuffer commandBuffer);
+  void beginRender(VkCommandBuffer commandBuffer);
+  void endRender(VkCommandBuffer commandBuffer);
 
   template <typename T>
   T* getPixelData(uint32_t x, uint32_t y)
@@ -128,7 +134,7 @@ class OffScreenRenderer {
 
   void freeResources();
   void freeCommandBuffer();
-
+  void createPipelineRenderingCreateInfo();
   VkResult submitCommandBuffer();
 
   EngineDevice& geDevice;
@@ -146,6 +152,9 @@ class OffScreenRenderer {
 
   VkFence imageRenderedFence;
 
+  VkPipelineRenderingCreateInfo pipelineCreate{};
+
+  VkFormat attachmentFormat;
   bool isFrameStarted = false;
 };
 }  // namespace GameEngine
