@@ -45,12 +45,12 @@ class EngineApp {
   GameObject::Map geObjects;
 
   const std::array<std::string, 6> cubeTextureFilePaths = {
-      "./textures/px.jpg",
-      "./textures/nx.jpg",
-      "./textures/py.jpg",
-      "./textures/ny.jpg",
-      "./textures/pz.jpg",
-      "./textures/nz.jpg",
+      "./images/px.jpg",
+      "./images/nx.jpg",
+      "./images/py.jpg",
+      "./images/ny.jpg",
+      "./images/pz.jpg",
+      "./images/nz.jpg",
   };
 
   bool hasClicked = false;

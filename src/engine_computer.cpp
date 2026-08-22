@@ -22,6 +22,8 @@ EngineComputer::~EngineComputer()
                        commandBuffers.data());
 }
 
+void EngineComputer::createSyncObjects() {}
+
 void EngineComputer::createCommandBuffers()
 {
   commandBuffers.resize(numProcesses);
@@ -41,7 +43,12 @@ void EngineComputer::createCommandBuffers()
   }
 }
 
-VkCommandBuffer EngineComputer::getAvailableCommandBuffer() {}
+VkCommandBuffer EngineComputer::getAvailableCommandBuffer()
+{
+  VkCommandBuffer commandBuffer;
+
+  return commandBuffer;
+}
 
 VkCommandBuffer EngineComputer::beginComputation()
 {
