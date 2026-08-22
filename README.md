@@ -42,8 +42,7 @@ Requires the Vulkan SDK, CMake, Ninja, and `glslang`. Local SDK paths live in
 
 ```sh
 git clone --recurse-submodules <repo>
-./compile_shaders.sh   # GLSL -> SPIR-V
-./build.sh             # configure, build, and launch
+./build.sh             # configure, SPIR-V, build, and launch 
 ```
 
 `build.sh` runs the binary at the end, so it's a build-and-run script rather
