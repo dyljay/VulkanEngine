@@ -1,8 +1,7 @@
 # Vulkan Engine
 
 A hobby real-time renderer written in C++20 on top of Vulkan, running on macOS
-through MoltenVK. Just something fun I've been working on for the past several
-months now.
+through MoltenVK. Something fun I've been working on for almost a year now.
 
 ![Scene rendered without bounding volumes](images/withoutBbox.png)
 
