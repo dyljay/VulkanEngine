@@ -1,8 +1,10 @@
 #include "engine_pipeline.hpp"
 
 #include <cassert>
+#include <cstdint>
 #include <fstream>
 #include <stdexcept>
+#include <vector>
 
 #include "engine_device.hpp"
 #include "sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
@@ -252,27 +254,37 @@ std::vector<char> GraphicsPipeline::readFile(const std::string& fileName)
 
 ComputePipeline::ComputePipeline(EngineDevice& geDevice,
                                  const std::string& shader,
-                                 VkDescriptorSetLayout descriptorSetLayout)
+                                 VkDescriptorSetLayout descriptorSetLayout,
+                                 uint32_t pushConstantSize)
     : geDevice{geDevice}
 {
-  createPipelineLayout(descriptorSetLayout);
+  createPipelineLayout(descriptorSetLayout, pushConstantSize);
   createComputePipeline(shader);
 }
 
 ComputePipeline::~ComputePipeline()
 {
   vkDestroyShaderModule(geDevice.device(), compShaderModule, nullptr);
-
+  vkDestroyPipelineLayout(geDevice.device(), computePipelineLayout, nullptr);
   vkDestroyPipeline(geDevice.device(), computePipeline, nullptr);
 }
 
 void ComputePipeline::createPipelineLayout(
-    VkDescriptorSetLayout descriptorSetLayout)
+    VkDescriptorSetLayout descriptorSetLayout,
+    uint32_t pushConstantSize)
 {
   VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   pipelineLayoutInfo.setLayoutCount = 1;
   pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
+  pipelineLayoutInfo.pushConstantRangeCount = 1;
+
+  VkPushConstantRange pushConstantRange{};
+  pushConstantRange.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+  pushConstantRange.offset = 0;
+  pushConstantRange.size = pushConstantSize;
+
+  pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 
   if (vkCreatePipelineLayout(geDevice.device(),
                              &pipelineLayoutInfo,
@@ -320,4 +332,9 @@ void ComputePipeline::bind(VkCommandBuffer commandBuffer)
                     VK_PIPELINE_BIND_POINT_COMPUTE,
                     computePipeline);
 }
+
+void ComputePipeline::dispatch(
+    VkCommandBuffer commandBuffer,
+    const std::vector<VkDescriptorSet>& descriptorSets)
+{}
 }  // namespace GameEngine

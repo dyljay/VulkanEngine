@@ -75,6 +75,7 @@ void EngineUI::initUI()
   ImGui_ImplVulkan_PipelineInfo pipelinInfo{};
   pipelinInfo.PipelineRenderingCreateInfo =
       geRenderer.getPipelineRenderingInfo();
+  pipelinInfo.MSAASamples = geRenderer.getDevice().getSampleCount();
   initInfo.PipelineInfoMain = pipelinInfo;
 
   ImGui_ImplVulkan_Init(&initInfo);

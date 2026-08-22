@@ -27,9 +27,7 @@
 #include "engine_ui.hpp"
 #include "glm/fwd.hpp"
 #include "glm/trigonometric.hpp"
-#include "imgui.h"
 #include "imgui_impl_sdl3.h"
-#include "offscreenSystem.hpp"
 #include "pbrMaterials.hpp"
 #include "point_light_system.hpp"
 #include "shaderList.hpp"
@@ -152,7 +150,7 @@ void EngineApp::run()
                           geRenderer.getPipelineRenderingInfo()};
 
   // FIXME:
-  // BVHAccel bvhaccel{geObjects, geDevice};
+  BVHAccel bvhaccel{geObjects, geDevice, *globalPool};
 
   // FIXME:
 

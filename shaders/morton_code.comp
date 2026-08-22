@@ -6,8 +6,8 @@ layout(local_size_x = 256) in;
 
 layout(push_constant) uniform PushConstants {
   vec4 sceneMinBound;
-  uint numPrimitives;
   vec4 sceneDiffBound;
+  uint numPrimitives;
 } pc;
 
 struct AABB {

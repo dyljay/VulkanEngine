@@ -1,10 +1,10 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
 #include "engine_device.hpp"
-#include "sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
 #include "vulkan/vulkan_core.h"
 
 namespace GameEngine {
@@ -68,7 +68,8 @@ class ComputePipeline {
  public:
   ComputePipeline(EngineDevice& geDevice,
                   const std::string& shader,
-                  VkDescriptorSetLayout descriptorSetLayout);
+                  VkDescriptorSetLayout descriptorSetLayout,
+                  uint32_t pushConstantSize);
 
   ~ComputePipeline();
 
@@ -78,10 +79,11 @@ class ComputePipeline {
   void bind(VkCommandBuffer commadBuffer);
 
   void dispatch(VkCommandBuffer commandBuffer,
-                std::vector<VkDescriptorSet> descroptorSets);
+                const std::vector<VkDescriptorSet>& descroptorSets);
 
  private:
-  void createPipelineLayout(VkDescriptorSetLayout descriptorSetLayout);
+  void createPipelineLayout(VkDescriptorSetLayout descriptorSetLayout,
+                            uint32_t pushConstantSize);
 
   void createComputePipeline(const std::string& shader);
 

@@ -1,84 +1,75 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
-#include "engine_device.hpp"
+#include "engine_computer.hpp"
+#include "engine_descriptor.hpp"
 #include "engine_game_object.hpp"
 #include "engine_pipeline.hpp"
+#include "engine_swapchain.hpp"
 #include "glm/fwd.hpp"
 #include "vulkan/vulkan_core.h"
 
 namespace GameEngine {
 
-struct InternalNode {
-  int left;
-  int right;
-  uint leftIsLeaf;
-  uint rightIsLeaf;
-  int parent;
-  uint visited;
-};
-
-struct LeafNode {
-  int parent;
-};
-
-struct PushConstantBVH {
-  uint32_t numPrimitives;
-};
-
 class BVHAccel {
+  static constexpr int NUM_BUFFER = EngineSwapChain::MAX_FRAMES_IN_FLIGHT;
+
  public:
-  BVHAccel(const GameObject::Map& geObjects, EngineDevice& geDevice);
+  BVHAccel(const GameObject::Map& geObjects,
+           EngineDevice& geDevice,
+           EngineDescriptorPoolGrowable& growablePool);
 
   ~BVHAccel();
+
+  void constructTree();
 
   bool doesIntersect();
 
   void inOrderTraversal();
 
  private:
+  void initializeAABB(const GameObject::Map& geObjects);
+  void initializeMortonCodeBuffers();
+  void initializeNodeBuffers();
+  void createDescriptorSetLayouts();
+  void createDescriptorSets();
   void createMortonCompPipeline();
   void createSortingPipeline();
   void createTreeGenCompPipeline();
   void createMergeCompPipeline();
-  void copyAABBData(const GameObject::Map& geObjects);
-  void initializeMortonCodeBuffers();
-  void initializeNodeBuffers();
-  void createSemaphores();
+  void updateAABBDataIndex(const GameObject::Map& geObjects, int index);
 
-  std::unique_ptr<EngineBuffer> primitiveAABBs;
-  std::unique_ptr<EngineBuffer> mortonCodes;
-  std::unique_ptr<EngineBuffer> sortedMortonCodes;
-  std::unique_ptr<EngineBuffer> primitiveIndices;
-  std::unique_ptr<EngineBuffer> primitiveIndicesOut;
-  std::unique_ptr<EngineBuffer> leafNodes;
-  std::unique_ptr<EngineBuffer> internalNodes;
-  std::unique_ptr<EngineBuffer> nodeAABBs;
+  std::vector<std::unique_ptr<EngineBuffer>> primitiveAABBs;
+  std::vector<std::unique_ptr<EngineBuffer>> mortonCodes;
+  std::vector<std::unique_ptr<EngineBuffer>> sortedMortonCodes;
+  std::vector<std::unique_ptr<EngineBuffer>> primitiveIndices;
+  std::vector<std::unique_ptr<EngineBuffer>> primitiveIndicesOut;
+  std::vector<std::unique_ptr<EngineBuffer>> leafNodes;
+  std::vector<std::unique_ptr<EngineBuffer>> internalNodes;
+  std::vector<std::unique_ptr<EngineBuffer>> nodeAABBs;
 
   std::unique_ptr<ComputePipeline> mortonGeneration;
   std::unique_ptr<ComputePipeline> radixSortPipeline;
   std::unique_ptr<ComputePipeline> treeGeneration;
   std::unique_ptr<ComputePipeline> mergeAABBPipeline;
 
-  VkSemaphore mortonCodesGenerated;
-  VkSemaphore mortonCodesSorted;
-  VkSemaphore internalNodesCreated;
+  std::unique_ptr<EngineDescriptorSetLayout> threeBindings;
+  std::unique_ptr<EngineDescriptorSetLayout> fourBindings;
+  std::unique_ptr<EngineDescriptorSetLayout> fiveBindings;
 
-  VkFence canDraw;
-
-  EngineDevice& geDevice;
-
-  VkDescriptorSet primitiveAABBsBuffer;
-  VkDescriptorSet mortonCodesBuffer;
-  VkDescriptorSet sortedMortonCodesBuffer;
-  VkDescriptorSet primitiveIndicesBuffer;
-  VkDescriptorSet leafNodesBuffer;
-  VkDescriptorSet internalNodesBuffer;
-  VkDescriptorSet nodeAABBBuffer;
+  std::vector<VkDescriptorSet> mortonCodesDS;
+  std::vector<VkDescriptorSet> sortMortonCodesDS;
+  std::vector<VkDescriptorSet> treeDS;
+  std::vector<VkDescriptorSet> mergeAABBDS;
 
   uint32_t primitiveCount;
   glm::vec3 sceneMinBound{std::numeric_limits<float>::max()};
   glm::vec3 sceneDiffBound{std::numeric_limits<float>::lowest()};
+
+  EngineDevice& geDevice;
+  EngineDescriptorPoolGrowable& growablePool;
+  EngineComputer computationManager;
 };
 }  // namespace GameEngine

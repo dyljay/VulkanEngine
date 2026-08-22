@@ -7,14 +7,13 @@ namespace GameEngine {
 
 class EngineBuffer {
  public:
-  EngineBuffer(
-      EngineDevice& device,
-      VkDeviceSize instanceSize,
-      uint32_t instanceCount,
-      VkBufferUsageFlags usageFlags,
-      VmaMemoryUsage memoryUsage,
-      VkDeviceSize minOffsetAlignment = 1,
-      VmaAllocationCreateFlags vmaFlags = VMA_ALLOCATION_CREATE_MAPPED_BIT);
+  EngineBuffer(EngineDevice& device,
+               VkDeviceSize instanceSize,
+               uint32_t instanceCount,
+               VkBufferUsageFlags usageFlags,
+               VmaMemoryUsage memoryUsage,
+               VkDeviceSize minOffsetAlignment = 1,
+               VmaAllocationCreateFlags vmaFlags = 0);
 
   ~EngineBuffer();
 
