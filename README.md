@@ -33,7 +33,7 @@ whether the tree above them is right.
 - **4x MSAA** with resolve, using dynamic rendering rather than render passes
 - **Dear ImGui** integration for runtime controls
 - **GPU LBVH** *(in progress)* — morton codes, radix sort, radix tree
-  construction, and bottom-up AABB propagation, following Karras 2012
+  construction, and bottom-up AABB propagation, following [Karras 2012](https://dl.acm.org/doi/epdf/10.5555/2383795.2383801)
 
 ## Building
 
@@ -69,8 +69,11 @@ vendored directly under `lib/`.
 ## Notes/Credits
 
 Credit for these tutorials for getting me started:
-[Vulkan Game Engine Tutorial by Brendan Gaela](https://www.youtube.com/watch?v=Y9U9IE0gVHA&list=PL8327DO66nu9qYVKLDmdLW_84-yE4auCR)
-[Learn OpenGL](https://learnopengl.com/)
-[VkGuide](https://vkguide.dev/)
 
-**Note**: Claude was used to generate code for trivial matters like this markdown or the cmake compilation files, but all CPP and GLSL code was done by hand. Was also used for reference to answer questions.
+- [Vulkan Game Engine Tutorial by Brendan Gaela](https://www.youtube.com/watch?v=Y9U9IE0gVHA&list=PL8327DO66nu9qYVKLDmdLW_84-yE4auCR)
+- [Learn OpenGL](https://learnopengl.com/)
+- [VkGuide](https://vkguide.dev/)
+
+**Note**: Claude was used to generate code for trivial matters like this markdown or
+the cmake compilation files, but all C++ and shader code was done by hand. Was also
+used for reference to answer questions.
