@@ -76,4 +76,4 @@ Credit for these tutorials for getting me started:
 
 **Note**: Claude was used to generate code for trivial matters like this markdown or
 the cmake compilation files, but all C++ and shader code was done by hand (aside from
-radix sort shader, where credit is given. Was also used for reference to answer questions.
+radix sort shader, where credit is given). Was also used for reference to answer questions.
