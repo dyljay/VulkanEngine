@@ -69,6 +69,7 @@ vendored directly under `lib/`.
 Credit to these tutorials for their great help throughout my struggles:
 
 - [Vulkan Game Engine Tutorial by Brendan Gaela](https://www.youtube.com/watch?v=Y9U9IE0gVHA&list=PL8327DO66nu9qYVKLDmdLW_84-yE4auCR)
+- [OGLDEV](https://www.youtube.com/@OGLDEV)
 - [Vulkan Tutorial](https://vulkan-tutorial.com/)
 - [VkGuide](https://vkguide.dev/)
 - [Learn OpenGL](https://learnopengl.com/)
