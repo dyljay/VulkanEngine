@@ -66,7 +66,7 @@ vendored directly under `lib/`.
 
 ## Notes/Credits
 
-Credit for these tutorials for their great help throughout my struggles:
+Credit to these tutorials for their great help throughout my struggles:
 
 - [Vulkan Game Engine Tutorial by Brendan Gaela](https://www.youtube.com/watch?v=Y9U9IE0gVHA&list=PL8327DO66nu9qYVKLDmdLW_84-yE4auCR)
 - [Vulkan Tutorial](https://vulkan-tutorial.com/)
