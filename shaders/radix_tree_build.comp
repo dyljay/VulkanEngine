@@ -1,8 +1,5 @@
 #version 450
 
-// bindings: 0 = sorted morton keys (in), 1 = internal nodes (out), 2 = leaf nodes (out)
-// one thread per internal node, i in [0, n-2]
-
 layout(local_size_x = 256) in;
 
 layout(push_constant) uniform PushConstants {
@@ -33,11 +30,6 @@ layout(std430, binding = 2) buffer LeafNodes {
   LeafNode leafNodes[];
 };
 
-// delta(i, j): length of the longest common prefix between keys[i] and
-// keys[j]. Return -1 when j is outside [0, n-1] (paper, Figure 4 caption).
-// The GPU implementation paragraph (end of Section 3) describes the
-// clz-based approach; note keys may need the i-augmentation from Section 4
-// if duplicates are possible.
 int delta(int i, int j) {
   int n = int(pc.numPrimitives);
 

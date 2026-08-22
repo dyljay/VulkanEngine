@@ -1,10 +1,5 @@
 #version 450
 
-// bindings: 0 = primitive AABBs (in), 1 = sorted primitive indices (in),
-//           2 = internal nodes (inout, .visited used as the atomic flag),
-//           3 = leaf nodes (in), 4 = internal node AABBs (out)
-// one thread per leaf, walking upward via parent pointers.
-
 layout(local_size_x = 256) in;
 
 layout(push_constant) uniform PushConstants {
