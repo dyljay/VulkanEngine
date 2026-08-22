@@ -70,9 +70,10 @@ vendored directly under `lib/`.
 Credit for these tutorials for getting me started:
 
 - [Vulkan Game Engine Tutorial by Brendan Gaela](https://www.youtube.com/watch?v=Y9U9IE0gVHA&list=PL8327DO66nu9qYVKLDmdLW_84-yE4auCR)
-- [Learn OpenGL](https://learnopengl.com/)
+- [Vulkan Tutorial](https://vulkan-tutorial.com/)
 - [VkGuide](https://vkguide.dev/)
+- [Learn OpenGL](https://learnopengl.com/)
 
 **Note**: Claude was used to generate code for trivial matters like this markdown or
-the cmake compilation files, but all C++ and shader code was done by hand. Was also
-used for reference to answer questions.
+the cmake compilation files, but all C++ and shader code was done by hand (aside from
+radix sort shader, where credit is given. Was also used for reference to answer questions.
