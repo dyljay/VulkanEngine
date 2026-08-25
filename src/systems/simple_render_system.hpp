@@ -2,6 +2,7 @@
 
 #include "engine_device.hpp"
 #include "engine_frame_info.hpp"
+#include "sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
 #include "system.hpp"
 
 // std
@@ -12,8 +13,12 @@ class SimpleRenderSystem : RenderSystem {
  public:
   SimpleRenderSystem(
       EngineDevice& device,
-      Shader shaders,
-      const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
+      const Shader& shaders,
+      const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
+      const std::vector<VkDescriptorSet>& uboSets,
+      std::vector<VkDescriptorSet>& materialSets,
+      VkDescriptorSet& cubeMap,
+      VkDescriptorSet& textureArray,
       VkPipelineRenderingCreateInfo attachmentInfo);
 
   ~SimpleRenderSystem();
@@ -21,6 +26,12 @@ class SimpleRenderSystem : RenderSystem {
   SimpleRenderSystem(const SimpleRenderSystem&) = delete;
   SimpleRenderSystem& operator=(const SimpleRenderSystem&) = delete;
 
-  void render(FrameInfo& frameinfo, DescriptorSets& descriptorSets);
+  void render(FrameInfo& frameinfo) override;
+
+ private:
+  const std::vector<VkDescriptorSet>& uboSets;
+  std::vector<VkDescriptorSet>& materialSets;
+  VkDescriptorSet& cubeMap;
+  VkDescriptorSet& textureArray;
 };
 }  // namespace GameEngine

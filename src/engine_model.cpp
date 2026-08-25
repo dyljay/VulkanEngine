@@ -10,6 +10,11 @@
 #include <variant>
 #include <vector>
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
+
+#include "engine_descriptor.hpp"
+#include "engine_node.hpp"
 #include "fastgltf/core.hpp"
 #include "fastgltf/tools.hpp"
 #include "fastgltf/types.hpp"
@@ -23,8 +28,10 @@
 namespace GameEngine {
 
 EngineModel::EngineModel(EngineDevice& geDevice,
-                         const std::filesystem::path& path)
-    : geDevice{geDevice}
+                         const std::filesystem::path& path,
+                         EngineDescriptorPoolGrowable& growablePool)
+    : geDevice{geDevice},
+      growablePool{growablePool}
 {
   loadModel(path);
 }
@@ -33,9 +40,10 @@ EngineModel::~EngineModel() {}
 
 std::unique_ptr<EngineModel> EngineModel::createModelFromFile(
     EngineDevice& geDevice,
-    const std::filesystem::path& filePath)
+    const std::filesystem::path& filePath,
+    EngineDescriptorPoolGrowable& growablePool)
 {
-  return std::make_unique<EngineModel>(geDevice, filePath);
+  return std::make_unique<EngineModel>(geDevice, filePath, growablePool);
 }
 
 void EngineModel::loadModel(const std::filesystem::path& filePath)
@@ -49,6 +57,7 @@ void EngineModel::loadModel(const std::filesystem::path& filePath)
   fastgltf::Parser parser{};
 
   auto load = parser.loadGltf(data.get(), filePath.parent_path(), gltfOptions);
+  fastgltf::Asset gltf;
 
   if (load) {
     gltf = std::move(load.get());
@@ -57,21 +66,73 @@ void EngineModel::loadModel(const std::filesystem::path& filePath)
     throw std::runtime_error("failed to load model.");
   }
 
-  // building descriptorPool
-  buildDescriptorPool(MAX_SETS);
-
   // loadTextures
-  loadTextures();
+  loadTextures(gltf);
 
-  // materials (need to be after textures to reference them in
-  // loadMaterials)
-  loadMaterials();
+  // materials
+  loadMaterials(gltf);
 
   // then vertices
-  loadVertices();
+  loadVertices(gltf);
+
+  // finally nodes
+  loadNodes(gltf);
 }
 
-void EngineModel::loadVertices()
+void EngineModel::loadNodes(fastgltf::Asset& gltf)
+{
+  // load all nodes and their meshes
+  for (fastgltf::Node& node : gltf.nodes) {
+    std::shared_ptr<Node> newNode =
+        (node.meshIndex.has_value())
+            ? std::make_shared<MeshNode>(meshes[*node.meshIndex])
+            : std::make_shared<Node>();
+
+    std::visit(
+        fastgltf::visitor{
+            [&](fastgltf::math::fmat4x4& matrix) {
+              memcpy(&newNode->localTransform, matrix.data(), sizeof(matrix));
+            },
+            [&](fastgltf::TRS& trs) {
+              glm::vec3 tl(trs.translation[0],
+                           trs.translation[1],
+                           trs.translation[2]);
+              glm::quat rot(trs.rotation[3],
+                            trs.rotation[0],
+                            trs.rotation[1],
+                            trs.rotation[2]);
+              glm::vec3 sc(trs.scale[0], trs.scale[1], trs.scale[2]);
+
+              glm::mat4 tm = glm::translate(glm::mat4(1.f), tl);
+              glm::mat4 rm = glm::toMat4(rot);
+              glm::mat4 sm = glm::scale(glm::mat4(1.f), sc);
+
+              newNode->localTransform = tm * rm * sm;
+            }},
+        node.transform);
+
+    nodes.push_back(std::move(newNode));
+  }
+  for (int i = 0; i < gltf.nodes.size(); i++) {
+    fastgltf::Node& node = gltf.nodes[i];
+    std::shared_ptr<Node>& sceneNode = nodes[i];
+
+    for (auto& c : node.children) {
+      sceneNode->children.push_back(nodes[c]);
+      nodes[c]->parent = sceneNode;
+    }
+  }
+
+  // find the top nodes, with no parents
+  for (auto& node : nodes) {
+    if (node->parent.lock() == nullptr) {
+      topNodes.push_back(node);
+      node->refreshTransform(glm::mat4{1.f});
+    }
+  }
+}
+
+void EngineModel::loadVertices(fastgltf::Asset& gltf)
 {
   std::vector<uint32_t> indices;
   std::vector<EngineMesh::Vertex> vertices;
@@ -120,7 +181,6 @@ void EngineModel::loadVertices()
               vertex.uv_x = 0;
               vertex.uv_y = 0;
               vertices[initialVertex + index] = vertex;
-              modelBoundingBox.testBounds(v);
               bbox.testBounds(v);
             });
       }
@@ -170,20 +230,7 @@ void EngineModel::loadVertices()
   }
 }
 
-void EngineModel::buildDescriptorPool(uint32_t numSets)
-{
-  std::vector<PoolSizeRatio> sizes = {
-      {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3},
-      {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3},
-      {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1}};
-
-  growablePool = EngineDescriptorPoolGrowable::Builder(geDevice)
-                     .setNumSets(numSets)
-                     .addPoolSizeRatioVector(sizes)
-                     .build();
-}
-
-void EngineModel::loadTextures()
+void EngineModel::loadTextures(fastgltf::Asset& gltf)
 {
   size_t numTextures = gltf.images.size();
   images.resize(numTextures);
@@ -294,7 +341,7 @@ void EngineModel::loadTextures()
   }
 }
 
-void EngineModel::loadMaterials()
+void EngineModel::loadMaterials(fastgltf::Asset& gltf)
 {
   size_t numMaterials = gltf.materials.size();
   materials.resize(numMaterials);

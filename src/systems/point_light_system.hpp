@@ -13,8 +13,9 @@ class PointLightSystem : RenderSystem {
  public:
   PointLightSystem(
       EngineDevice& device,
-      Shader shaders,
-      const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
+      const Shader& shaders,
+      const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
+      const std::vector<VkDescriptorSet>& uboSets,
       VkPipelineRenderingCreateInfo attachmentInfo);
 
   ~PointLightSystem();
@@ -24,6 +25,9 @@ class PointLightSystem : RenderSystem {
 
   void update(FrameInfo& frameinfo, GlobalUbo& ubo);
 
-  void render(FrameInfo& frameinfo, DescriptorSets& descriptorSets);
+  void render(FrameInfo& frameinfo) override;
+
+ private:
+  const std::vector<VkDescriptorSet>& uboSets;
 };
 }  // namespace GameEngine

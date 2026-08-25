@@ -1,0 +1,27 @@
+#version 450
+
+#extension GL_EXT_buffer_reference : require
+
+layout(local_size_x = 256) in;
+
+struct AABB {
+  vec4 min;
+  vec4 max;
+};
+
+layout(buffer_reference, std430) readonly buffer AABBIn {
+  AABB aabbIn[];
+};
+
+layout(buffer_reference, std430) writeonly buffer AABBOut {
+  AABB aabbOut[];
+};
+
+layout(push_constant) uniform Push {
+  AABBIn aabbInbuffer;
+  AABBOut aabbOutBuffer;
+  mat4 model;
+  mat4 localTransform;
+} push;
+
+void main() {}

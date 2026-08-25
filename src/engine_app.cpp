@@ -55,7 +55,7 @@ EngineApp::EngineApp()
                    .addPoolSizeRatioVector(sizes)
                    .build();
 
-  loadGameObjects();
+  loadGameObjects(*globalPool);
 }
 
 EngineApp::~EngineApp() {}
@@ -119,6 +119,10 @@ void EngineApp::run()
   SimpleRenderSystem simpleRenderSystem{geDevice,
                                         mainShaderFiles,
                                         mainLayouts,
+                                        descriptorSets.uboSets,
+                                        descriptorSets.materialSets,
+                                        descriptorSets.cubeMap,
+                                        descriptorSets.textureArray,
                                         geRenderer.getPipelineRenderingInfo()};
 
   // only need to pass in the uboSetLayout to this because no material or
@@ -128,6 +132,7 @@ void EngineApp::run()
   PointLightSystem pointLightSystem{geDevice,
                                     pointLightShaderFiles,
                                     pointLightLayouts,
+                                    descriptorSets.uboSets,
                                     geRenderer.getPipelineRenderingInfo()};
 
   // only need ubo and cubemap textures
@@ -136,17 +141,21 @@ void EngineApp::run()
   CubeMapRenderSystem cubeMapRender{geDevice,
                                     cubeMapShaderFiles,
                                     cubeMapLayouts,
+                                    descriptorSets.uboSets,
+                                    descriptorSets.cubeMap,
                                     geRenderer.getPipelineRenderingInfo()};
 
   OffscreenSystem offScreenSystem{geDevice,
                                   offscreenShaderFiles,
                                   pointLightLayouts,
+                                  descriptorSets.uboSets,
                                   offscreenRenderer.getPipelineRenderingInfo()};
 
   std::vector<VkDescriptorSetLayout> bboxLayout{mainLayouts[0]};
   BboxRenderer bboxRender{geDevice,
                           bboxShaderFiles,
                           bboxLayout,
+                          descriptorSets.uboSets,
                           geRenderer.getPipelineRenderingInfo()};
 
   // FIXME:
@@ -180,9 +189,7 @@ void EngineApp::run()
     // fps counter
     float fps = 1.f / frameTime;
 
-    // TODO: might be worth moving this into it's own method. if you're
-    // gonna process all events here, should be moved out, maybe to
-    // KeyboardMovementController?
+    int lastFrame = 0;
 
     while (SDL_PollEvent(&e) != 0) {
       if (e.type == SDL_EVENT_QUIT) {
@@ -226,7 +233,7 @@ void EngineApp::run()
       ImGui_ImplSDL3_ProcessEvent(&e);
     }
 
-    // TODOEND
+    updateScene();
 
     if (!userSeeMouse) {
       cameraController.moveInXYZPlane(frameTime, viewerObject);
@@ -257,31 +264,26 @@ void EngineApp::run()
       // draw calls
       geRenderer.beginRender(commandBuffer);
 
-      simpleRenderSystem.render(frameInfo, descriptorSets);
-      pointLightSystem.render(frameInfo, descriptorSets);
-      cubeMapRender.render(frameInfo, descriptorSets);
+      simpleRenderSystem.render(frameInfo);
+      pointLightSystem.render(frameInfo);
+      cubeMapRender.render(frameInfo);
+
       if (showbbox) {
-        bboxRender.render(frameInfo, descriptorSets);
+        bboxRender.render(frameInfo);
       }
+
+      /*
       if (hasClicked) {
-        if (auto commandBuffer_off = offscreenRenderer.beginFrame()) {
-          offscreenRenderer.beginRender(commandBuffer_off);
-          frameInfo.commandBuffer = commandBuffer_off;
-          offScreenSystem.render(frameInfo, descriptorSets);
-          offscreenRenderer.endRender(commandBuffer_off);
-          offscreenRenderer.endFrame();
+        id_t objIDFromPixel = offscreenRenderer.getPixelData<uint32_t>(x, y);
 
-          id_t objIDFromPixel = *offscreenRenderer.getPixelData<uint32_t>(x, y);
+        std::cout << objIDFromPixel << std::endl;
 
-          std::cout << objIDFromPixel << std::endl;
-
-          if (objIDFromPixel > 0) {
-            geObjects.at(objIDFromPixel).isSelected = true;
-          }
-
-          hasClicked = false;
+        if (objIDFromPixel > 0) {
+          geObjects.at(objIDFromPixel).isSelected = true;
         }
+        hasClicked = false;
       }
+      */
 
       // ui
       if (userSeeMouse) {
@@ -310,8 +312,20 @@ void EngineApp::run()
       }
       // ui end
 
+      // drawing objects offscreen
+      if (auto commandBuffer_off = offscreenRenderer.beginFrame(frameIndex)) {
+        frameInfo.commandBuffer = commandBuffer_off;
+        offscreenRenderer.beginRender(commandBuffer_off);
+        frameInfo.commandBuffer = commandBuffer_off;
+        offScreenSystem.render(frameInfo);
+        offscreenRenderer.endRender(commandBuffer_off);
+        offscreenRenderer.endFrame();
+      }
+
       geRenderer.endRender(commandBuffer);
       geRenderer.endFrame();
+
+      lastFrame = frameIndex;
     }
   }
 
@@ -368,6 +382,18 @@ void EngineApp::populateDescriptorSetLayouts(
           .build();
 }
 
+void EngineApp::updateScene()
+{
+  for (auto& kv : geObjects) {
+    auto& obj = kv.second;
+
+    if (obj.model == nullptr) continue;
+
+    for (auto& topNode : obj.model->topNodes) {
+      topNode->Draw(obj.transform.mat4());
+    }
+  }
+}
 void EngineApp::populateMatTexDescriptorSets(
     DescriptorSets& descriptorSets,
     DescriptorSetLayouts& descriptorSetLayouts)
@@ -430,28 +456,54 @@ void EngineApp::populateMatTexDescriptorSets(
   }
 }
 
-void EngineApp::loadGameObjects()
+void EngineApp::loadGameObjects(EngineDescriptorPoolGrowable& growablePool)
 {
   std::cout << "Loading Game Objects..." << std::endl;
 
   std::shared_ptr<EngineModel> geModel =
-      EngineModel::createModelFromFile(geDevice, "./models/just_a_girl.glb");
+      EngineModel::createModelFromFile(geDevice,
+                                       "./models/just_a_girl.glb",
+                                       growablePool);
   auto girl = GameObject::createGameObject();
   girl.model = geModel;
   girl.transform.scale = {.01f, .01f, .01f};
-  girl.transform.translation = {0.0f, -1.0f, 0.0f};
-  girl.transform.rotation = {glm::radians(-90.f), glm::radians(180.f), 0.0f};
+  girl.transform.translation = {0.0f, -1.f, 0.0f};
+  girl.transform.rotation = {glm::radians(0.f), glm::radians(180.f), 0.0f};
 
   geObjects.emplace(girl.getID(), std::move(girl));
 
-  geModel = EngineModel::createModelFromFile(geDevice, "./models/floor.glb");
-  auto floor = GameObject::createGameObject();
-  floor.model = geModel;
-  floor.transform.scale = {3.f, 3.f, 0.1f};
-  floor.transform.translation = {0.0f, -1.f, 0.0f};
-  floor.transform.rotation = {glm::radians(90.f), 0.0f, 0.0f};
+  geModel = EngineModel::createModelFromFile(geDevice,
+                                             "./models/shiba.glb",
+                                             growablePool);
+  auto shiba = GameObject::createGameObject();
+  shiba.model = geModel;
+  shiba.transform.translation = {-1.0f, -0.5f, -0.2f};
+  shiba.transform.scale = {0.5f, 0.5, 0.5f};
+  shiba.transform.rotation = {glm::radians(180.f),
+                              glm::radians(-30.f),
+                              glm::radians(180.f)};
 
-  geObjects.emplace(floor.getID(), std::move(floor));
+  geObjects.emplace(shiba.getID(), std::move(shiba));
+
+  geModel = EngineModel::createModelFromFile(geDevice,
+                                             "./models/the_bathroom_free.glb",
+                                             growablePool);
+  auto background = GameObject::createGameObject();
+  background.model = geModel;
+  background.transform.scale = {1.5f, 1.5f, 1.5f};
+  background.transform.translation = {0.0f, -1.0f, 1.0f};
+  geObjects.emplace(background.getID(), std::move(background));
+
+  /*
+  geModel = EngineModel::createModelFromFile(
+      geDevice,
+      "./models/free_1975_porsche_911_930_turbo.glb",
+      growablePool);
+  auto car = GameObject::createGameObject();
+  car.model = geModel;
+  car.transform.translation = {-5.0, 0.f, -1.0f};
+  geObjects.emplace(car.getID(), std::move(car));
+  */
 
   std::vector<glm::vec3> lightColors = {{0.2f, 0.2f, .7f}, {0.2f, 0.2f, .7f}};
 

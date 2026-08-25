@@ -9,7 +9,7 @@
 namespace GameEngine {
 
 class IRenderable {
-  virtual void Draw(const glm::mat4 transform) = 0;
+  virtual void Draw(const glm::mat4& transform) = 0;
 };
 
 class Node : public IRenderable {
@@ -30,6 +30,8 @@ class Node : public IRenderable {
 
 class MeshNode : public Node {
  public:
+  MeshNode(std::shared_ptr<EngineMesh> mesh);
+  ~MeshNode();
   virtual void Draw(const glm::mat4& transform) override;
 
  private:

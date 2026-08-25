@@ -39,21 +39,6 @@ struct AABB : Primitive {
     }
   }
 
-  void recomputeBoundsWorldSpace(const glm::mat4& model)
-  {
-    assert(min.x == std::numeric_limits<float>::max() &&
-           "Cannot recompute bounds before min is set");
-
-    assert(max.x == std::numeric_limits<float>::lowest() &&
-           "Cannot recompute bounds before max is set");
-  }
-
-  void expandBBox(const AABB& bbox)
-  {
-    min = glm::min(min, bbox.min);
-    max = glm::max(max, bbox.max);
-  }
-
   bool doesIntersect(const AABB& bbox)
   {
     return (min.x <= bbox.max.x && max.x >= bbox.min.x) &&

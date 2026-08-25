@@ -18,8 +18,10 @@ BboxRenderer::BboxRenderer(
     EngineDevice& geDevice,
     const Shader& shaders,
     const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
+    const std::vector<VkDescriptorSet>& uboSets,
     VkPipelineRenderingCreateInfo attachmentInfo)
-    : RenderSystem{geDevice,
+    : uboSets{uboSets},
+      RenderSystem{geDevice,
                    shaders,
                    descriptorSetLayouts,
                    sizeof(BboxPushConstant),
@@ -29,14 +31,14 @@ BboxRenderer::BboxRenderer(
 
 BboxRenderer::~BboxRenderer() {}
 
-void BboxRenderer::render(FrameInfo& frameInfo, DescriptorSets& descriptorSets)
+void BboxRenderer::render(FrameInfo& frameInfo)
 {
   vkCmdBindDescriptorSets(frameInfo.commandBuffer,
                           VK_PIPELINE_BIND_POINT_GRAPHICS,
                           getPipelineLayout(),
                           0,
                           1,
-                          &descriptorSets.uboSets[frameInfo.frameIndex],
+                          &uboSets[frameInfo.frameIndex],
                           0,
                           nullptr);
 
@@ -47,9 +49,9 @@ void BboxRenderer::render(FrameInfo& frameInfo, DescriptorSets& descriptorSets)
     if (obj.model == nullptr) continue;
 
     BboxPushConstant push{};
-    push.modelMatrix = obj.transform.mat4();
 
     for (auto& mesh : obj.model->meshes) {
+      push.modelMatrix = mesh->getLocalMatrix();
       push.tlas.min = mesh->getBBox().min;
       push.tlas.max = mesh->getBBox().max;
 

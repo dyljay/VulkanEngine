@@ -66,6 +66,7 @@ class EngineMesh {
   VkDeviceAddress getVertexBufferAddress() const { return vertexBufferAddress; }
   std::vector<GeoSurface>& getSurfaces() { return surfaces_; }
   std::unique_ptr<EngineBuffer>& getVertexBuffer() { return vertexBuffer; }
+  glm::mat4& getLocalMatrix() { return localTransform; }
 
  private:
   void createVertexBuffers(const std::vector<Vertex>& vertices);
@@ -75,6 +76,8 @@ class EngineMesh {
                     std::vector<Vertex> vertices);
 
   void totalIndexCount();
+
+  glm::mat4 localTransform;
 
   std::vector<GeoSurface> surfaces_;
 

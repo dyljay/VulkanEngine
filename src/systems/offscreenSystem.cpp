@@ -2,7 +2,6 @@
 
 #include <vector>
 
-#include "engine_descriptor.hpp"
 #include "engine_device.hpp"
 #include "engine_frame_info.hpp"
 #include "glm/fwd.hpp"
@@ -20,10 +19,12 @@ struct OffscreenPushConstants {
 
 OffscreenSystem::OffscreenSystem(
     EngineDevice& geDevice,
-    Shader shaders,
-    const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
+    const Shader& shaders,
+    const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
+    const std::vector<VkDescriptorSet>& uboSets,
     VkPipelineRenderingCreateInfo attachmentInfo)
-    : RenderSystem(geDevice,
+    : uboSets{uboSets},
+      RenderSystem(geDevice,
                    shaders,
                    descriptorSetLayouts,
                    sizeof(OffscreenPushConstants),
@@ -33,8 +34,7 @@ OffscreenSystem::OffscreenSystem(
 
 OffscreenSystem::~OffscreenSystem() {}
 
-void OffscreenSystem::render(FrameInfo& frameInfo,
-                             DescriptorSets& descriptorSets)
+void OffscreenSystem::render(FrameInfo& frameInfo)
 {
   getPipeline()->bind(frameInfo.commandBuffer);
 
@@ -43,7 +43,7 @@ void OffscreenSystem::render(FrameInfo& frameInfo,
                           getPipelineLayout(),
                           0,
                           1,
-                          &descriptorSets.uboSets[frameInfo.frameIndex],
+                          &uboSets[frameInfo.frameIndex],
                           0,
                           nullptr);
 

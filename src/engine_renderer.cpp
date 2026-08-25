@@ -1,12 +1,12 @@
 #include "engine_renderer.hpp"
 
 #include <cstdint>
-#include <iostream>
 #include <memory>
 #include <stdexcept>
 
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_video.h"
+#include "engine_swapchain.hpp"
 #include "sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
 #include "src/engine_device.hpp"
 #include "src/engine_image.hpp"
@@ -266,15 +266,18 @@ void OffScreenRenderer::init()
 
 void OffScreenRenderer::createCommandBuffer()
 {
+  commandBuffers.resize(EngineSwapChain::MAX_FRAMES_IN_FLIGHT);
+
   VkCommandBufferAllocateInfo allocInfo{};
 
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   allocInfo.commandPool = geDevice.getCommandPool();
-  allocInfo.commandBufferCount = 1;
+  allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
 
-  if (vkAllocateCommandBuffers(geDevice.device(), &allocInfo, &commandBuffer) !=
-      VK_SUCCESS)
+  if (vkAllocateCommandBuffers(geDevice.device(),
+                               &allocInfo,
+                               commandBuffers.data()) != VK_SUCCESS)
   {
     throw std::runtime_error("failed to allocate command buffer");
   }
@@ -282,63 +285,66 @@ void OffScreenRenderer::createCommandBuffer()
 
 void OffScreenRenderer::freeResources()
 {
-  vkDestroyFence(geDevice.device(), imageRenderedFence, nullptr);
+  for (int i = 0; i < imageRenderedFences.size(); i++) {
+    vkDestroyFence(geDevice.device(), imageRenderedFences[i], nullptr);
+  }
 }
 
 void OffScreenRenderer::freeCommandBuffer()
 {
   vkFreeCommandBuffers(geDevice.device(),
                        geDevice.getCommandPool(),
-                       1,
-                       &commandBuffer);
+                       commandBuffers.size(),
+                       commandBuffers.data());
 }
 
 void OffScreenRenderer::beginRender(VkCommandBuffer commandBuffer)
 {
-  assert(isFrameStarted &&
-         "Can't call beginSwapChainRenderPass if frame "
-         "is not in "
-         "progress");
-
-  EngineImage::ImageMemoryBarrier(commandBuffer,
-                                  offscreenImage->getImage(),
-                                  offscreenImage->getImageFormat(),
-                                  VK_IMAGE_LAYOUT_UNDEFINED,
-                                  VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+  EngineImage::ImageMemoryBarrier(
+      commandBuffer,
+      offscreenImages[currentIndex]->getImage(),
+      offscreenImages[currentIndex]->getImageFormat(),
+      VK_IMAGE_LAYOUT_UNDEFINED,
+      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+  EngineImage::ImageMemoryBarrier(
+      commandBuffer,
+      depthImages[currentIndex]->getImage(),
+      depthImages[currentIndex]->getImageFormat(),
+      VK_IMAGE_LAYOUT_UNDEFINED,
+      VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
   EngineImage::ImageMemoryBarrier(
       commandBuffer,
-      depthImage->getImage(),
-      offscreenImage->getImageFormat(),
+      depthImages[currentIndex]->getImage(),
+      offscreenImages[currentIndex]->getImageFormat(),
       VK_IMAGE_LAYOUT_UNDEFINED,
       VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
   VkRenderingAttachmentInfo colorAttachmentInfos = {
       .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-      .imageView = offscreenImage->getImageView(),
+      .imageView = offscreenImages[currentIndex]->getImageView(),
       .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
       .resolveMode = VK_RESOLVE_MODE_NONE,
       .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-      .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+      .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
       .clearValue = {0.0, 0.0, 0.0},
   };
 
   VkRenderingAttachmentInfo depthAttachmentInfos = {
       .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-      .imageView = depthImage->getImageView(),
+      .imageView = depthImages[currentIndex]->getImageView(),
       .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
       .resolveMode = VK_RESOLVE_MODE_NONE,
       .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
       .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
       .clearValue = {1.0, 0.0},
-
   };
 
   VkRenderingInfo renderInfo{};
   renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
   renderInfo.renderArea.offset = {0, 0};
-  renderInfo.renderArea.extent = {offscreenImage->getWidth(),
-                                  offscreenImage->getHeight()};
+  renderInfo.renderArea.extent = {offscreenImages[currentIndex]->getWidth(),
+                                  offscreenImages[currentIndex]->getHeight()};
   renderInfo.layerCount = 1;
   renderInfo.viewMask = 0;
   renderInfo.colorAttachmentCount = 1;
@@ -359,7 +365,9 @@ void OffScreenRenderer::beginRender(VkCommandBuffer commandBuffer)
   viewport.minDepth = 0.0f;
   viewport.maxDepth = 1.0f;
   VkRect2D scissor{{0, 0},
-                   {offscreenImage->getWidth(), offscreenImage->getHeight()}};
+                   {offscreenImages[currentIndex]->getWidth(),
+                    offscreenImages[currentIndex]->getHeight()}};
+
   vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
   vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }
@@ -371,6 +379,7 @@ void OffScreenRenderer::endRender(VkCommandBuffer commandBuffer)
 
 VkResult OffScreenRenderer::submitCommandBuffer()
 {
+  /*
   if (imageRenderedFence != VK_NULL_HANDLE) {
     vkWaitForFences(geDevice.device(),
                     1,
@@ -378,31 +387,34 @@ VkResult OffScreenRenderer::submitCommandBuffer()
                     VK_TRUE,
                     UINT64_MAX);
   }
+  */
 
   VkSubmitInfo submitInfo = {};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
   submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &commandBuffer;
+  submitInfo.pCommandBuffers = &commandBuffers[currentIndex];
 
+  /*
   vkResetFences(geDevice.device(), 1, &imageRenderedFence);
-  auto result = vkQueueSubmit(geDevice.graphicsQueue(),
-                              1,
-                              &submitInfo,
-                              imageRenderedFence);
+  */
+  auto result =
+      vkQueueSubmit(geDevice.graphicsQueue(), 1, &submitInfo, nullptr);
   return result;
 }
 
-VkCommandBuffer OffScreenRenderer::beginFrame()
+VkCommandBuffer OffScreenRenderer::beginFrame(int imageIndex)
 {
-  assert(!isFrameStarted && "Can't call beginFrame while already in progress");
-
   if (geWindow.wasWindowResized()) {
     geWindow.resetWindowResizedFlag();
     init();
     return nullptr;
   }
   isFrameStarted = true;
+
+  currentIndex = imageIndex;
+
+  VkCommandBuffer commandBuffer = commandBuffers[imageIndex];
 
   VkCommandBufferBeginInfo beginInfo{};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -420,7 +432,14 @@ void OffScreenRenderer::endFrame()
          "Can't call endFrame while frame is not in "
          "progress");
 
-  if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+  EngineImage::ImageMemoryBarrier(
+      commandBuffers[currentIndex],
+      offscreenImages[currentIndex]->getImage(),
+      offscreenImages[currentIndex]->getImageFormat(),
+      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+  if (vkEndCommandBuffer(commandBuffers[currentIndex]) != VK_SUCCESS) {
     throw std::runtime_error("failed to record command buffer");
   }
 
@@ -438,24 +457,28 @@ void OffScreenRenderer::endFrame()
 
 void OffScreenRenderer::createOffscreenImage()
 {
-  int w, h;
-  SDL_GetWindowSizeInPixels(geWindow.getSDLWindow(), &w, &h);
-  imageExtent.width = w;
-  imageExtent.height = h;
+  offscreenImages.resize(EngineSwapChain::MAX_FRAMES_IN_FLIGHT);
 
-  ImageConfigInfo imageInfo{};
-  imageInfo.extent.width = imageExtent.width;
-  imageInfo.extent.height = imageExtent.height;
-  imageInfo.format = VK_FORMAT_R32_UINT;
-  imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-                    VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
-                    VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-  imageInfo.memPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
-  imageInfo.tiling = VK_IMAGE_TILING_LINEAR;
-  ImageViewConfigInfo imageViewInfo{};
+  for (int i = 0; i < offscreenImages.size(); i++) {
+    int w, h;
+    SDL_GetWindowSizeInPixels(geWindow.getSDLWindow(), &w, &h);
+    imageExtent.width = w;
+    imageExtent.height = h;
 
-  offscreenImage =
-      std::make_unique<EngineImage>(geDevice, imageInfo, imageViewInfo);
+    ImageConfigInfo imageInfo{};
+    imageInfo.extent.width = imageExtent.width;
+    imageInfo.extent.height = imageExtent.height;
+    imageInfo.format = VK_FORMAT_R32_UINT;
+    imageInfo.usage =
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    imageInfo.memPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    ImageViewConfigInfo imageViewInfo{};
+
+    offscreenImages[i] =
+        std::make_unique<EngineImage>(geDevice, imageInfo, imageViewInfo);
+  }
 }
 
 void OffScreenRenderer::createPipelineRenderingCreateInfo()
@@ -463,43 +486,51 @@ void OffScreenRenderer::createPipelineRenderingCreateInfo()
   pipelineCreate.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
   pipelineCreate.pNext = VK_NULL_HANDLE;
 
-  attachmentFormat = offscreenImage->getImageFormat();
+  attachmentFormat = offscreenImages[0]->getImageFormat();
 
   pipelineCreate.colorAttachmentCount = 1;
   pipelineCreate.pColorAttachmentFormats = &attachmentFormat;
-  pipelineCreate.depthAttachmentFormat = depthImage->getImageFormat();
+  pipelineCreate.depthAttachmentFormat = depthImages[0]->getImageFormat();
 }
 
 void OffScreenRenderer::createDepthResources()
 {
-  ImageConfigInfo imageInfo{};
-  imageInfo.extent.width = imageExtent.width;
-  imageInfo.extent.height = imageExtent.height;
-  imageInfo.format = VK_FORMAT_D32_SFLOAT;
-  imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-  imageInfo.mipLevels = 1;
-  imageInfo.memPropertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+  depthImages.resize(EngineSwapChain::MAX_FRAMES_IN_FLIGHT);
 
-  ImageViewConfigInfo viewInfo{};
-  viewInfo.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+  for (int i = 0; i < depthImages.size(); i++) {
+    ImageConfigInfo imageInfo{};
+    imageInfo.extent.width = imageExtent.width;
+    imageInfo.extent.height = imageExtent.height;
+    imageInfo.format = VK_FORMAT_D32_SFLOAT;
+    imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    imageInfo.mipLevels = 1;
+    imageInfo.memPropertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
-  depthImage = std::make_unique<EngineImage>(geDevice, imageInfo, viewInfo);
+    ImageViewConfigInfo viewInfo{};
+    viewInfo.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+    depthImages[i] =
+        std::make_unique<EngineImage>(geDevice, imageInfo, viewInfo);
+  }
 }
 
 void OffScreenRenderer::createSyncObject()
 {
-  VkFenceCreateInfo fenceInfo{};
-  fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-  fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+  imageRenderedFences.resize(EngineSwapChain::MAX_FRAMES_IN_FLIGHT);
+  for (int i = 0; i < imageRenderedFences.size(); i++) {
+    VkFenceCreateInfo fenceInfo{};
+    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-  if (vkCreateFence(geDevice.device(),
-                    &fenceInfo,
-                    nullptr,
-                    &imageRenderedFence) != VK_SUCCESS)
-  {
-    throw std::runtime_error(
-        "failed to create fence for off-screen "
-        "renderer");
+    if (vkCreateFence(geDevice.device(),
+                      &fenceInfo,
+                      nullptr,
+                      &imageRenderedFences[i]) != VK_SUCCESS)
+    {
+      throw std::runtime_error(
+          "failed to create fence for off-screen "
+          "renderer");
+    }
   }
 }
 }  // namespace GameEngine

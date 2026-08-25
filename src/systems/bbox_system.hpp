@@ -14,6 +14,7 @@ class BboxRenderer : RenderSystem {
   BboxRenderer(EngineDevice& geDevice,
                const Shader& shaders,
                const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
+               const std::vector<VkDescriptorSet>& uboSets,
                VkPipelineRenderingCreateInfo attachmentInfo);
 
   ~BboxRenderer();
@@ -21,6 +22,9 @@ class BboxRenderer : RenderSystem {
   BboxRenderer(const BboxRenderer&) = delete;
   BboxRenderer& operator=(const BboxRenderer&) = delete;
 
-  void render(FrameInfo& frameinfo, DescriptorSets& descriptorSets);
+  void render(FrameInfo& frameinfo) override;
+
+ private:
+  const std::vector<VkDescriptorSet>& uboSets;
 };
 }  // namespace GameEngine

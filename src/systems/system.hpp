@@ -28,8 +28,8 @@ struct PipeLineSettings {
 class RenderSystem {
  public:
   RenderSystem(EngineDevice& geDevice,
-               const Shader shaders,
-               const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
+               const Shader& shaders,
+               const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
                uint32_t sizeOfPushConstants,
                VkPipelineRenderingCreateInfo attachmentInfo,
                const PipeLineSettings& pipelineSettings = {});
@@ -39,7 +39,7 @@ class RenderSystem {
   RenderSystem(const RenderSystem&) = delete;
   RenderSystem& operator=(const RenderSystem&) = delete;
 
-  virtual void render(FrameInfo& frameInfo, DescriptorSets& descriptorSets) = 0;
+  virtual void render(FrameInfo& frameInfo) = 0;
 
  protected:
   std::unique_ptr<GraphicsPipeline>& getPipeline() { return gePipeline; }

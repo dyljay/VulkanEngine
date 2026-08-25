@@ -22,10 +22,18 @@ struct SimplePushConstantData {
 
 SimpleRenderSystem::SimpleRenderSystem(
     EngineDevice& device,
-    Shader shaders,
-    const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
+    const Shader& shaders,
+    const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
+    const std::vector<VkDescriptorSet>& uboSets,
+    std::vector<VkDescriptorSet>& materialSets,
+    VkDescriptorSet& cubeMap,
+    VkDescriptorSet& textureArray,
     VkPipelineRenderingCreateInfo attachmentInfo)
-    : RenderSystem{device,
+    : uboSets{uboSets},
+      materialSets{materialSets},
+      cubeMap{cubeMap},
+      textureArray{textureArray},
+      RenderSystem{device,
                    shaders,
                    descriptorSetLayouts,
                    sizeof(SimplePushConstantData),
@@ -34,8 +42,7 @@ SimpleRenderSystem::SimpleRenderSystem(
 
 SimpleRenderSystem::~SimpleRenderSystem() {}
 
-void SimpleRenderSystem::render(FrameInfo& frameInfo,
-                                DescriptorSets& descriptorSets)
+void SimpleRenderSystem::render(FrameInfo& frameInfo)
 {
   getPipeline()->bind(frameInfo.commandBuffer);
 
@@ -45,7 +52,7 @@ void SimpleRenderSystem::render(FrameInfo& frameInfo,
                           getPipelineLayout(),
                           0,
                           1,
-                          &descriptorSets.uboSets[frameInfo.frameIndex],
+                          &uboSets[frameInfo.frameIndex],
                           0,
                           nullptr);
 
@@ -55,7 +62,7 @@ void SimpleRenderSystem::render(FrameInfo& frameInfo,
                           getPipelineLayout(),
                           2,
                           1,
-                          &descriptorSets.cubeMap,
+                          &cubeMap,
                           0,
                           nullptr);
 
@@ -65,7 +72,7 @@ void SimpleRenderSystem::render(FrameInfo& frameInfo,
                           getPipelineLayout(),
                           3,
                           1,
-                          &descriptorSets.textureArray,
+                          &textureArray,
                           0,
                           nullptr);
 
@@ -77,11 +84,12 @@ void SimpleRenderSystem::render(FrameInfo& frameInfo,
     if (obj.model == nullptr) continue;
 
     SimplePushConstantData pushData{};
-    pushData.modelMatrix = obj.transform.mat4();
     pushData.normalMatrix = obj.transform.normalMatrix();
 
     for (auto& mesh : obj.model->meshes) {
       pushData.vertexBuffer = mesh->getVertexBufferAddress();
+      pushData.modelMatrix = mesh->getLocalMatrix();
+
       vkCmdPushConstants(
           frameInfo.commandBuffer,
           getPipelineLayout(),
@@ -93,15 +101,14 @@ void SimpleRenderSystem::render(FrameInfo& frameInfo,
       mesh->bind(frameInfo.commandBuffer);
 
       for (auto& p : mesh->getSurfaces()) {
-        vkCmdBindDescriptorSets(
-            frameInfo.commandBuffer,
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            getPipelineLayout(),
-            1,
-            1,
-            &descriptorSets.materialSets[p.materialIndex + materialOffset],
-            0,
-            nullptr);
+        vkCmdBindDescriptorSets(frameInfo.commandBuffer,
+                                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                getPipelineLayout(),
+                                1,
+                                1,
+                                &materialSets[p.materialIndex + materialOffset],
+                                0,
+                                nullptr);
 
         vkCmdDrawIndexed(frameInfo.commandBuffer,
                          p.count,
@@ -115,7 +122,7 @@ void SimpleRenderSystem::render(FrameInfo& frameInfo,
         }
       }
     }
-    materialOffset += visited_materials.size();
+    materialOffset = visited_materials.size();
   }
 }
 }  // namespace GameEngine

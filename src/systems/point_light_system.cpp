@@ -20,10 +20,12 @@ struct PointLightPushConstants {
 
 PointLightSystem::PointLightSystem(
     EngineDevice& device,
-    Shader shaders,
-    const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
+    const Shader& shaders,
+    const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
+    const std::vector<VkDescriptorSet>& uboSets,
     VkPipelineRenderingCreateInfo attachmentInfo)
-    : RenderSystem(device,
+    : uboSets{uboSets},
+      RenderSystem(device,
                    shaders,
                    descriptorSetLayouts,
                    sizeof(PointLightPushConstants),
@@ -61,8 +63,7 @@ void PointLightSystem::update(FrameInfo& frameInfo, GlobalUbo& ubo)
   ubo.numActiveLights = lightIndex;
 }
 
-void PointLightSystem::render(FrameInfo& frameInfo,
-                              DescriptorSets& descriptorSets)
+void PointLightSystem::render(FrameInfo& frameInfo)
 {
   getPipeline()->bind(frameInfo.commandBuffer);
 
@@ -71,7 +72,7 @@ void PointLightSystem::render(FrameInfo& frameInfo,
                           getPipelineLayout(),
                           0,
                           1,
-                          &descriptorSets.uboSets[frameInfo.frameIndex],
+                          &uboSets[frameInfo.frameIndex],
                           0,
                           nullptr);
 

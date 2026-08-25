@@ -11,8 +11,8 @@ namespace GameEngine {
 
 RenderSystem::RenderSystem(
     EngineDevice& geDevice,
-    const Shader shaders,
-    const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
+    const Shader& shaders,
+    const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
     uint32_t sizeOfPushConstants,
     VkPipelineRenderingCreateInfo attachmentInfo,
     const PipeLineSettings& pipelineSettings)

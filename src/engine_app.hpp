@@ -17,7 +17,7 @@ class EngineApp {
   static constexpr int MAX_DESCRIPTOR_SET = 100;
 
   void run();
-  void updateGameObjects(float deltaTime);
+
   static constexpr int WIDTH = 1180;
   static constexpr int HEIGHT = 980;
 
@@ -28,12 +28,14 @@ class EngineApp {
   EngineApp& operator=(const EngineApp&) = delete;
 
  private:
-  void loadGameObjects();
+  void loadGameObjects(EngineDescriptorPoolGrowable& growablePool);
 
   void populateDescriptorSetLayouts(DescriptorSetLayouts& descriptorSetLayouts);
 
   void populateMatTexDescriptorSets(DescriptorSets& descriptorSets,
                                     DescriptorSetLayouts& descriptorSetLayouts);
+
+  void updateScene();
 
   EngineWindow geWindow{WIDTH, HEIGHT, "WIT Engine"};
   EngineDevice geDevice{geWindow};
@@ -54,6 +56,6 @@ class EngineApp {
   };
 
   bool hasClicked = false;
-  bool showbbox = true;
+  bool showbbox = false;
 };
 }  // namespace GameEngine

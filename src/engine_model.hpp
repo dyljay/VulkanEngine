@@ -10,6 +10,7 @@
 
 #include "engine_descriptor.hpp"
 #include "engine_mesh.hpp"
+#include "engine_node.hpp"
 #include "pbrMaterials.hpp"
 #include "primitive.hpp"
 #include "src/engine_device.hpp"
@@ -24,13 +25,14 @@ class EngineModel {
 
   static std::unique_ptr<EngineModel> createModelFromFile(
       EngineDevice& geDevice,
-      const std::filesystem::path& filePath);
+      const std::filesystem::path& filePath,
+      EngineDescriptorPoolGrowable& growablePool);
 
-  EngineModel(EngineDevice& geDevice, const std::filesystem::path& path);
+  EngineModel(EngineDevice& geDevice,
+              const std::filesystem::path& path,
+              EngineDescriptorPoolGrowable& growablePool);
 
   ~EngineModel();
-
-  std::unique_ptr<EngineDescriptorPoolGrowable> growablePool;
 
   void bind(VkCommandBuffer commandBuffer);
 
@@ -39,21 +41,24 @@ class EngineModel {
   std::vector<std::shared_ptr<EngineMesh>> meshes;
   std::vector<std::shared_ptr<EngineTexture>> images;
   std::vector<std::shared_ptr<PBRMaterial>> materials;
+  std::vector<std::shared_ptr<Node>> nodes;
+  std::vector<std::shared_ptr<Node>> topNodes;
 
  private:
   void loadModel(const std::filesystem::path& filePath);
   void buildDescriptorPool(uint32_t numSets);
-  void loadMaterials();
-  void loadTextures();
-  void loadVertices();
+  void loadMaterials(fastgltf::Asset& gltf);
+  void loadTextures(fastgltf::Asset& gltf);
+  void loadVertices(fastgltf::Asset& gltf);
+  void loadNodes(fastgltf::Asset& gltf);
+  void updateNodes();
 
   VkFilter getFilter(fastgltf::Filter filter);
   VkSamplerMipmapMode getSampler(fastgltf::Filter filter);
 
   EngineDevice& geDevice;
-  fastgltf::Asset gltf;
 
-  AABB modelBoundingBox;
+  EngineDescriptorPoolGrowable& growablePool;
 };
 
 }  // namespace GameEngine

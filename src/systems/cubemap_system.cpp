@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <vector>
 
+#include "sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
 #include "src/engine_descriptor.hpp"
 #include "vulkan/vulkan_core.h"
 
@@ -10,10 +11,14 @@ namespace GameEngine {
 
 CubeMapRenderSystem::CubeMapRenderSystem(
     EngineDevice& device,
-    Shader shaders,
-    const std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
+    const Shader& shaders,
+    const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
+    const std::vector<VkDescriptorSet>& uboSets,
+    VkDescriptorSet& cubeMap,
     VkPipelineRenderingCreateInfo attachmentInfo)
-    : RenderSystem(device,
+    : uboSets{uboSets},
+      cubeMap{cubeMap},
+      RenderSystem(device,
                    shaders,
                    descriptorSetLayouts,
                    0,
@@ -24,8 +29,7 @@ CubeMapRenderSystem::CubeMapRenderSystem(
 
 CubeMapRenderSystem::~CubeMapRenderSystem() {}
 
-void CubeMapRenderSystem::render(FrameInfo& frameInfo,
-                                 DescriptorSets& descriptorSet)
+void CubeMapRenderSystem::render(FrameInfo& frameInfo)
 {
   getPipeline()->bind(frameInfo.commandBuffer);
 
@@ -34,7 +38,7 @@ void CubeMapRenderSystem::render(FrameInfo& frameInfo,
                           getPipelineLayout(),
                           0,
                           1,
-                          &descriptorSet.uboSets[frameInfo.frameIndex],
+                          &uboSets[frameInfo.frameIndex],
                           0,
                           nullptr);
 
@@ -43,7 +47,7 @@ void CubeMapRenderSystem::render(FrameInfo& frameInfo,
                           getPipelineLayout(),
                           1,
                           1,
-                          &descriptorSet.cubeMap,
+                          &cubeMap,
                           0,
                           nullptr);
 

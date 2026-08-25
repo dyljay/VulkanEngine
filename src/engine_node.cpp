@@ -1,5 +1,8 @@
 #include "engine_node.hpp"
 
+#include <memory>
+
+#include "engine_mesh.hpp"
 #include "glm/fwd.hpp"
 
 namespace GameEngine {
@@ -24,8 +27,17 @@ void Node::refreshTransform(const glm::mat4& topMatrix)
   }
 }
 
+MeshNode::MeshNode(std::shared_ptr<EngineMesh> mesh)
+    : mesh{mesh}
+{}
+
+MeshNode::~MeshNode() {}
+
 void MeshNode::Draw(const glm::mat4& transform)
 {
   glm::mat4 nodeMatrix = transform * worldTransform;
+  mesh->getLocalMatrix() = nodeMatrix;
+
+  Node::Draw(transform);
 }
 }  // namespace GameEngine

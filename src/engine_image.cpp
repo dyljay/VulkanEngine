@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <iostream>
 #include <stdexcept>
 
 #include "engine_device.hpp"
@@ -182,12 +183,6 @@ void EngineImage::ImageMemoryBarrier(VkCommandBuffer commandBuffer,
   {
     barrier.srcAccessMask = 0;  // VK_ACCESS_SHADER_READ_BIT;
     barrier.dstAccessMask = 0;
-
-    /*
-    srcStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-    dstStage = VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
-    dstStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    */
 
     srcStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;

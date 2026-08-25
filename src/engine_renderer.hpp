@@ -87,15 +87,16 @@ class OffScreenRenderer {
     return pipelineCreate;
   }
 
-  std::unique_ptr<EngineImage>& getImage() { return offscreenImage; }
+  std::unique_ptr<EngineImage>& getImage(int i) { return offscreenImages[i]; }
 
-  VkCommandBuffer beginFrame();
+  VkCommandBuffer beginFrame(int imageIndex);
   void endFrame();
   void beginRender(VkCommandBuffer commandBuffer);
   void endRender(VkCommandBuffer commandBuffer);
 
+  /*
   template <typename T>
-  T* getPixelData(uint32_t x, uint32_t y)
+  T getPixelData(uint32_t x, uint32_t y)
   {
     assert(offscreenImage->getTiling() == VK_IMAGE_TILING_LINEAR &&
            "Tiling must be linear to read directly from image");
@@ -113,11 +114,13 @@ class OffScreenRenderer {
 
     T* data_t = static_cast<T*>(mapped);
     T* dataPoint = &data_t[y * imageExtent.width + x];
+    T dataValue{*dataPoint};
 
     vmaUnmapMemory(geDevice.getAllocator(), offscreenImage->getAllocation());
 
-    return dataPoint;
+    return dataValue;
   }
+  */
 
   VkResult submitCommandBuffers(const VkCommandBuffer* buffers,
                                 uint32_t* imageIndex);
@@ -140,21 +143,19 @@ class OffScreenRenderer {
   EngineDevice& geDevice;
   EngineWindow& geWindow;
 
-  VkRenderPass renderPass;
-  VkCommandBuffer commandBuffer;
+  std::vector<VkCommandBuffer> commandBuffers;
 
-  std::unique_ptr<EngineImage> offscreenImage;
-  std::unique_ptr<EngineImage> depthImage;
+  std::vector<std::unique_ptr<EngineImage>> offscreenImages;
+  std::vector<std::unique_ptr<EngineImage>> depthImages;
 
   VkExtent2D imageExtent;
 
-  VkFramebuffer frameBuffer;
-
-  VkFence imageRenderedFence;
+  std::vector<VkFence> imageRenderedFences;
 
   VkPipelineRenderingCreateInfo pipelineCreate{};
 
   VkFormat attachmentFormat;
   bool isFrameStarted = false;
+  int currentIndex;
 };
 }  // namespace GameEngine
