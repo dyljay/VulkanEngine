@@ -10,7 +10,8 @@
 namespace GameEngine {
 
 struct BboxPushConstant {
-  glm::mat4 modelMatrix;
+  glm::mat4 modelMatrix{1.f};
+  glm::mat4 localTransform{1.f};
   AABBPush tlas;
 };
 
@@ -49,9 +50,9 @@ void BboxRenderer::render(FrameInfo& frameInfo)
     if (obj.model == nullptr) continue;
 
     BboxPushConstant push{};
-
+    push.modelMatrix = obj.transform.mat4();
     for (auto& mesh : obj.model->meshes) {
-      push.modelMatrix = mesh->getLocalMatrix();
+      push.localTransform = mesh->getLocalMatrix();
       push.tlas.min = mesh->getBBox().min;
       push.tlas.max = mesh->getBBox().max;
 

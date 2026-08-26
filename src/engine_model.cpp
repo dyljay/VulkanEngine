@@ -165,6 +165,8 @@ void EngineModel::loadVertices(fastgltf::Asset& gltf)
             });
       }
 
+      // FIXME: need to use min/max of accessor as it is much more eficient
+
       {
         fastgltf::Accessor& posAccessor =
             gltf.accessors[p.findAttribute("POSITION")->accessorIndex];

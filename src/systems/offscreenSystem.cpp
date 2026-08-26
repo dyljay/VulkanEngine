@@ -12,7 +12,7 @@ namespace GameEngine {
 
 struct OffscreenPushConstants {
   glm::mat4 modelMatrix{1.f};
-  glm::mat4 normalMatrix{1.f};
+  glm::mat4 localTransform{1.f};
   VkDeviceAddress vertexBuffer;
   glm::uint32 id;
 };
@@ -46,6 +46,7 @@ void OffscreenSystem::render(FrameInfo& frameInfo)
                           &uboSets[frameInfo.frameIndex],
                           0,
                           nullptr);
+  uint32_t count = 1;
 
   for (auto& kv : frameInfo.gameObjects) {
     auto& obj = kv.second;
@@ -53,10 +54,10 @@ void OffscreenSystem::render(FrameInfo& frameInfo)
 
     OffscreenPushConstants pushData{};
     pushData.modelMatrix = obj.transform.mat4();
-    pushData.normalMatrix = obj.transform.normalMatrix();
-    pushData.id = obj.getID();
 
     for (auto& mesh : obj.model->meshes) {
+      pushData.id = count;
+      pushData.localTransform = mesh->getLocalMatrix();
       pushData.vertexBuffer = mesh->getVertexBufferAddress();
       vkCmdPushConstants(
           frameInfo.commandBuffer,
@@ -68,6 +69,8 @@ void OffscreenSystem::render(FrameInfo& frameInfo)
 
       mesh->bind(frameInfo.commandBuffer);
       mesh->draw(frameInfo.commandBuffer);
+
+      count += 1;
     }
   }
 }

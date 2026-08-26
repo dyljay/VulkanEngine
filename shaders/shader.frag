@@ -113,7 +113,10 @@ void main() {
   roughness = clamp(roughness, 0.045, 1.0);
   float alpha = roughness * roughness;
 
-  vec3 ambientLight = vec3(.2);
+  if (bool(matProperties.numFeatures & GLSL_HAS_NORMAL_MAP)) {
+    vec4 normalValue = texture(bindlessTextures[(matProperties.normalMap + matProperties.offset)], fragUV);
+  }
+
   vec3 surfaceNormal = normalize(fragNormalWorld);
 
   vec3 cameraPosWorld = ubo.invView[3].xyz;
@@ -152,7 +155,7 @@ void main() {
 
   vec3 ambientSpecular = fragSkybox * f0 * (1.0 - roughness);
 
-  vec3 ambient = (ubo.ambientLightColor.xyz * ubo.ambientLightColor.w + ambientLight) * albedo.rgb;
+  vec3 ambient = (ubo.ambientLightColor.xyz * ubo.ambientLightColor.w) * albedo.rgb;
 
   outColor = vec4(Lo + ambientSpecular + ambient, albedo.a);
 }

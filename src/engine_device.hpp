@@ -152,7 +152,8 @@ class EngineDevice {
       "VK_KHR_portability_subset",
       VK_KHR_MAINTENANCE_3_EXTENSION_NAME,
       VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
-      VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME};
+      VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
+  };
 };
 
 }  // namespace GameEngine

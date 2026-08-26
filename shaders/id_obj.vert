@@ -32,14 +32,14 @@ layout(buffer_reference, std430) readonly buffer VertexBuffer {
 
 layout(push_constant) uniform Push {
   mat4 modelMatrix;
-  mat4 normalMatrix;
+  mat4 localTransform;
   VertexBuffer vertexBuffer;
   uint id;
 } push;
 
 void main() {
   Vertex v = push.vertexBuffer.vertices[gl_VertexIndex];
-  vec4 positionWorld = push.modelMatrix * vec4(v.position, 1.0);
+  vec4 positionWorld = push.modelMatrix * push.localTransform * vec4(v.position, 1.0);
   gl_Position = ubo.projection * ubo.view * positionWorld;
 
   fragColor = push.id;

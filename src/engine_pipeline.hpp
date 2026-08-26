@@ -76,10 +76,17 @@ class ComputePipeline {
   ComputePipeline(const ComputePipeline&) = delete;
   ComputePipeline& operator=(const ComputePipeline&) = delete;
 
-  void bind(VkCommandBuffer commadBuffer);
+  static uint32_t groupCount(uint32_t n, uint32_t localSize)
+  {
+    return (n + localSize - 1) / localSize;
+  }
 
+  void bind(VkCommandBuffer commadBuffer);
   void dispatch(VkCommandBuffer commandBuffer,
-                const std::vector<VkDescriptorSet>& descroptorSets);
+                const VkDescriptorSet* descroptorSets,
+                uint32_t numPrimitives);
+
+  VkPipelineLayout getPipelineLayout() const { return computePipelineLayout; }
 
  private:
   void createPipelineLayout(VkDescriptorSetLayout descriptorSetLayout,

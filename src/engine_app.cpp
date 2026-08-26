@@ -158,10 +158,7 @@ void EngineApp::run()
                           descriptorSets.uboSets,
                           geRenderer.getPipelineRenderingInfo()};
 
-  // FIXME:
   BVHAccel bvhaccel{geObjects, geDevice, *globalPool};
-
-  // FIXME:
 
   EngineCamera camera{};
   camera.setViewDirection(glm::vec3(0.0f), glm::vec3(0.f, 0.f, 1.f));
@@ -326,6 +323,8 @@ void EngineApp::run()
       geRenderer.endFrame();
 
       lastFrame = frameIndex;
+
+      bvhaccel.constructTree(frameIndex);
     }
   }
 
@@ -390,7 +389,7 @@ void EngineApp::updateScene()
     if (obj.model == nullptr) continue;
 
     for (auto& topNode : obj.model->topNodes) {
-      topNode->Draw(obj.transform.mat4());
+      topNode->Draw(glm::mat4{1.f});
     }
   }
 }
@@ -492,23 +491,17 @@ void EngineApp::loadGameObjects(EngineDescriptorPoolGrowable& growablePool)
   background.model = geModel;
   background.transform.scale = {1.5f, 1.5f, 1.5f};
   background.transform.translation = {0.0f, -1.0f, 1.0f};
+  background.transform.rotation = {0.0f, 0.f, 0.0f};
   geObjects.emplace(background.getID(), std::move(background));
 
-  /*
-  geModel = EngineModel::createModelFromFile(
-      geDevice,
-      "./models/free_1975_porsche_911_930_turbo.glb",
-      growablePool);
-  auto car = GameObject::createGameObject();
-  car.model = geModel;
-  car.transform.translation = {-5.0, 0.f, -1.0f};
-  geObjects.emplace(car.getID(), std::move(car));
-  */
-
-  std::vector<glm::vec3> lightColors = {{0.2f, 0.2f, .7f}, {0.2f, 0.2f, .7f}};
+  std::vector<glm::vec3> lightColors = {{0.2f, 0.2f, .7f},
+                                        {0.2f, 0.2f, .7f},
+                                        {0.2f, 0.2f, .7f},
+                                        {0.2f, 0.2f, .7f},
+                                        {0.2f, 0.2f, .7f}};
 
   for (int i = 0; i < lightColors.size(); i++) {
-    auto pointLight = GameObject::makePointLight(10.f);
+    auto pointLight = GameObject::makePointLight(1.f);
     pointLight.color = lightColors[i];
 
     auto rotateLight =

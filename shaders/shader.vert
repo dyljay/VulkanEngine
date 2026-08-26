@@ -9,17 +9,17 @@ layout(location = 2) out vec3 fragNormalWorld;
 layout(location = 3) out vec2 fragUV;
 
 struct PointLight {
-    vec4 position;
-    vec4 color;
+  vec4 position;
+  vec4 color;
 };
 
 layout(set = 0, binding = 0) uniform GlobalUbo {
-    mat4 projection;
-    mat4 view;
-    mat4 invView;
-    vec4 ambientLightColor;
-    PointLight pointLights[10];
-    int numActiveLights;
+  mat4 projection;
+  mat4 view;
+  mat4 invView;
+  vec4 ambientLightColor;
+  PointLight pointLights[10];
+  int numActiveLights;
 } ubo;
 
 struct Vertex {
@@ -34,19 +34,20 @@ layout(buffer_reference, std430) readonly buffer VertexBuffer {
   Vertex vertices[];
 };
 
-layout( push_constant ) uniform Push {
-    mat4 modelMatrix;
-    mat4 normalMatrix;
-    VertexBuffer vertexBuffer;
+layout(push_constant) uniform Push {
+  mat4 modelMatrix;
+  mat4 normalMatrix;
+  mat4 localTransform;
+  VertexBuffer vertexBuffer;
 } push;
 
 void main() {
-    Vertex v = push.vertexBuffer.vertices[gl_VertexIndex];
-    vec4 positionWorld = push.modelMatrix * vec4(v.position, 1.0);
-    gl_Position = ubo.projection * ubo.view * positionWorld;
-    
-    fragNormalWorld = normalize(mat3(push.normalMatrix) * v.normal);
-    fragPosWorld = positionWorld.xyz;
-    fragColor = v.color;
-    fragUV = vec2(v.uv_x, v.uv_y);
+  Vertex v = push.vertexBuffer.vertices[gl_VertexIndex];
+  vec4 positionWorld = push.modelMatrix * push.localTransform * vec4(v.position, 1.0);
+  gl_Position = ubo.projection * ubo.view * positionWorld;
+
+  fragNormalWorld = normalize(mat3(push.normalMatrix * push.localTransform) * v.normal);
+  fragPosWorld = positionWorld.xyz;
+  fragColor = v.color;
+  fragUV = vec2(v.uv_x, v.uv_y);
 }

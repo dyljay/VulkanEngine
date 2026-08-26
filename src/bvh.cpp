@@ -11,7 +11,9 @@
 #include "engine_descriptor.hpp"
 #include "engine_game_object.hpp"
 #include "engine_pipeline.hpp"
+#include "glm/fwd.hpp"
 #include "primitive.hpp"
+#include "sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
 #include "vulkan/vulkan_core.h"
 
 namespace GameEngine {
@@ -36,12 +38,62 @@ BVHAccel::BVHAccel(const GameObject::Map& geObjects,
 
 BVHAccel::~BVHAccel() {}
 
-void BVHAccel::constructTree()
+void BVHAccel::constructTree(int index)
 {
-  if (VkCommandBuffer commandBuffer = computationManager.beginComputation()) {
+  if (VkCommandBuffer commandBuffer =
+          computationManager.beginComputation(index))
+  {
     mortonGeneration->bind(commandBuffer);
 
+    PushConstantBVHWithBounds pushBound{};
+    pushBound.numPrimitives = primitiveCount;
+    pushBound.sceneDiff = glm::vec4{40.f};
+    pushBound.sceneMin = glm::vec4{-20.f};
+
+    vkCmdPushConstants(commandBuffer,
+                       mortonGeneration->getPipelineLayout(),
+                       VK_SHADER_STAGE_COMPUTE_BIT,
+                       0,
+                       sizeof(PushConstantBVHWithBounds),
+                       &pushBound);
+
+    mortonGeneration->dispatch(commandBuffer,
+                               &mortonCodesDS[index],
+                               primitiveCount);
+
+    PushConstantBVH push{};
+    push.numPrimitives = primitiveCount;
+
     radixSortPipeline->bind(commandBuffer);
+    vkCmdPushConstants(commandBuffer,
+                       mortonGeneration->getPipelineLayout(),
+                       VK_SHADER_STAGE_COMPUTE_BIT,
+                       0,
+                       sizeof(PushConstantBVHWithBounds),
+                       &push);
+    radixSortPipeline->dispatch(commandBuffer,
+                                &sortMortonCodesDS[index],
+                                primitiveCount);
+
+    treeGeneration->bind(commandBuffer);
+    vkCmdPushConstants(commandBuffer,
+                       mortonGeneration->getPipelineLayout(),
+                       VK_SHADER_STAGE_COMPUTE_BIT,
+                       0,
+                       sizeof(PushConstantBVHWithBounds),
+                       &push);
+    treeGeneration->dispatch(commandBuffer, &treeDS[index], primitiveCount - 1);
+
+    mergeAABBPipeline->bind(commandBuffer);
+    vkCmdPushConstants(commandBuffer,
+                       mortonGeneration->getPipelineLayout(),
+                       VK_SHADER_STAGE_COMPUTE_BIT,
+                       0,
+                       sizeof(PushConstantBVHWithBounds),
+                       &push);
+    mergeAABBPipeline->dispatch(commandBuffer,
+                                &mergeAABBDS[index],
+                                primitiveCount);
 
     computationManager.endComputation(commandBuffer);
   }

@@ -23,7 +23,7 @@ class BVHAccel {
 
   ~BVHAccel();
 
-  void constructTree();
+  void constructTree(int index);
 
   bool doesIntersect();
 

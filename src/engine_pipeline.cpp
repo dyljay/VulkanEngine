@@ -333,8 +333,19 @@ void ComputePipeline::bind(VkCommandBuffer commandBuffer)
                     computePipeline);
 }
 
-void ComputePipeline::dispatch(
-    VkCommandBuffer commandBuffer,
-    const std::vector<VkDescriptorSet>& descriptorSets)
-{}
+void ComputePipeline::dispatch(VkCommandBuffer commandBuffer,
+                               const VkDescriptorSet* descriptorSets,
+                               uint32_t n)
+{
+  vkCmdBindDescriptorSets(commandBuffer,
+                          VK_PIPELINE_BIND_POINT_COMPUTE,
+                          computePipelineLayout,
+                          0,
+                          1,
+                          descriptorSets,
+                          0,
+                          nullptr);
+
+  vkCmdDispatch(commandBuffer, groupCount(n, 256), 1, 1);
+}
 }  // namespace GameEngine

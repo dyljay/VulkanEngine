@@ -1,26 +1,8 @@
 #version 450
 
-// Vertex shader — no vertex buffer needed at all
-const vec3 positions[36] = vec3[](
-    // +X face
-    vec3(1, -1, -1), vec3(1, -1, 1), vec3(1, 1, 1),
-    vec3(1, 1, 1), vec3(1, 1, -1), vec3(1, -1, -1),
-    // -X face
-    vec3(-1, -1, 1), vec3(-1, -1, -1), vec3(-1, 1, -1),
-    vec3(-1, 1, -1), vec3(-1, 1, 1), vec3(-1, -1, 1),
-    // +Y face
-    vec3(-1, 1, -1), vec3(1, 1, -1), vec3(1, 1, 1),
-    vec3(1, 1, 1), vec3(-1, 1, 1), vec3(-1, 1, -1),
-    // -Y face
-    vec3(-1, -1, 1), vec3(1, -1, 1), vec3(1, -1, -1),
-    vec3(1, -1, -1), vec3(-1, -1, -1), vec3(-1, -1, 1),
-    // +Z face
-    vec3(-1, -1, 1), vec3(-1, 1, 1), vec3(1, 1, 1),
-    vec3(1, 1, 1), vec3(1, -1, 1), vec3(-1, -1, 1),
-    // -Z face
-    vec3(1, -1, -1), vec3(1, 1, -1), vec3(-1, 1, -1),
-    vec3(-1, 1, -1), vec3(-1, -1, -1), vec3(1, -1, -1)
-  );
+#extension GL_ARB_shading_language_include : require
+
+#include "rectangle.glsl"
 
 struct PointLight {
   vec4 position;

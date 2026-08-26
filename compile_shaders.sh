@@ -11,6 +11,7 @@
 /opt/homebrew/bin/glslang -V shaders/bbox.frag -o shaders/bbox.frag.spv
 
 # compute shaders
+/opt/homebrew/bin/glslang -V shaders/copy_aabb.comp -o shaders/copy_aabb.comp.spv
 /opt/homebrew/bin/glslang -V shaders/morton_code.comp -o shaders/morton_code.comp.spv
 /opt/homebrew/bin/glslang -V --target-env vulkan1.1 shaders/single_radixsort.comp -o shaders/single_radixsort.comp.spv
 /opt/homebrew/bin/glslang -V shaders/radix_tree_build.comp -o shaders/radix_tree_build.comp.spv

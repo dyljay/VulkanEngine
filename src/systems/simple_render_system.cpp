@@ -17,6 +17,7 @@ namespace GameEngine {
 struct SimplePushConstantData {
   glm::mat4 modelMatrix{1.f};
   glm::mat4 normalMatrix{1.f};
+  glm::mat4 localTransform{1.f};
   VkDeviceAddress vertexBuffer;
 };
 
@@ -85,10 +86,11 @@ void SimpleRenderSystem::render(FrameInfo& frameInfo)
 
     SimplePushConstantData pushData{};
     pushData.normalMatrix = obj.transform.normalMatrix();
+    pushData.modelMatrix = obj.transform.mat4();
 
     for (auto& mesh : obj.model->meshes) {
       pushData.vertexBuffer = mesh->getVertexBufferAddress();
-      pushData.modelMatrix = mesh->getLocalMatrix();
+      pushData.localTransform = mesh->getLocalMatrix();
 
       vkCmdPushConstants(
           frameInfo.commandBuffer,

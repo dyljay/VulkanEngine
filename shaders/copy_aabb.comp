@@ -1,27 +1,62 @@
 #version 450
 
-#extension GL_EXT_buffer_reference : require
-
 layout(local_size_x = 256) in;
+
+const uint edges[24] = uint[](
+    0, 1, 2, 3, 4, 5, 6, 7,
+    0, 2, 1, 3, 4, 6, 5, 7,
+    0, 4, 1, 5, 2, 6, 3, 7
+  );
 
 struct AABB {
   vec4 min;
   vec4 max;
 };
 
-layout(buffer_reference, std430) readonly buffer AABBIn {
+layout(std430, binding = 0) readonly buffer AABBIn {
   AABB aabbIn[];
 };
 
-layout(buffer_reference, std430) writeonly buffer AABBOut {
+layout(std430, binding = 1) writeonly buffer AABBOut {
   AABB aabbOut[];
 };
 
 layout(push_constant) uniform Push {
-  AABBIn aabbInbuffer;
-  AABBOut aabbOutBuffer;
   mat4 model;
   mat4 localTransform;
 } push;
 
-void main() {}
+void main() {
+  AABB bbox = aabbIn[gl_GlobalInvocationID.x];
+  mat4 transform = push.localTransform * push.model;
+
+  vec4 min;
+  vec4 max;
+
+  AABB bboxOut;
+  for (int i = 0; i < 24; i++) {
+    uint edge = edges[i];
+    vec4 bounds = vec4(
+        ((edge & 1u) != 0u) ? bbox.max.x : bbox.min.x,
+        ((edge & 2u) != 0u) ? bbox.max.y : bbox.min.y,
+        ((edge & 4u) != 0u) ? bbox.max.z : bbox.min.z,
+        1.0
+      );
+    bounds = transform * bounds;
+
+    bboxOut.min = vec4(
+        (bounds.x < min.x) ? bounds.x : min.x,
+        (bounds.y < min.y) ? bounds.y : min.y,
+        (bounds.z < min.z) ? bounds.z : min.z,
+        1.0
+      );
+    bboxOut.max = vec4(
+        (bounds.x > max.x) ? bounds.x : max.x,
+        (bounds.y > max.y) ? bounds.y : max.y,
+        (bounds.z > max.z) ? bounds.z : max.z,
+        1.0
+      );
+  }
+
+  aabbOut[gl_GlobalInvocationID.x] = bboxOut;
+}

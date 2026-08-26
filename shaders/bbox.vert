@@ -1,27 +1,8 @@
 #version 450
 
-#extension GL_EXT_buffer_reference : require
+#extension GL_ARB_shading_language_include : require
 
-const vec3 positions[36] = vec3[](
-    // +X face
-    vec3(1, -1, -1), vec3(1, -1, 1), vec3(1, 1, 1),
-    vec3(1, 1, 1), vec3(1, 1, -1), vec3(1, -1, -1),
-    // -X face
-    vec3(-1, -1, 1), vec3(-1, -1, -1), vec3(-1, 1, -1),
-    vec3(-1, 1, -1), vec3(-1, 1, 1), vec3(-1, -1, 1),
-    // +Y face
-    vec3(-1, 1, -1), vec3(1, 1, -1), vec3(1, 1, 1),
-    vec3(1, 1, 1), vec3(-1, 1, 1), vec3(-1, 1, -1),
-    // -Y face
-    vec3(-1, -1, 1), vec3(1, -1, 1), vec3(1, -1, -1),
-    vec3(1, -1, -1), vec3(-1, -1, -1), vec3(-1, -1, 1),
-    // +Z face
-    vec3(-1, -1, 1), vec3(-1, 1, 1), vec3(1, 1, 1),
-    vec3(1, 1, 1), vec3(1, -1, 1), vec3(-1, -1, 1),
-    // -Z face
-    vec3(1, -1, -1), vec3(1, 1, -1), vec3(-1, 1, -1),
-    vec3(-1, 1, -1), vec3(-1, -1, -1), vec3(1, -1, -1)
-  );
+#include "rectangle.glsl"
 
 struct PointLight {
   vec4 position;
@@ -46,6 +27,7 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
 
 layout(push_constant) uniform Push {
   mat4 model;
+  mat4 localTransform;
   AABB tlas;
 } push;
 
@@ -56,5 +38,5 @@ void main() {
   position.y = (sign(position.y) < 0) ? push.tlas.min.y : push.tlas.max.y;
   position.z = (sign(position.z) < 0) ? push.tlas.min.z : push.tlas.max.z;
 
-  gl_Position = ubo.projection * ubo.view * push.model * position;
+  gl_Position = ubo.projection * ubo.view * push.model * push.localTransform * position;
 }

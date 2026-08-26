@@ -50,9 +50,9 @@ VkCommandBuffer EngineComputer::getAvailableCommandBuffer()
   return commandBuffer;
 }
 
-VkCommandBuffer EngineComputer::beginComputation()
+VkCommandBuffer EngineComputer::beginComputation(int i)
 {
-  VkCommandBuffer commandBuffer = getAvailableCommandBuffer();
+  VkCommandBuffer commandBuffer = commandBuffers[i];
 
   VkCommandBufferBeginInfo beginInfo{};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;

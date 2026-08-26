@@ -25,7 +25,7 @@ struct FrameInfo {
   int frameIndex;
   float frameTime;
   VkCommandBuffer commandBuffer;
-  EngineCamera &camera;
-  GameObject::Map &gameObjects;
+  EngineCamera& camera;
+  GameObject::Map& gameObjects;
 };
-} // namespace GameEngine
+}  // namespace GameEngine

@@ -11,7 +11,7 @@ class EngineComputer {
   EngineComputer(EngineDevice& device, int processes);
   ~EngineComputer();
 
-  VkCommandBuffer beginComputation();
+  VkCommandBuffer beginComputation(int i);
   void endComputation(VkCommandBuffer commandBuffer);
 
  private:
