@@ -76,6 +76,7 @@ void main() {
     if (delta(i, i + (s + t) * d) > deltaNode) {
       s = s + t;
     }
+    if (t == 1) break;
     t = (t + 1) / 2;
   }
 

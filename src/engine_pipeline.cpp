@@ -348,4 +348,5 @@ void ComputePipeline::dispatch(VkCommandBuffer commandBuffer,
 
   vkCmdDispatch(commandBuffer, groupCount(n, 256), 1, 1);
 }
+
 }  // namespace GameEngine

@@ -181,7 +181,8 @@ void EngineDevice::createLogicalDevice()
 
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
   std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily,
-                                            indices.presentFamily};
+                                            indices.presentFamily,
+                                            indices.computeFamily};
 
   float queuePriority = 1.0f;
   for (uint32_t queueFamily : uniqueQueueFamilies) {
@@ -252,6 +253,7 @@ void EngineDevice::createLogicalDevice()
 
   vkGetDeviceQueue(device_, indices.graphicsFamily, 0, &graphicsQueue_);
   vkGetDeviceQueue(device_, indices.presentFamily, 0, &presentQueue_);
+  vkGetDeviceQueue(device_, indices.computeFamily, 0, &computeQueue_);
 }
 
 void EngineDevice::createCommandPool()
@@ -446,11 +448,16 @@ QueueFamilyIndices EngineDevice::findQueueFamilies(VkPhysicalDevice device)
   int i = 0;
   for (const auto& queueFamily : queueFamilies) {
     if (queueFamily.queueCount > 0 &&
-        (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) &&
         (queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT))
     {
       indices.graphicsFamily = i;
       indices.graphicsFamilyHasValue = true;
+    }
+    if (queueFamily.queueCount > 0 &&
+        queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT)
+    {
+      indices.computeFamily = i;
+      indices.computeHasValue = true;
     }
     VkBool32 presentSupport = false;
     vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface_, &presentSupport);

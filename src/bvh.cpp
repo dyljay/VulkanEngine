@@ -30,6 +30,7 @@ BVHAccel::BVHAccel(const GameObject::Map& geObjects,
   initializeNodeBuffers();
   createDescriptorSetLayouts();
   createDescriptorSets();
+  createAABBPipeline();
   createMortonCompPipeline();
   createSortingPipeline();
   createTreeGenCompPipeline();
@@ -38,11 +39,15 @@ BVHAccel::BVHAccel(const GameObject::Map& geObjects,
 
 BVHAccel::~BVHAccel() {}
 
+void BVHAccel::createAABBs(const GameObject::Map& geObjects) {}
+
 void BVHAccel::constructTree(int index)
 {
   if (VkCommandBuffer commandBuffer =
           computationManager.beginComputation(index))
   {
+    resetBuffers(commandBuffer, index);
+
     mortonGeneration->bind(commandBuffer);
 
     PushConstantBVHWithBounds pushBound{};
@@ -61,6 +66,15 @@ void BVHAccel::constructTree(int index)
                                &mortonCodesDS[index],
                                primitiveCount);
 
+    EngineBuffer::SetBufferPipelineBarrier(commandBuffer,
+                                           mortonCodes[index]->getBuffer(),
+                                           BufferAccess::ComputeWrite,
+                                           BufferAccess::ComputeReadWrite);
+
+    EngineBuffer::SetBufferPipelineBarrier(commandBuffer,
+                                           primitiveIndices[index]->getBuffer(),
+                                           BufferAccess::ComputeWrite,
+                                           BufferAccess::ComputeReadWrite);
     PushConstantBVH push{};
     push.numPrimitives = primitiveCount;
 
@@ -71,9 +85,13 @@ void BVHAccel::constructTree(int index)
                        0,
                        sizeof(PushConstantBVHWithBounds),
                        &push);
-    radixSortPipeline->dispatch(commandBuffer,
-                                &sortMortonCodesDS[index],
-                                primitiveCount);
+    radixSortPipeline->dispatch(commandBuffer, &sortMortonCodesDS[index], 1);
+
+    EngineBuffer::SetBufferPipelineBarrier(
+        commandBuffer,
+        sortedMortonCodes[index]->getBuffer(),
+        BufferAccess::ComputeReadWrite,
+        BufferAccess::ComputeRead);
 
     treeGeneration->bind(commandBuffer);
     vkCmdPushConstants(commandBuffer,
@@ -83,6 +101,22 @@ void BVHAccel::constructTree(int index)
                        sizeof(PushConstantBVHWithBounds),
                        &push);
     treeGeneration->dispatch(commandBuffer, &treeDS[index], primitiveCount - 1);
+
+    EngineBuffer::SetBufferPipelineBarrier(
+        commandBuffer,
+        primitiveIndicesOut[index]->getBuffer(),
+        BufferAccess::ComputeReadWrite,
+        BufferAccess::ComputeRead);
+
+    EngineBuffer::SetBufferPipelineBarrier(commandBuffer,
+                                           leafNodes[index]->getBuffer(),
+                                           BufferAccess::ComputeWrite,
+                                           BufferAccess::ComputeRead);
+
+    EngineBuffer::SetBufferPipelineBarrier(commandBuffer,
+                                           internalNodes[index]->getBuffer(),
+                                           BufferAccess::ComputeWrite,
+                                           BufferAccess::ComputeReadWrite);
 
     mergeAABBPipeline->bind(commandBuffer);
     vkCmdPushConstants(commandBuffer,
@@ -194,6 +228,60 @@ void BVHAccel::initializeMortonCodeBuffers()
   }
 }
 
+void BVHAccel::resetBuffers(VkCommandBuffer commandBuffer, int index)
+{
+  // resetting the mortonCodes
+  vkCmdFillBuffer(commandBuffer,
+                  mortonCodes[index]->getBuffer(),
+                  0,
+                  VK_WHOLE_SIZE,
+                  0);
+  // sorted mortonCodes buffer
+  vkCmdFillBuffer(commandBuffer,
+                  sortedMortonCodes[index]->getBuffer(),
+                  0,
+                  VK_WHOLE_SIZE,
+                  0);
+  // prim indices
+  vkCmdFillBuffer(commandBuffer,
+                  primitiveIndices[index]->getBuffer(),
+                  0,
+                  VK_WHOLE_SIZE,
+                  0);
+
+  // prim sorted
+  vkCmdFillBuffer(commandBuffer,
+                  primitiveIndicesOut[index]->getBuffer(),
+                  0,
+                  VK_WHOLE_SIZE,
+                  0);
+  // leaf nodes
+  vkCmdFillBuffer(commandBuffer,
+                  leafNodes[index]->getBuffer(),
+                  0,
+                  VK_WHOLE_SIZE,
+                  0);
+
+  // internalNodes, but also makes sure to set the root node parent to -1
+  vkCmdFillBuffer(commandBuffer,
+                  internalNodes[index]->getBuffer(),
+                  0,
+                  VK_WHOLE_SIZE,
+                  0);
+  // set root node parent to -1
+  vkCmdFillBuffer(commandBuffer,
+                  internalNodes[index]->getBuffer(),
+                  4 * sizeof(uint32_t),
+                  sizeof(int32_t),
+                  -1);
+  // node buffer
+  vkCmdFillBuffer(commandBuffer,
+                  nodeAABBs[index]->getBuffer(),
+                  0,
+                  VK_WHOLE_SIZE,
+                  0);
+}
+
 void BVHAccel::initializeNodeBuffers()
 {
   leafNodes.resize(NUM_BUFFER);
@@ -217,28 +305,6 @@ void BVHAccel::initializeNodeBuffers()
             VK_BUFFER_USAGE_TRANSFER_DST_BIT,
         VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
 
-    // initializing internalNodes[0].parent = -1 for the root node so
-    // terminating condition can be met
-
-    EngineBuffer internalWrite{
-        geDevice,
-        sizeof(InternalNode),
-        1,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-        VMA_MEMORY_USAGE_AUTO_PREFER_HOST,
-        1,
-        VMA_ALLOCATION_CREATE_MAPPED_BIT |
-            VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT};
-
-    InternalNode rootNode{};
-    internalWrite.map();
-    internalWrite.writeToBuffer(&rootNode, sizeof(InternalNode), 0);
-    internalWrite.unmap();
-
-    geDevice.copyBuffer(internalWrite.getBuffer(),
-                        internalNodes[i]->getBuffer(),
-                        sizeof(InternalNode));
-
     nodeAABBs[i] = std::make_unique<EngineBuffer>(
         geDevice,
         sizeof(AABBPush),
@@ -251,6 +317,12 @@ void BVHAccel::initializeNodeBuffers()
 
 void BVHAccel::createDescriptorSetLayouts()
 {
+  oneBinding = EngineDescriptorSetLayout::Builder(geDevice)
+                   .addBinding(0,
+                               VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                               VK_SHADER_STAGE_COMPUTE_BIT)
+                   .build();
+
   threeBindings = EngineDescriptorSetLayout::Builder(geDevice)
                       .addBinding(0,
                                   VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
@@ -297,6 +369,7 @@ void BVHAccel::createDescriptorSetLayouts()
 
 void BVHAccel::createDescriptorSets()
 {
+  aabbGenDS.resize(NUM_BUFFER);
   mortonCodesDS.resize(NUM_BUFFER);
   sortMortonCodesDS.resize(NUM_BUFFER);
   treeDS.resize(NUM_BUFFER);
@@ -312,6 +385,10 @@ void BVHAccel::createDescriptorSets()
     auto leafNodesBufferInfo = leafNodes[i]->descriptorInfo();
     auto internalNodesBufferInfo = internalNodes[i]->descriptorInfo();
     auto nodeAABBBufferInfo = nodeAABBs[i]->descriptorInfo();
+
+    EngineDescriptorWriter(*oneBinding, growablePool)
+        .writeBuffer(0, &primbboxBufferInfo)
+        .build(aabbGenDS[i]);
 
     EngineDescriptorWriter(*threeBindings, growablePool)
         .writeBuffer(0, &primbboxBufferInfo)
@@ -340,6 +417,15 @@ void BVHAccel::createDescriptorSets()
         .writeBuffer(4, &nodeAABBBufferInfo)
         .build(mergeAABBDS[i]);
   }
+}
+
+void BVHAccel::createAABBPipeline()
+{
+  sortPipeline =
+      std::make_unique<ComputePipeline>(geDevice,
+                                        "./shaders/copy_aabb.comp.spv",
+                                        oneBinding->getDescriptorSetLayout(),
+                                        sizeof(AABBSortPipelinePush));
 }
 
 void BVHAccel::createMortonCompPipeline()

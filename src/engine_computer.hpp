@@ -22,7 +22,9 @@ class EngineComputer {
 
   EngineDevice& geDevice;
   std::vector<VkCommandBuffer> commandBuffers;
+  int index = 0;
 
+  std::vector<VkFence> commandBufferAvaialable;
   int numProcesses;
 };
 }  // namespace GameEngine

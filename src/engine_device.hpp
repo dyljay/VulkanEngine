@@ -24,9 +24,14 @@ struct SwapChainSupportDetails {
 struct QueueFamilyIndices {
   uint32_t graphicsFamily;
   uint32_t presentFamily;
+  uint32_t computeFamily;
   bool graphicsFamilyHasValue = false;
   bool presentFamilyHasValue = false;
-  bool isComplete() { return graphicsFamilyHasValue && presentFamilyHasValue; }
+  bool computeHasValue = false;
+  bool isComplete()
+  {
+    return graphicsFamilyHasValue && presentFamilyHasValue && computeHasValue;
+  }
 };
 
 class EngineDevice {
@@ -51,6 +56,7 @@ class EngineDevice {
   VkSurfaceKHR surface() { return surface_; }
   VkQueue graphicsQueue() { return graphicsQueue_; }
   VkQueue presentQueue() { return presentQueue_; }
+  VkQueue computeQueue() { return computeQueue_; }
   VkInstance instance() { return instance_; }
   VkPhysicalDevice getPhysicalDevice() { return physicalDevice; }
   VmaAllocator getAllocator() { return allocator_; }
@@ -140,6 +146,7 @@ class EngineDevice {
   VkSurfaceKHR surface_;
   VkQueue graphicsQueue_;
   VkQueue presentQueue_;
+  VkQueue computeQueue_;
 
   VkSampleCountFlagBits msaaSamples_ = VK_SAMPLE_COUNT_4_BIT;
 

@@ -5,6 +5,28 @@
 
 namespace GameEngine {
 
+/**
+ * How a buffer is being accessed on either side of a pipeline barrier. Buffers
+ * have no layouts, so this plays the role VkImageLayout plays for images: the
+ * src value describes the work that must finish, the dst value the work that
+ * must wait.
+ */
+enum class BufferAccess {
+  None,
+  HostRead,
+  HostWrite,
+  TransferSrc,
+  TransferDst,
+  ComputeRead,
+  ComputeWrite,
+  ComputeReadWrite,
+  VertexShaderRead,
+  FragmentShaderRead,
+  VertexInput,
+  IndexInput,
+  IndirectCommand,
+};
+
 class EngineBuffer {
  public:
   EngineBuffer(EngineDevice& device,
@@ -47,9 +69,21 @@ class EngineBuffer {
   VkDeviceSize getBufferSize() const { return bufferSize; }
   VmaAllocation getAllocation() const { return allocation_; }
 
+  static void SetBufferPipelineBarrier(VkCommandBuffer commandBuffer,
+                                       VkBuffer buffer,
+                                       BufferAccess oldAccess,
+                                       BufferAccess newAccess,
+                                       VkDeviceSize offset = 0,
+                                       VkDeviceSize size = VK_WHOLE_SIZE);
+
  private:
   static VkDeviceSize getAlignment(VkDeviceSize instanceSize,
                                    VkDeviceSize minOffsetAlignment);
+
+  static void GetAccessInfo(BufferAccess access,
+                            bool isSource,
+                            VkPipelineStageFlags& stage,
+                            VkAccessFlags& accessMask);
 
   EngineDevice& lveDevice;
   void* mapped = nullptr;

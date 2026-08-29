@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "engine_device.hpp"
+#include "sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
 #include "vulkan/vulkan_core.h"
 
 namespace GameEngine {
@@ -85,7 +86,7 @@ class ComputePipeline {
   void dispatch(VkCommandBuffer commandBuffer,
                 const VkDescriptorSet* descroptorSets,
                 uint32_t numPrimitives);
-
+  void end(VkCommandBuffer commandBuffer);
   VkPipelineLayout getPipelineLayout() const { return computePipelineLayout; }
 
  private:

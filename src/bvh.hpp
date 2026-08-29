@@ -40,6 +40,9 @@ class BVHAccel {
   void createTreeGenCompPipeline();
   void createMergeCompPipeline();
   void updateAABBDataIndex(const GameObject::Map& geObjects, int index);
+  void createAABBs(const GameObject::Map& geObjects);
+  void createAABBPipeline();
+  void resetBuffers(VkCommandBuffer commandBuffer, int index);
 
   std::vector<std::unique_ptr<EngineBuffer>> primitiveAABBs;
   std::vector<std::unique_ptr<EngineBuffer>> mortonCodes;
@@ -50,15 +53,18 @@ class BVHAccel {
   std::vector<std::unique_ptr<EngineBuffer>> internalNodes;
   std::vector<std::unique_ptr<EngineBuffer>> nodeAABBs;
 
+  std::unique_ptr<ComputePipeline> sortPipeline;
   std::unique_ptr<ComputePipeline> mortonGeneration;
   std::unique_ptr<ComputePipeline> radixSortPipeline;
   std::unique_ptr<ComputePipeline> treeGeneration;
   std::unique_ptr<ComputePipeline> mergeAABBPipeline;
 
+  std::unique_ptr<EngineDescriptorSetLayout> oneBinding;
   std::unique_ptr<EngineDescriptorSetLayout> threeBindings;
   std::unique_ptr<EngineDescriptorSetLayout> fourBindings;
   std::unique_ptr<EngineDescriptorSetLayout> fiveBindings;
 
+  std::vector<VkDescriptorSet> aabbGenDS;
   std::vector<VkDescriptorSet> mortonCodesDS;
   std::vector<VkDescriptorSet> sortMortonCodesDS;
   std::vector<VkDescriptorSet> treeDS;

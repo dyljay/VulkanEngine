@@ -70,6 +70,9 @@ void RenderSystem::createPipeline(VkPipelineRenderingCreateInfo attachmentInfo,
   pipelineConfig.multisampleInfo.rasterizationSamples =
       pipelineSettings.sampleCount;
   pipelineConfig.rasterizationInfo.polygonMode = pipelineSettings.polyMode;
+  if (pipelineConfig.rasterizationInfo.polygonMode == VK_POLYGON_MODE_LINE) {
+    pipelineConfig.rasterizationInfo.cullMode = VK_CULL_MODE_NONE;
+  }
 
   if (pipelineSettings.clearDescriptions) {
     pipelineConfig.bindingDescriptions.clear();
