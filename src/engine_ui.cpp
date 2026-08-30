@@ -4,6 +4,7 @@
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_vulkan.h"
+#include "imgui_internal.h"
 #include "src/engine_descriptor.hpp"
 #include "src/engine_device.hpp"
 #include "src/engine_renderer.hpp"
@@ -51,6 +52,8 @@ void EngineUI::initImGUIPool()
           .build();
 }
 
+void EngineUI::setStyle() { ImGuiStyle style = ImGui::GetStyle(); }
+
 void EngineUI::initUI()
 {
   ImGui::CreateContext();
@@ -88,6 +91,8 @@ void EngineUI::newFrame()
   ImGui::NewFrame();
 }
 
+ImGuiIO& EngineUI::getIO() { return ImGui::GetIO(); }
+
 void EngineUI::render(VkCommandBuffer commandBuffer)
 {
   ImGui::Render();
@@ -109,7 +114,12 @@ void EngineUI::renderLightUI(glm::vec3& color, float& intensity)
   }
 }
 
-void EngineUI::beginModelUI() { ImGui::BeginMenu("Selected Objects"); }
+void EngineUI::beginSideBar(float width)
+{
+  ImGuiViewport* viewPort = ImGui::GetMainViewport();
+
+  ImGui::BeginViewportSideBar("Settings", viewPort, ImGuiDir_Right, width, 0);
+}
 
 void EngineUI::renderModelUI(TransformComponent& transform,
                              const std::string& name,
@@ -128,19 +138,16 @@ void EngineUI::renderModelUI(TransformComponent& transform,
   ImGui::PopID();
 }
 
-void EngineUI::endModelUI() { ImGui::End(); }
+void EngineUI::endSideBar() { ImGui::End(); }
 
 void EngineUI::bvhUI(bool& showbbox)
 {
-  if (ImGui::Begin("Bounding Volume")) {
+  if (ImGui::CollapsingHeader("Bounding Volume",
+                              ImGuiTreeNodeFlags_DefaultOpen))
+  {
     ImGui::Checkbox("Show AABBs?", &showbbox);
-    ImGui::End();
   }
 }
 
-void EngineUI::endFrame()
-{
-  ImGui::End();
-  ImGui::EndFrame();
-}
+void EngineUI::endFrame() { ImGui::EndFrame(); }
 }  // namespace GameEngine

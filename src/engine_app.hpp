@@ -6,6 +6,7 @@
 #include "engine_ui.hpp"
 #include "engine_window.hpp"
 #include "shaderList.hpp"
+#include "vulkan/vulkan_core.h"
 // std
 #include <stdbool.h>
 
@@ -21,7 +22,7 @@ class EngineApp {
 
   void run();
 
-  static constexpr int WIDTH = 1180;
+  static constexpr int WIDTH = 1280;
   static constexpr int HEIGHT = 980;
 
   EngineApp();
@@ -38,7 +39,7 @@ class EngineApp {
   void populateMatTexDescriptorSets(DescriptorSets& descriptorSets,
                                     DescriptorSetLayouts& descriptorSetLayouts);
 
-  void renderUI(EngineUI& ui);
+  void renderUI(EngineUI& ui, VkCommandBuffer commandBuffer);
   void updateScene();
 
   EngineWindow geWindow{WIDTH, HEIGHT, "WIT Engine"};

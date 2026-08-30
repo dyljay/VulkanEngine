@@ -30,27 +30,29 @@ class EngineUI {
   EngineUI(EngineRenderer& geRenderer);
   ~EngineUI();
 
-  void initImGUIPool();
-
-  void initUI();
+  void setStyle();
 
   void newFrame();
 
+  void beginSideBar(float width);
+  void endSideBar();
   void renderLightUI(glm::vec3& color, float& intensity);
 
-  void beginModelUI();
   void renderModelUI(TransformComponent& transform,
                      const std::string& name,
                      unsigned int id);
-  void endModelUI();
 
   void bvhUI(bool& showBVH);
 
+  ImGuiIO& getIO();
   void render(VkCommandBuffer commandBuffer);
 
   void endFrame();
 
  private:
+  void initImGUIPool();
+  void initUI();
+
   EngineRenderer& geRenderer;
 
   std::unique_ptr<EngineDescriptorPool> imguiPool;

@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
+#include <iterator>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -14,8 +15,10 @@
 #include "core.hpp"
 #include "engine_game_object.hpp"
 #include "glm/trigonometric.hpp"
+#include "imgui.h"
 #include "imgui_impl_sdl3.h"
 #include "render_systems.hpp"
+#include "sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -158,6 +161,7 @@ void EngineApp::run()
   bool userSeeMouse = false;
   uint32_t x, y = 0;
 
+  // main app loop
   while (!shouldQuit) {
     auto newTime = std::chrono::high_resolution_clock::now();
     float frameTime =
@@ -171,6 +175,7 @@ void EngineApp::run()
 
     int lastFrame = 0;
 
+    // processing window evenrs - clicking, resizing, button presses
     while (SDL_PollEvent(&e) != 0) {
       if (e.type == SDL_EVENT_QUIT) {
         shouldQuit = true;
@@ -196,6 +201,11 @@ void EngineApp::run()
         cameraController.handleMouseMovements(e, frameTime, viewerObject);
       }
 
+      if (e.type == SDL_EVENT_WINDOW_RESIZED) {
+        geWindow.setWindowResizedFlag();
+      }
+
+      // Mouse buttons: 0=left, 1=right, 2=middle + extras
       if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
         if (e.button.button == SDL_BUTTON_LEFT) {
           hasClicked = true;
@@ -205,25 +215,24 @@ void EngineApp::run()
           y = (int)pixelDensity * e.motion.y;
         }
       }
-
-      if (e.type == SDL_EVENT_WINDOW_RESIZED) {
-        geWindow.setWindowResizedFlag();
-      }
-
       ImGui_ImplSDL3_ProcessEvent(&e);
     }
 
+    // updating object nodes
     updateScene();
 
+    // updating camera view
     if (!userSeeMouse) {
       cameraController.moveInXYZPlane(frameTime, viewerObject);
       camera.setViewYXZ(viewerObject.transform.translation,
                         viewerObject.transform.rotation);
     }
 
+    // updating projection matrix
     float aspect = geRenderer.getAspectRatio();
     camera.setPerspectiveProjection(glm::radians(45.f), aspect, 0.1f, 1000.f);
 
+    // main render loop
     if (auto commandBuffer = geRenderer.beginFrame()) {
       int frameIndex = geRenderer.getFrameIndex();
       FrameInfo frameInfo{frameIndex,
@@ -252,7 +261,11 @@ void EngineApp::run()
         bboxRender.render(frameInfo);
       }
 
-      if (hasClicked) {
+      if (userSeeMouse) {
+        renderUI(ui, commandBuffer);
+      }
+
+      if (hasClicked && !ImGui::GetIO().MouseDownOwned[0]) {
         uint32_t objIDFromPixel = offscreenRenderer.readPixelValue(x, y);
 
         if (objIDFromPixel == 0) {
@@ -267,30 +280,6 @@ void EngineApp::run()
 
         hasClicked = false;
       }
-
-      // ui
-      ui.newFrame();
-      ui.bvhUI(showbbox);
-
-      if (!selectedObjects.empty()) {
-        for (auto objectIDkv : selectedObjects) {
-          auto objectID = objectIDkv.first;
-          auto& object = geObjects.at(objectID);
-          TransformComponent transformUI{};
-
-          if (object.pointLight == nullptr) {
-            ui.beginModelUI();
-            ui.renderModelUI(object.transform,
-                             object.model->getName(),
-                             objectID);
-            ui.endModelUI();
-          }
-        }
-      }
-
-      ui.render(commandBuffer);
-      ui.endFrame();
-      // ui end
 
       // drawing objects offscreen
       if (auto commandBuffer_off = offscreenRenderer.beginFrame(frameIndex)) {
@@ -364,6 +353,27 @@ void EngineApp::populateDescriptorSetLayouts(
           .build();
 }
 
+void EngineApp::renderUI(EngineUI& ui, VkCommandBuffer commandBuffer)
+{
+  ui.newFrame();
+  ui.beginSideBar(300.);
+  ui.bvhUI(showbbox);
+
+  if (!selectedObjects.empty()) {
+    for (auto objectIDkv : selectedObjects) {
+      auto objectID = objectIDkv.first;
+      auto& object = geObjects.at(objectID);
+      TransformComponent transformUI{};
+      if (object.pointLight == nullptr) {
+        ui.renderModelUI(object.transform, object.model->getName(), objectID);
+      }
+    }
+  }
+  ui.endSideBar();
+  ui.render(commandBuffer);
+  ui.endFrame();
+}
+
 void EngineApp::updateScene()
 {
   for (auto& kv : geObjects) {
@@ -376,6 +386,7 @@ void EngineApp::updateScene()
     }
   }
 }
+
 void EngineApp::populateMatTexDescriptorSets(
     DescriptorSets& descriptorSets,
     DescriptorSetLayouts& descriptorSetLayouts)
