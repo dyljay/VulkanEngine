@@ -13,19 +13,22 @@
 #include "engine_pipeline.hpp"
 #include "glm/fwd.hpp"
 #include "primitive.hpp"
+#include "sdl/vendored/SDL/src/joystick/hidapi/steam/controller_structs.h"
 #include "sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
 #include "vulkan/vulkan_core.h"
 
 namespace GameEngine {
 
-BVHAccel::BVHAccel(const GameObject::Map& geObjects,
+BVHAccel::BVHAccel(GameObject::Map& geObjects,
                    EngineDevice& geDevice,
                    EngineDescriptorPoolGrowable& growablePool)
     : geDevice{geDevice},
       growablePool{growablePool},
+      geObjects{geObjects},
       computationManager{geDevice, NUM_BUFFER}
+
 {
-  initializeAABB(geObjects);
+  initializeAABB();
   initializeMortonCodeBuffers();
   initializeNodeBuffers();
   createDescriptorSetLayouts();
@@ -39,14 +42,13 @@ BVHAccel::BVHAccel(const GameObject::Map& geObjects,
 
 BVHAccel::~BVHAccel() {}
 
-void BVHAccel::createAABBs(const GameObject::Map& geObjects) {}
-
 void BVHAccel::constructTree(int index)
 {
   if (VkCommandBuffer commandBuffer =
           computationManager.beginComputation(index))
   {
     resetBuffers(commandBuffer, index);
+    updateAABBDataIndex(index);
 
     mortonGeneration->bind(commandBuffer);
 
@@ -133,36 +135,59 @@ void BVHAccel::constructTree(int index)
   }
 }
 
-void BVHAccel::initializeAABB(const GameObject::Map& geObjects)
+void BVHAccel::initializeAABB()
 {
   primitiveAABBs.resize(NUM_BUFFER);
-
-  for (int i = 0; i < NUM_BUFFER; i++) {
-    updateAABBDataIndex(geObjects, i);
-  }
-}
-
-void BVHAccel::updateAABBDataIndex(const GameObject::Map& geObjects, int index)
-{
-  std::vector<AABBPush> aabbVec;
-
   for (auto& kv : geObjects) {
     auto& obj = kv.second;
 
     if (obj.model == nullptr) continue;
-
-    for (auto& mesh : obj.model->meshes) {
-      aabbVec.emplace_back(
-          AABBPush{.min = mesh->getBBox().min, .max = mesh->getBBox().max});
-    }
+    primitiveCount += obj.model->meshes.size();
   }
 
-  primitiveCount = aabbVec.size();
+  aabbVectors.resize(NUM_BUFFER);
 
+  for (int i = 0; i < NUM_BUFFER; i++) {
+    primitiveAABBs[i] = std::make_unique<EngineBuffer>(
+        geDevice,
+        sizeof(AABBPush),
+        primitiveCount,
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+        VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
+
+    aabbVectors[i].resize(primitiveCount);
+  }
+}
+
+void BVHAccel::updateAABBDataIndex(int index)
+{
+  aabbVectors[index].clear();
+
+  traverseAndUpdateAABB(aabbVectors[index]);
+
+  copyAABBBuffer(index);
+}
+
+void BVHAccel::traverseAndUpdateAABB(std::vector<AABBPush>& aabbVec)
+{
+  for (auto& kv : geObjects) {
+    auto& obj = kv.second;
+
+    if (obj.model == nullptr) continue;
+    for (auto& mesh : obj.model->meshes) {
+      glm::mat4 transform = obj.transform.mat4() * mesh->getLocalMatrix();
+
+      aabbVec.emplace_back(mesh->getBBox().worldSpaceBounds(transform));
+    }
+  }
+}
+
+void BVHAccel::copyAABBBuffer(int index)
+{
   EngineBuffer stagingBuffer =
       EngineBuffer(geDevice,
                    sizeof(AABBPush),
-                   aabbVec.size(),
+                   aabbVectors[index].size(),
                    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                    VMA_MEMORY_USAGE_AUTO_PREFER_HOST,
                    1,
@@ -170,19 +195,12 @@ void BVHAccel::updateAABBDataIndex(const GameObject::Map& geObjects, int index)
                        VMA_ALLOCATION_CREATE_MAPPED_BIT);
 
   stagingBuffer.map();
-  stagingBuffer.writeToBuffer((void*)aabbVec.data());
+  stagingBuffer.writeToBuffer((void*)aabbVectors[index].data());
   stagingBuffer.unmap();
-
-  primitiveAABBs[index] = std::make_unique<EngineBuffer>(
-      geDevice,
-      sizeof(AABBPush),
-      aabbVec.size(),
-      VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-      VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
 
   geDevice.copyBuffer(stagingBuffer.getBuffer(),
                       primitiveAABBs[index]->getBuffer(),
-                      sizeof(AABBPush) * aabbVec.size());
+                      sizeof(AABBPush) * aabbVectors[index].size());
 }
 
 void BVHAccel::initializeMortonCodeBuffers()

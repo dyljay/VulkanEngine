@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -17,7 +18,7 @@ class BVHAccel {
   static constexpr int NUM_BUFFER = EngineSwapChain::MAX_FRAMES_IN_FLIGHT;
 
  public:
-  BVHAccel(const GameObject::Map& geObjects,
+  BVHAccel(GameObject::Map& geObjects,
            EngineDevice& geDevice,
            EngineDescriptorPoolGrowable& growablePool);
 
@@ -30,7 +31,8 @@ class BVHAccel {
   void inOrderTraversal();
 
  private:
-  void initializeAABB(const GameObject::Map& geObjects);
+  void initializeAABB();
+  void traverseAndUpdateAABB(std::vector<AABBPush>& aabbVec);
   void initializeMortonCodeBuffers();
   void initializeNodeBuffers();
   void createDescriptorSetLayouts();
@@ -39,10 +41,10 @@ class BVHAccel {
   void createSortingPipeline();
   void createTreeGenCompPipeline();
   void createMergeCompPipeline();
-  void updateAABBDataIndex(const GameObject::Map& geObjects, int index);
-  void createAABBs(const GameObject::Map& geObjects);
+  void updateAABBDataIndex(int index);
   void createAABBPipeline();
   void resetBuffers(VkCommandBuffer commandBuffer, int index);
+  void copyAABBBuffer(int index);
 
   std::vector<std::unique_ptr<EngineBuffer>> primitiveAABBs;
   std::vector<std::unique_ptr<EngineBuffer>> mortonCodes;
@@ -74,8 +76,11 @@ class BVHAccel {
   glm::vec3 sceneMinBound{std::numeric_limits<float>::max()};
   glm::vec3 sceneDiffBound{std::numeric_limits<float>::lowest()};
 
+  std::vector<std::vector<AABBPush>> aabbVectors;
+
   EngineDevice& geDevice;
   EngineDescriptorPoolGrowable& growablePool;
+  GameObject::Map& geObjects;
   EngineComputer computationManager;
 };
 }  // namespace GameEngine

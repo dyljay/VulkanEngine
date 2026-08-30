@@ -26,8 +26,6 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
 } ubo;
 
 layout(push_constant) uniform Push {
-  mat4 model;
-  mat4 localTransform;
   AABB tlas;
 } push;
 
@@ -38,5 +36,5 @@ void main() {
   position.y = (sign(position.y) < 0) ? push.tlas.min.y : push.tlas.max.y;
   position.z = (sign(position.z) < 0) ? push.tlas.min.z : push.tlas.max.z;
 
-  gl_Position = ubo.projection * ubo.view * push.model * push.localTransform * position;
+  gl_Position = ubo.projection * ubo.view * position;
 }
