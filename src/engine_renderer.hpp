@@ -94,33 +94,7 @@ class OffScreenRenderer {
   void beginRender(VkCommandBuffer commandBuffer);
   void endRender(VkCommandBuffer commandBuffer);
 
-  /*
-  template <typename T>
-  T getPixelData(uint32_t x, uint32_t y)
-  {
-    assert(offscreenImage->getTiling() == VK_IMAGE_TILING_LINEAR &&
-           "Tiling must be linear to read directly from image");
-
-    vkWaitForFences(geDevice.device(),
-                    1,
-                    &imageRenderedFence,
-                    VK_TRUE,
-                    UINT64_MAX);
-
-    void* mapped = nullptr;
-    vmaMapMemory(geDevice.getAllocator(),
-                 offscreenImage->getAllocation(),
-                 &mapped);
-
-    T* data_t = static_cast<T*>(mapped);
-    T* dataPoint = &data_t[y * imageExtent.width + x];
-    T dataValue{*dataPoint};
-
-    vmaUnmapMemory(geDevice.getAllocator(), offscreenImage->getAllocation());
-
-    return dataValue;
-  }
-  */
+  uint32_t readPixelValue(uint32_t x, uint32_t y);
 
   VkResult submitCommandBuffers(const VkCommandBuffer* buffers,
                                 uint32_t* imageIndex);
@@ -129,7 +103,6 @@ class OffScreenRenderer {
 
  private:
   void init();
-
   void createOffscreenImage();
   void createDepthResources();
   void createSyncObject();

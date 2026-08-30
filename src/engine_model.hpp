@@ -26,13 +26,17 @@ class EngineModel {
   static std::unique_ptr<EngineModel> createModelFromFile(
       EngineDevice& geDevice,
       const std::filesystem::path& filePath,
+      const std::string modelName,
       EngineDescriptorPoolGrowable& growablePool);
 
   EngineModel(EngineDevice& geDevice,
               const std::filesystem::path& path,
+              const std::string modelName,
               EngineDescriptorPoolGrowable& growablePool);
 
   ~EngineModel();
+
+  const std::string& getName() const { return modelName; }
 
   void bind(VkCommandBuffer commandBuffer);
 
@@ -59,6 +63,7 @@ class EngineModel {
   EngineDevice& geDevice;
 
   EngineDescriptorPoolGrowable& growablePool;
+  const std::string modelName;
 };
 
 }  // namespace GameEngine

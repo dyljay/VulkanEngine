@@ -6,6 +6,7 @@
 
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_video.h"
+#include "engine_buffer.hpp"
 #include "engine_swapchain.hpp"
 #include "sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
 #include "src/engine_device.hpp"
@@ -313,13 +314,6 @@ void OffScreenRenderer::beginRender(VkCommandBuffer commandBuffer)
       VK_IMAGE_LAYOUT_UNDEFINED,
       VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
-  EngineImage::ImageMemoryBarrier(
-      commandBuffer,
-      depthImages[currentIndex]->getImage(),
-      offscreenImages[currentIndex]->getImageFormat(),
-      VK_IMAGE_LAYOUT_UNDEFINED,
-      VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-
   VkRenderingAttachmentInfo colorAttachmentInfos = {
       .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
       .imageView = offscreenImages[currentIndex]->getImageView(),
@@ -512,6 +506,57 @@ void OffScreenRenderer::createDepthResources()
     depthImages[i] =
         std::make_unique<EngineImage>(geDevice, imageInfo, viewInfo);
   }
+}
+
+uint32_t OffScreenRenderer::readPixelValue(uint32_t x, uint32_t y)
+{
+  vkWaitForFences(geDevice.device(),
+                  1,
+                  &imageRenderedFences[currentIndex],
+                  VK_TRUE,
+                  UINT64_MAX);
+
+  uint32_t size = imageExtent.width * imageExtent.height * sizeof(uint32_t);
+
+  EngineBuffer buffer =
+      EngineBuffer{geDevice,
+                   size,
+                   1,
+                   VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                   VMA_MEMORY_USAGE_AUTO_PREFER_HOST,
+                   1,
+                   VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT};
+
+  VkCommandBuffer commandBuffer = geDevice.beginSingleTimeCommands();
+  EngineImage::ImageMemoryBarrier(commandBuffer,
+                                  offscreenImages[currentIndex]->getImage(),
+                                  attachmentFormat,
+                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                  VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+  geDevice.endSingleTimeCommands(commandBuffer);
+
+  geDevice.copyImageToBuffer(offscreenImages[currentIndex]->getImage(),
+                             buffer.getBuffer(),
+                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                             imageExtent.width,
+                             imageExtent.height,
+                             1);
+
+  commandBuffer = geDevice.beginSingleTimeCommands();
+  EngineImage::ImageMemoryBarrier(commandBuffer,
+                                  offscreenImages[currentIndex]->getImage(),
+                                  attachmentFormat,
+                                  VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+  geDevice.endSingleTimeCommands(commandBuffer);
+
+  buffer.map();
+  void* mapped = buffer.getMappedMemory();
+  uint32_t* idMemory = static_cast<uint32_t*>(mapped);
+
+  uint32_t pixelID = idMemory[y * imageExtent.width + x];
+
+  return pixelID;
 }
 
 void OffScreenRenderer::createSyncObject()

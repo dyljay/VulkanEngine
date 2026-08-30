@@ -29,8 +29,10 @@ namespace GameEngine {
 
 EngineModel::EngineModel(EngineDevice& geDevice,
                          const std::filesystem::path& path,
+                         const std::string modelName,
                          EngineDescriptorPoolGrowable& growablePool)
     : geDevice{geDevice},
+      modelName{modelName},
       growablePool{growablePool}
 {
   loadModel(path);
@@ -41,9 +43,13 @@ EngineModel::~EngineModel() {}
 std::unique_ptr<EngineModel> EngineModel::createModelFromFile(
     EngineDevice& geDevice,
     const std::filesystem::path& filePath,
+    const std::string modelName,
     EngineDescriptorPoolGrowable& growablePool)
 {
-  return std::make_unique<EngineModel>(geDevice, filePath, growablePool);
+  return std::make_unique<EngineModel>(geDevice,
+                                       filePath,
+                                       modelName,
+                                       growablePool);
 }
 
 void EngineModel::loadModel(const std::filesystem::path& filePath)

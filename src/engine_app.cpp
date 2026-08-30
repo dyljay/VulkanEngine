@@ -11,28 +11,11 @@
 #include "SDL3/SDL_keycode.h"
 #include "SDL3/SDL_mouse.h"
 #include "SDL3/SDL_video.h"
-#include "bbox_system.hpp"
-#include "bvh.hpp"
-#include "cubemap_system.hpp"
-#include "engine_buffer.hpp"
-#include "engine_camera.hpp"
-#include "engine_descriptor.hpp"
-#include "engine_device.hpp"
-#include "engine_frame_info.hpp"
+#include "core.hpp"
 #include "engine_game_object.hpp"
-#include "engine_keyboardmovement.hpp"
-#include "engine_model.hpp"
-#include "engine_swapchain.hpp"
-#include "engine_texture.hpp"
-#include "engine_ui.hpp"
-#include "glm/fwd.hpp"
 #include "glm/trigonometric.hpp"
 #include "imgui_impl_sdl3.h"
-#include "offscreenSystem.hpp"
-#include "pbrMaterials.hpp"
-#include "point_light_system.hpp"
-#include "shaderList.hpp"
-#include "simple_render_system.hpp"
+#include "render_systems.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -269,44 +252,44 @@ void EngineApp::run()
         bboxRender.render(frameInfo);
       }
 
-      /*
       if (hasClicked) {
-        id_t objIDFromPixel = offscreenRenderer.getPixelData<uint32_t>(x, y);
+        uint32_t objIDFromPixel = offscreenRenderer.readPixelValue(x, y);
 
-        std::cout << objIDFromPixel << std::endl;
-
-        if (objIDFromPixel > 0) {
-          geObjects.at(objIDFromPixel).isSelected = true;
+        if (objIDFromPixel == 0) {
+          selectedObjects.clear();
         }
+        else if (selectedObjects.contains(objIDFromPixel)) {
+          selectedObjects.erase(objIDFromPixel);
+        }
+        else if (objIDFromPixel > 0) {
+          selectedObjects.emplace(objIDFromPixel, true);
+        }
+
         hasClicked = false;
       }
-      */
 
       // ui
-      if (userSeeMouse) {
-        ui.newFrame();
-        ui.bvhUI(showbbox);
+      ui.newFrame();
+      ui.bvhUI(showbbox);
 
-        for (auto& kv : geObjects) {
-          auto& obj = kv.second;
-          if (obj.isSelected) {
-            if (obj.model == nullptr) {
-              glm::vec3 color{obj.color};
-              float intensity = obj.pointLight->lightIntensity;
-              ui.renderLightUI(color, intensity);
-              obj.color = {color.r, color.g, color.b};
-              obj.pointLight->lightIntensity = intensity;
-            }
-            else {
-              TransformComponent transformUI{obj.transform};
-              ui.renderModelUI(transformUI);
-              obj.transform = transformUI;
-            }
+      if (!selectedObjects.empty()) {
+        for (auto objectIDkv : selectedObjects) {
+          auto objectID = objectIDkv.first;
+          auto& object = geObjects.at(objectID);
+          TransformComponent transformUI{};
+
+          if (object.pointLight == nullptr) {
+            ui.beginModelUI();
+            ui.renderModelUI(object.transform,
+                             object.model->getName(),
+                             objectID);
+            ui.endModelUI();
           }
         }
-        ui.render(commandBuffer);
-        ui.endFrame();
       }
+
+      ui.render(commandBuffer);
+      ui.endFrame();
       // ui end
 
       // drawing objects offscreen
@@ -462,6 +445,7 @@ void EngineApp::loadGameObjects(EngineDescriptorPoolGrowable& growablePool)
   std::shared_ptr<EngineModel> geModel =
       EngineModel::createModelFromFile(geDevice,
                                        "./models/just_a_girl.glb",
+                                       "Girl",
                                        growablePool);
   auto girl = GameObject::createGameObject();
   girl.model = geModel;
@@ -473,7 +457,9 @@ void EngineApp::loadGameObjects(EngineDescriptorPoolGrowable& growablePool)
 
   geModel = EngineModel::createModelFromFile(geDevice,
                                              "./models/shiba.glb",
+                                             "Shiba",
                                              growablePool);
+
   auto shiba = GameObject::createGameObject();
   shiba.model = geModel;
   shiba.transform.translation = {-1.0f, -0.5f, -0.2f};
@@ -486,6 +472,7 @@ void EngineApp::loadGameObjects(EngineDescriptorPoolGrowable& growablePool)
 
   geModel = EngineModel::createModelFromFile(geDevice,
                                              "./models/the_bathroom_free.glb",
+                                             "Room",
                                              growablePool);
   auto background = GameObject::createGameObject();
   background.model = geModel;

@@ -676,7 +676,7 @@ void EngineDevice::copyImageToBuffer(VkImage image,
   copyInfo.imageSubresource.layerCount = layerCount;
 
   copyInfo.imageOffset = {0, 0, 0};
-  copyInfo.imageExtent = {width, height};
+  copyInfo.imageExtent = {width, height, 1};
 
   vkCmdCopyImageToBuffer(commandBuffer,
                          image,

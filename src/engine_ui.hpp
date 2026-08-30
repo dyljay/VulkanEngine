@@ -38,7 +38,11 @@ class EngineUI {
 
   void renderLightUI(glm::vec3& color, float& intensity);
 
-  void renderModelUI(TransformComponent& transform);
+  void beginModelUI();
+  void renderModelUI(TransformComponent& transform,
+                     const std::string& name,
+                     unsigned int id);
+  void endModelUI();
 
   void bvhUI(bool& showBVH);
 

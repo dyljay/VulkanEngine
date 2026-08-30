@@ -3,12 +3,15 @@
 #include "engine_device.hpp"
 #include "engine_game_object.hpp"
 #include "engine_renderer.hpp"
+#include "engine_ui.hpp"
 #include "engine_window.hpp"
 #include "shaderList.hpp"
 // std
 #include <stdbool.h>
 
+#include <cstdint>
 #include <memory>
+#include <unordered_map>
 
 namespace GameEngine {
 
@@ -35,6 +38,7 @@ class EngineApp {
   void populateMatTexDescriptorSets(DescriptorSets& descriptorSets,
                                     DescriptorSetLayouts& descriptorSetLayouts);
 
+  void renderUI(EngineUI& ui);
   void updateScene();
 
   EngineWindow geWindow{WIDTH, HEIGHT, "WIT Engine"};
@@ -57,5 +61,6 @@ class EngineApp {
 
   bool hasClicked = false;
   bool showbbox = false;
+  std::unordered_map<uint32_t, bool> selectedObjects;
 };
 }  // namespace GameEngine

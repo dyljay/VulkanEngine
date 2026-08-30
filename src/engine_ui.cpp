@@ -109,15 +109,26 @@ void EngineUI::renderLightUI(glm::vec3& color, float& intensity)
   }
 }
 
-void EngineUI::renderModelUI(TransformComponent& transform)
+void EngineUI::beginModelUI() { ImGui::BeginMenu("Selected Objects"); }
+
+void EngineUI::renderModelUI(TransformComponent& transform,
+                             const std::string& name,
+                             unsigned int id)
 {
-  if (ImGui::Begin("Model Transform")) {
+  const std::string& uniqueString = "Model Transform ID: ";
+  std::string combined = uniqueString + name;
+
+  ImGui::PushID(id);
+  if (ImGui::CollapsingHeader(combined.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+  {
     ImGui::DragFloat3("Location", &transform.translation.x, 0.01f);
     ImGui::DragFloat3("Rotation", &transform.rotation.x, 0.01f);
     ImGui::DragFloat3("Scale", &transform.scale.x, 0.001f, 0.0f, 10.0f);
-    ImGui::End();
   }
+  ImGui::PopID();
 }
+
+void EngineUI::endModelUI() { ImGui::End(); }
 
 void EngineUI::bvhUI(bool& showbbox)
 {
@@ -127,5 +138,9 @@ void EngineUI::bvhUI(bool& showbbox)
   }
 }
 
-void EngineUI::endFrame() { ImGui::EndFrame(); }
+void EngineUI::endFrame()
+{
+  ImGui::End();
+  ImGui::EndFrame();
+}
 }  // namespace GameEngine
