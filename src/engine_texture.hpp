@@ -6,6 +6,8 @@
 #include <string>
 
 #include "engine_device.hpp"
+#include "engine_image.hpp"
+#include "sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
 #include "stb_image.hpp"
 #include "vulkan/vulkan_core.h"
 
@@ -14,7 +16,7 @@ using id_t = unsigned int;
 
 class EngineTexture {
  public:
-  enum class TextureType { Texture2D, TextureCube };
+  enum class TextureType { Texture2D, Texture2DExternalImage, TextureCube };
   static constexpr int MAX_TEXTURES = 100;
 
   static std::shared_ptr<EngineTexture> createTexture(EngineDevice& geDevice);
@@ -22,7 +24,13 @@ class EngineTexture {
       EngineDevice& geDevice,
       const std::array<std::string, 6>& facePaths);
 
+  static std::shared_ptr<EngineTexture> createTexture(EngineDevice& geDevice,
+                                                      VkImage image,
+                                                      VkImageView imageView);
+
   EngineTexture(EngineDevice& geDevice, id_t ID);
+
+  EngineTexture(EngineDevice& geDevice, VkImage image, VkImageView imageView);
 
   EngineTexture(EngineDevice& geDevice,
                 const std::array<std::string, 6>& facePaths);
@@ -56,6 +64,9 @@ class EngineTexture {
 
   uint32_t texWidth;
   uint32_t texHeight;
+
+  void cleanUpInternalImage();
+  void cleanUpExternalImage();
 
   void createImageView(VkImageViewType viewType,
                        uint32_t layers,

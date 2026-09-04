@@ -9,6 +9,14 @@ layout(push_constant) uniform Push {
 } push;
 
 void main() {
-  vec4 uv = texelFetch(textureID, ivec2(gl_FragCoord.xy), 0);
-  outColor = uv;
+  for (int i = -1; i < 2; i++) {
+    for (int j = -1; j < 2; j++) {
+      vec4 uv = texelFetch(textureID, ivec2(gl_FragCoord.x + i, gl_FragCoord.y + j), 0);
+      if (uv.x != push.selectedID) {
+        outColor = vec4(1.0, 0.0, 0.0, 1.0);
+      }
+    }
+  }
+
+  discard;
 }

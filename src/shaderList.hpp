@@ -29,4 +29,6 @@ const Shader bboxShaderFiles{
     .fragShader = "shaders/bbox.frag.spv",
 };
 
+const Shader outlineShaderFiles{.vertexShader = "shaders/outline.vert.spv",
+                                .fragShader = "shaders/outline.frag.spv"};
 }  // namespace GameEngine

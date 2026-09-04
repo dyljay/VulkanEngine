@@ -13,12 +13,15 @@
 #include "SDL3/SDL_mouse.h"
 #include "SDL3/SDL_video.h"
 #include "core.hpp"
+#include "engine_descriptor.hpp"
 #include "engine_game_object.hpp"
 #include "glm/trigonometric.hpp"
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
+#include "outline_system.hpp"
 #include "render_systems.hpp"
 #include "sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
+#include "shaderList.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -136,6 +139,29 @@ void EngineApp::run()
                                   pointLightLayouts,
                                   descriptorSets.uboSets,
                                   offscreenRenderer.getPipelineRenderingInfo()};
+
+  ///////// probably should make this neater //////
+  /*
+  auto textureSetLayout =
+      EngineDescriptorSetLayout::Builder(geDevice)
+          .addBinding(0,
+                      VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                      VK_SHADER_STAGE_FRAGMENT_BIT)
+          .build();
+  std::vector<VkDescriptorSetLayout> outlineLayouts{
+      textureSetLayout->getDescriptorSetLayout(),
+  };
+
+  VkDescriptorSet textureSet;
+
+  OutlineSystem outlineSystem{geDevice,
+                              outlineShaderFiles,
+                              outlineLayouts,
+                              textureSet,
+                              selectedObjects,
+                              geRenderer.getPipelineRenderingInfo()};
+  */
+  ////////////////////////////////////////////////
 
   std::vector<VkDescriptorSetLayout> bboxLayout{mainLayouts[0]};
   BboxRenderer bboxRender{geDevice,

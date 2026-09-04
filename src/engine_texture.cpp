@@ -19,6 +19,17 @@ EngineTexture::EngineTexture(EngineDevice& geDevice, unsigned int ID)
 {}
 
 EngineTexture::EngineTexture(EngineDevice& geDevice,
+                             VkImage image,
+                             VkImageView imageView)
+    : geDevice{geDevice},
+      textureImage{image},
+      textureImageView{imageView},
+      type(TextureType::Texture2DExternalImage)
+{
+  createSampler(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+}
+
+EngineTexture::EngineTexture(EngineDevice& geDevice,
                              const std::array<std::string, 6>& cubePaths)
     : geDevice{geDevice},
       type{TextureType::TextureCube}
@@ -32,9 +43,10 @@ EngineTexture::~EngineTexture()
 {
   vkDestroySampler(geDevice.device(), textureSampler, nullptr);
 
-  vkDestroyImageView(geDevice.device(), textureImageView, nullptr);
-
-  vmaDestroyImage(geDevice.getAllocator(), textureImage, allocation);
+  if (type != TextureType::Texture2DExternalImage) {
+    vkDestroyImageView(geDevice.device(), textureImageView, nullptr);
+    vmaDestroyImage(geDevice.getAllocator(), textureImage, allocation);
+  }
 }
 
 VkDescriptorImageInfo EngineTexture::getDescriptorInfo()
@@ -49,6 +61,14 @@ std::shared_ptr<EngineTexture> EngineTexture::createTexture(
 {
   static id_t id = 0;
   return std::make_shared<EngineTexture>(geDevice, id++);
+}
+
+std::shared_ptr<EngineTexture> EngineTexture::createTexture(
+    EngineDevice& geDevice,
+    VkImage image,
+    VkImageView imageView)
+{
+  return std::make_shared<EngineTexture>(geDevice, image, imageView);
 }
 
 std::unique_ptr<EngineTexture> EngineTexture::createCubeMap(

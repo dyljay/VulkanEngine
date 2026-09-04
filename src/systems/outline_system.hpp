@@ -1,11 +1,12 @@
 #pragma once
 
 #include <cstdint>
+#include <unordered_map>
 #include <vector>
 
 #include "engine_device.hpp"
 #include "engine_frame_info.hpp"
-#include "sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
+#include "engine_texture.hpp"
 #include "system.hpp"
 
 namespace GameEngine {
@@ -20,6 +21,7 @@ class OutlineSystem : RenderSystem {
                 const Shader& shaders,
                 const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
                 VkDescriptorSet& textureDescriptorSet,
+                std::unordered_map<uint32_t, bool>& selectedObjects,
                 VkPipelineRenderingCreateInfo attachmentInfo);
 
   ~OutlineSystem();
@@ -30,7 +32,11 @@ class OutlineSystem : RenderSystem {
   void render(FrameInfo& frameinfo) override;
 
  private:
+  void createSamplers();
+
   VkDescriptorSet& textureDescriptorSet;
+  std::vector<EngineTexture> shaderSamplerImages;
+  std::unordered_map<uint32_t, bool>& selectedObjects;
 };
 
 }  // namespace GameEngine

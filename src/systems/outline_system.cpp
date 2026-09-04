@@ -1,6 +1,7 @@
 #include "outline_system.hpp"
 
 #include <cstdint>
+#include <unordered_map>
 
 #include "engine_device.hpp"
 #include "engine_frame_info.hpp"
@@ -14,8 +15,10 @@ OutlineSystem::OutlineSystem(
     const Shader& shaders,
     const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
     VkDescriptorSet& textureDescriptorSet,
+    std::unordered_map<uint32_t, bool>& selectedObjects,
     VkPipelineRenderingCreateInfo attachmentInfo)
     : textureDescriptorSet{textureDescriptorSet},
+      selectedObjects{selectedObjects},
       RenderSystem(device,
                    shaders,
                    descriptorSetLayouts,
@@ -37,16 +40,19 @@ void OutlineSystem::render(FrameInfo& frameInfo)
                           &textureDescriptorSet,
                           0,
                           nullptr);
-  OutlinePush push{};
-  push.idObj = 1;
 
-  vkCmdPushConstants(frameInfo.commandBuffer,
-                     getPipelineLayout(),
-                     VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                     0,
-                     sizeof(OutlinePush),
-                     &push);
+  for (auto& kv : selectedObjects) {
+    OutlinePush push{};
+    push.idObj = kv.first;
+    vkCmdPushConstants(
+        frameInfo.commandBuffer,
+        getPipelineLayout(),
+        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+        0,
+        sizeof(OutlinePush),
+        &push);
 
-  vkCmdDraw(frameInfo.commandBuffer, 3, 1, 0, 0);
+    vkCmdDraw(frameInfo.commandBuffer, 3, 1, 0, 0);
+  }
 }
 }  // namespace GameEngine
