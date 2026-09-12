@@ -8,6 +8,7 @@
 #include <stdexcept>
 
 #include "engine_buffer.hpp"
+#include "sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
 #include "src/engine_device.hpp"
 #include "vulkan/vulkan_core.h"
 
@@ -20,13 +21,18 @@ EngineTexture::EngineTexture(EngineDevice& geDevice, unsigned int ID)
 
 EngineTexture::EngineTexture(EngineDevice& geDevice,
                              VkImage image,
-                             VkImageView imageView)
+                             VkImageView imageView,
+                             VkFilter filter,
+                             VkSamplerMipmapMode mipmapMode)
     : geDevice{geDevice},
       textureImage{image},
       textureImageView{imageView},
       type(TextureType::Texture2DExternalImage)
 {
-  createSampler(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+  createSampler(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+                filter,
+                filter,
+                mipmapMode);
 }
 
 EngineTexture::EngineTexture(EngineDevice& geDevice,
@@ -66,9 +72,15 @@ std::shared_ptr<EngineTexture> EngineTexture::createTexture(
 std::shared_ptr<EngineTexture> EngineTexture::createTexture(
     EngineDevice& geDevice,
     VkImage image,
-    VkImageView imageView)
+    VkImageView imageView,
+    VkFilter filter,
+    VkSamplerMipmapMode mipmapMode)
 {
-  return std::make_shared<EngineTexture>(geDevice, image, imageView);
+  return std::make_shared<EngineTexture>(geDevice,
+                                         image,
+                                         imageView,
+                                         filter,
+                                         mipmapMode);
 }
 
 std::unique_ptr<EngineTexture> EngineTexture::createCubeMap(

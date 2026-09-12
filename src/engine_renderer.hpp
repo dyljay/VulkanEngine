@@ -8,6 +8,7 @@
 #include "vulkan/vulkan_core.h"
 // std
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -87,7 +88,8 @@ class OffScreenRenderer {
     return pipelineCreate;
   }
 
-  std::unique_ptr<EngineImage>& getImage(int i) { return offscreenImages[i]; }
+  EngineImage& getImage(int i) const { return *offscreenImages[i]; }
+  const size_t getNumberOfImages() const { return offscreenImages.size(); }
 
   VkCommandBuffer beginFrame(int imageIndex);
   void endFrame();
@@ -129,6 +131,6 @@ class OffScreenRenderer {
 
   VkFormat attachmentFormat;
   bool isFrameStarted = false;
-  int currentIndex;
+  int currentIndex = 0;
 };
 }  // namespace GameEngine

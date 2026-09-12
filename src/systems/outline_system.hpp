@@ -1,11 +1,14 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <unordered_map>
 #include <vector>
 
+#include "engine_descriptor.hpp"
 #include "engine_device.hpp"
 #include "engine_frame_info.hpp"
+#include "engine_renderer.hpp"
 #include "engine_texture.hpp"
 #include "system.hpp"
 
@@ -19,10 +22,11 @@ class OutlineSystem : RenderSystem {
  public:
   OutlineSystem(EngineDevice& device,
                 const Shader& shaders,
-                const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
-                VkDescriptorSet& textureDescriptorSet,
+                EngineDescriptorSetLayout& descriptorSetLayouts,
                 std::unordered_map<uint32_t, bool>& selectedObjects,
-                VkPipelineRenderingCreateInfo attachmentInfo);
+                VkPipelineRenderingCreateInfo pipelineRenderingInfo,
+                OffScreenRenderer& offscreenRenderer,
+                EngineDescriptorPoolGrowable& globalPool);
 
   ~OutlineSystem();
 
@@ -32,10 +36,15 @@ class OutlineSystem : RenderSystem {
   void render(FrameInfo& frameinfo) override;
 
  private:
-  void createSamplers();
+  void createTextures(EngineDevice& device,
+                      OffScreenRenderer& offscreenRenderer);
 
-  VkDescriptorSet& textureDescriptorSet;
-  std::vector<EngineTexture> shaderSamplerImages;
+  void createDescriptorSet(EngineDevice& device,
+                           EngineDescriptorSetLayout& setLayout,
+                           EngineDescriptorPoolGrowable& growablePool);
+
+  std::vector<VkDescriptorSet> descriptorSets;
+  std::vector<std::unique_ptr<EngineTexture>> shaderSamplerImages;
   std::unordered_map<uint32_t, bool>& selectedObjects;
 };
 

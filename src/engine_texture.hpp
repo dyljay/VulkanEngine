@@ -24,13 +24,20 @@ class EngineTexture {
       EngineDevice& geDevice,
       const std::array<std::string, 6>& facePaths);
 
-  static std::shared_ptr<EngineTexture> createTexture(EngineDevice& geDevice,
-                                                      VkImage image,
-                                                      VkImageView imageView);
+  static std::shared_ptr<EngineTexture> createTexture(
+      EngineDevice& geDevice,
+      VkImage image,
+      VkImageView imageView,
+      VkFilter filter,
+      VkSamplerMipmapMode mipmapMode);
 
   EngineTexture(EngineDevice& geDevice, id_t ID);
 
-  EngineTexture(EngineDevice& geDevice, VkImage image, VkImageView imageView);
+  EngineTexture(EngineDevice& geDevice,
+                VkImage image,
+                VkImageView imageView,
+                VkFilter filter,
+                VkSamplerMipmapMode mipmapMode);
 
   EngineTexture(EngineDevice& geDevice,
                 const std::array<std::string, 6>& facePaths);

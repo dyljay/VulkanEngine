@@ -9,6 +9,8 @@
 /opt/homebrew/bin/glslang -V shaders/id_obj.frag -o shaders/id_obj.frag.spv
 /opt/homebrew/bin/glslang -V shaders/bbox.vert -o shaders/bbox.vert.spv
 /opt/homebrew/bin/glslang -V shaders/bbox.frag -o shaders/bbox.frag.spv
+/opt/homebrew/bin/glslang -V shaders/outline.vert -o shaders/outline.vert.spv
+/opt/homebrew/bin/glslang -V shaders/outline.frag -o shaders/outline.frag.spv
 
 # compute shaders
 /opt/homebrew/bin/glslang -V shaders/copy_aabb.comp -o shaders/copy_aabb.comp.spv

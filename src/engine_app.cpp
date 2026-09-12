@@ -140,28 +140,20 @@ void EngineApp::run()
                                   descriptorSets.uboSets,
                                   offscreenRenderer.getPipelineRenderingInfo()};
 
-  ///////// probably should make this neater //////
-  /*
   auto textureSetLayout =
       EngineDescriptorSetLayout::Builder(geDevice)
           .addBinding(0,
                       VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
                       VK_SHADER_STAGE_FRAGMENT_BIT)
           .build();
-  std::vector<VkDescriptorSetLayout> outlineLayouts{
-      textureSetLayout->getDescriptorSetLayout(),
-  };
-
-  VkDescriptorSet textureSet;
 
   OutlineSystem outlineSystem{geDevice,
                               outlineShaderFiles,
-                              outlineLayouts,
-                              textureSet,
+                              *textureSetLayout,
                               selectedObjects,
-                              geRenderer.getPipelineRenderingInfo()};
-  */
-  ////////////////////////////////////////////////
+                              geRenderer.getPipelineRenderingInfo(),
+                              offscreenRenderer,
+                              *globalPool};
 
   std::vector<VkDescriptorSetLayout> bboxLayout{mainLayouts[0]};
   BboxRenderer bboxRender{geDevice,
@@ -170,7 +162,10 @@ void EngineApp::run()
                           descriptorSets.uboSets,
                           geRenderer.getPipelineRenderingInfo()};
 
-  BVHAccel bvhaccel{geObjects, geDevice, *globalPool};
+  // TODO: fix this please
+  //  FIXME: CATASTROPHIC BUG failing to create memory here, NEEDS FIX!
+  //  BVHAccel bvhaccel{geObjects, geDevice, *globalPool};
+  //  END BUG
 
   EngineCamera camera{};
   camera.setViewDirection(glm::vec3(0.0f), glm::vec3(0.f, 0.f, 1.f));
@@ -309,20 +304,25 @@ void EngineApp::run()
 
       // drawing objects offscreen
       if (auto commandBuffer_off = offscreenRenderer.beginFrame(frameIndex)) {
-        frameInfo.commandBuffer = commandBuffer_off;
+        FrameInfo frameInfo{frameIndex,
+                            frameTime,
+                            commandBuffer_off,
+                            camera,
+                            geObjects};
         offscreenRenderer.beginRender(commandBuffer_off);
-        frameInfo.commandBuffer = commandBuffer_off;
         offScreenSystem.render(frameInfo);
         offscreenRenderer.endRender(commandBuffer_off);
         offscreenRenderer.endFrame();
       }
+
+      outlineSystem.render(frameInfo);
 
       geRenderer.endRender(commandBuffer);
       geRenderer.endFrame();
 
       lastFrame = frameIndex;
 
-      bvhaccel.constructTree(frameIndex);
+      // bvhaccel.constructTree(frameIndex);
     }
   }
 
