@@ -315,6 +315,7 @@ void EngineApp::run()
         offscreenRenderer.endFrame();
       }
 
+      frameInfo.frameIndex = lastFrame;
       outlineSystem.render(frameInfo);
 
       geRenderer.endRender(commandBuffer);

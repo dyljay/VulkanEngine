@@ -19,10 +19,10 @@ find_package(Vulkan REQUIRED)
 add_subdirectory("${PROJECT_SOURCE_DIR}/lib/sdl/vendored/SDL" EXCLUDE_FROM_ALL)
 add_subdirectory("${PROJECT_SOURCE_DIR}/lib/fastgltf/")
 
-file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp
-                          ${PROJECT_SOURCE_DIR}/src/render_sysetms/*.cpp)
+add_executable(${PROJECT_NAME})
 
-add_executable(${PROJECT_NAME} ${SOURCES})
+# sources + include dirs for everything under src/
+add_subdirectory(src)
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 

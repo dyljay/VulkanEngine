@@ -1,6 +1,6 @@
 #include "engine_buffer.hpp"
 
-#include "src/engine_device.hpp"
+#include "engine_device.hpp"
 #include "vulkan/vulkan_core.h"
 
 #define VMA_IMPLEMENTATION

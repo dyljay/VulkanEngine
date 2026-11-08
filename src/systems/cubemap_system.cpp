@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
-#include "src/engine_descriptor.hpp"
+#include "engine_descriptor.hpp"
 #include "vulkan/vulkan_core.h"
 
 namespace GameEngine {

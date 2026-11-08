@@ -5,11 +5,11 @@
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_vulkan.h"
 #include "imgui_internal.h"
-#include "src/engine_descriptor.hpp"
-#include "src/engine_device.hpp"
-#include "src/engine_renderer.hpp"
-#include "src/engine_swapchain.hpp"
-#include "src/engine_window.hpp"
+#include "engine_descriptor.hpp"
+#include "engine_device.hpp"
+#include "engine_renderer.hpp"
+#include "engine_swapchain.hpp"
+#include "engine_window.hpp"
 #include "vulkan/vulkan_core.h"
 
 namespace GameEngine {

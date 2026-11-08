@@ -13,8 +13,8 @@
 #include "engine_node.hpp"
 #include "pbrMaterials.hpp"
 #include "primitive.hpp"
-#include "src/engine_device.hpp"
-#include "src/engine_texture.hpp"
+#include "engine_device.hpp"
+#include "engine_texture.hpp"
 #include "vulkan/vulkan_core.h"
 
 namespace GameEngine {

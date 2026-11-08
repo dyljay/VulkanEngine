@@ -1,4 +1,4 @@
-#include "src/engine_mesh.hpp"
+#include "engine_mesh.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -7,8 +7,8 @@
 #include <vector>
 
 #include "lib/utils.hpp"
-#include "src/engine_buffer.hpp"
-#include "src/engine_device.hpp"
+#include "engine_buffer.hpp"
+#include "engine_device.hpp"
 #include "vulkan/vulkan_core.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION

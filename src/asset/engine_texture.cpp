@@ -9,7 +9,7 @@
 
 #include "engine_buffer.hpp"
 #include "sdl/vendored/SDL/src/video/khronos/vulkan/vulkan_core.h"
-#include "src/engine_device.hpp"
+#include "engine_device.hpp"
 #include "vulkan/vulkan_core.h"
 
 namespace GameEngine {

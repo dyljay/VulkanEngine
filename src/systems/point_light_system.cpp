@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "src/engine_descriptor.hpp"
+#include "engine_descriptor.hpp"
 #include "vulkan/vulkan_core.h"
 
 #define GLM_FORCE_RADIANS

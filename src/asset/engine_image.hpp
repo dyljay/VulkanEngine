@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "src/engine_device.hpp"
+#include "engine_device.hpp"
 #include "vulkan/vulkan_core.h"
 
 namespace GameEngine {

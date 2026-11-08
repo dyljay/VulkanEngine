@@ -20,9 +20,9 @@
 #include "fastgltf/types.hpp"
 #include "fastgltf/util.hpp"
 #include "glm/fwd.hpp"
-#include "src/engine_device.hpp"
-#include "src/engine_mesh.hpp"
-#include "src/pbrMaterials.hpp"
+#include "engine_device.hpp"
+#include "engine_mesh.hpp"
+#include "pbrMaterials.hpp"
 #include "vulkan/vulkan_core.h"
 
 namespace GameEngine {
