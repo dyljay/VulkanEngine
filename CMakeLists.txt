@@ -78,26 +78,41 @@ find_program(GLSL_VALIDATOR glslangValidator HINTS
 )
 
 # get all .vert, .frag and .comp files in shaders directory
-file(GLOB_RECURSE GLSL_SOURCE_FILES
+# CONFIGURE_DEPENDS re-globs at build time so new shaders are picked up without a re-configure
+file(GLOB_RECURSE GLSL_SOURCE_FILES CONFIGURE_DEPENDS
   "${PROJECT_SOURCE_DIR}/shaders/*.frag"
   "${PROJECT_SOURCE_DIR}/shaders/*.vert"
   "${PROJECT_SOURCE_DIR}/shaders/*.comp"
 )
 
+# glslang writes a depfile per shader listing its #includes (rectangle.glsl, material.glsl, ...)
+# so editing an included file recompiles every shader that uses it
+set(SHADER_DEPFILE_DIR "${CMAKE_BINARY_DIR}/shader_deps")
+file(MAKE_DIRECTORY ${SHADER_DEPFILE_DIR})
+
 foreach(GLSL ${GLSL_SOURCE_FILES})
   get_filename_component(FILE_NAME ${GLSL} NAME)
-  set(SPIRV "${PROJECT_SOURCE_DIR}/shaders/${FILE_NAME}.spv")
-  if(FILE_NAME STREQUAL "single_radixsort.comp")
-    add_custom_command(
-      OUTPUT ${SPIRV}
-      COMMAND ${GLSL_VALIDATOR} -V --target-env vulkan1.1 ${GLSL} -o ${SPIRV}
-      DEPENDS ${GLSL})
+
+  # main shader is loaded as vert.spv / frag.spv (see src/util/shaderList.hpp)
+  if(FILE_NAME STREQUAL "shader.vert")
+    set(SPIRV "${PROJECT_SOURCE_DIR}/shaders/vert.spv")
+  elseif(FILE_NAME STREQUAL "shader.frag")
+    set(SPIRV "${PROJECT_SOURCE_DIR}/shaders/frag.spv")
   else()
-    add_custom_command(
-      OUTPUT ${SPIRV}
-      COMMAND ${GLSL_VALIDATOR} -V ${GLSL} -o ${SPIRV}
-      DEPENDS ${GLSL})
+    set(SPIRV "${PROJECT_SOURCE_DIR}/shaders/${FILE_NAME}.spv")
   endif()
+
+  set(GLSL_FLAGS -V)
+  if(FILE_NAME STREQUAL "single_radixsort.comp")
+    list(APPEND GLSL_FLAGS --target-env vulkan1.1)
+  endif()
+
+  set(DEPFILE "${SHADER_DEPFILE_DIR}/${FILE_NAME}.d")
+  add_custom_command(
+    OUTPUT ${SPIRV}
+    COMMAND ${GLSL_VALIDATOR} ${GLSL_FLAGS} ${GLSL} -o ${SPIRV} --depfile ${DEPFILE}
+    DEPENDS ${GLSL}
+    DEPFILE ${DEPFILE})
   list(APPEND SPIRV_BINARY_FILES ${SPIRV})
 endforeach(GLSL)
 
