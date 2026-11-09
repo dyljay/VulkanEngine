@@ -34,6 +34,16 @@ whether the tree above them is right.
 - **GPU LBVH** *(in progress)* — morton codes, radix sort, radix tree
   construction, and bottom-up AABB propagation, following [Karras 2012](https://dl.acm.org/doi/epdf/10.5555/2383795.2383801)
 
+## Future Features
+
+- Simple Collision Detection, using BVH hierarchy
+- Using differential geometry to glean geometric properties from [Keenan Crane's lectures](https://youtube.com/playlist?list=PL9_jI1bdZmz0hIrNCMQW1YmZysAiIYSSS)
+- A basic ray tracing
+
+## Works In Progress
+
+- Sharpening the synchronization
+
 ## Building
 
 Requires the Vulkan SDK, CMake, Ninja, and `glslang`. Local SDK paths live in
@@ -75,9 +85,10 @@ Credit to these tutorials for their great help throughout my struggles:
 - [Learn OpenGL](https://learnopengl.com/)
 
 Models used:
--[Just a girl](https://sketchfab.com/3d-models/just-a-girl-b2359160a4f54e76b5ae427a55d9594d)
--[Shiba](https://sketchfab.com/3d-models/shiba-faef9fe5ace445e7b2989d1c1ece361c)
--[Kasumizawa Miyu](https://sketchfab.com/3d-models/blue-archivekasumizawa-miyu-108d81dfd5a44dab92e4dccf0cc51a02)
+
+- [Just a girl](https://sketchfab.com/3d-models/just-a-girlb2359160a4f54e76b5ae427a55d9594d)
+- [Shiba](https://sketchfab.com/3d-models/shiba-faef9fe5ace445e7b2989d1c1ece361c)
+- [Kasumizawa Miyu](https://sketchfab.com/3d-models/blue-archivekasumizawa-miyu-108d81dfd5a44dab92e4dccf0cc51a02)
 
 ## AI Usage in Project
 

@@ -8,6 +8,8 @@ layout(push_constant) uniform Push {
   uint selectedID;
 } push;
 
+float sobelFilter(vec3 color) {}
+
 void main() {
   for (int i = -1; i < 2; i++) {
     for (int j = -1; j < 2; j++) {
