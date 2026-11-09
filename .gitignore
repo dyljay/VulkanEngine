@@ -9,6 +9,6 @@ CMakeCache.txt
 __cmake_systeminformation/
 envUnix.cmake
 CLAUDE.md
-models/
 project_feedback.md
 imgui.ini
+models/

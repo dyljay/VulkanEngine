@@ -79,5 +79,7 @@ Models used:
 -[Shiba](https://sketchfab.com/3d-models/shiba-faef9fe5ace445e7b2989d1c1ece361c)
 -[Kasumizawa Miyu](https://sketchfab.com/3d-models/blue-archivekasumizawa-miyu-108d81dfd5a44dab92e4dccf0cc51a02)
 
-**Note**: Claude was used to generate code for trivial matters like this markdown or
+## AI Usage in Project
+
+Claude was used to generate code for non-graphics code matters like this markdown or
 the CMake compilation files, but all C++ and shader code was done by hand (aside from one exception, SetBufferPipelineBarrier  - denoted in function definition). Was also used for reference to answer questions.
