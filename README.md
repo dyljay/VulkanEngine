@@ -40,10 +40,6 @@ hair, glasses, the suitcase, each accessory — wrapped by the bounds of the who
 
 ![Changing of AABB with rotations, movement](images/bbox_rotation.avif)
 
-<https://github.com/user-attachments/assets/a16a5283-f290-4a36-b3cf-7bc4859dfc6a>
-
-<https://github.com/user-attachments/assets/4b475388-3950-4ce8-8dae-c9e661c5bec6>
-
 (see full frame rate video below)
 
 This is the debug view for the GPU bounding volume hierarchy that's currently
