@@ -120,6 +120,22 @@ Models used:
 - [Shiba](https://sketchfab.com/3d-models/shiba-faef9fe5ace445e7b2989d1c1ece361c)
 - [Kasumizawa Miyu](https://sketchfab.com/3d-models/blue-archivekasumizawa-miyu-108d81dfd5a44dab92e4dccf0cc51a02)
 
+## Original Videos of Engine
+
+
+https://github.com/user-attachments/assets/edf6cc40-fa31-469b-888a-cf0ffc83a49b
+
+
+
+https://github.com/user-attachments/assets/4b475388-3950-4ce8-8dae-c9e661c5bec6
+
+
+
+https://github.com/user-attachments/assets/a16a5283-f290-4a36-b3cf-7bc4859dfc6a
+
+
+
+
 ## AI Usage in Project
 
 Claude was used to generate code for non-graphics code matters like this markdown or
