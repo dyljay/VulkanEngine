@@ -34,10 +34,8 @@ scene as a white wireframe, from the same buffer the acceleration structure is
 built out of. The nested boxes are the individual meshes making up the model —
 hair, glasses, the suitcase, each accessory — wrapped by the bounds of the whole.
 
-Checking AABB to show boxes:
 https://github.com/user-attachments/assets/295652b2-6219-4324-a933-e69ffa23f34e
 
-They adapt in real-time:
 https://github.com/user-attachments/assets/448041f6-75ae-4f95-a659-1b700792fa0a
 
 This is the debug view for the GPU bounding volume hierarchy that's currently
