@@ -34,6 +34,8 @@ class EngineUI {
 
   void newFrame();
 
+  void addText(const std::string& message);
+
   void beginSideBar(float width);
   void endSideBar();
   void renderLightUI(glm::vec3& color, float& intensity);

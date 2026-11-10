@@ -1,15 +1,15 @@
 #include "engine_ui.hpp"
 
+#include "engine_descriptor.hpp"
+#include "engine_device.hpp"
 #include "engine_game_object.hpp"
+#include "engine_renderer.hpp"
+#include "engine_swapchain.hpp"
+#include "engine_window.hpp"
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_vulkan.h"
 #include "imgui_internal.h"
-#include "engine_descriptor.hpp"
-#include "engine_device.hpp"
-#include "engine_renderer.hpp"
-#include "engine_swapchain.hpp"
-#include "engine_window.hpp"
 #include "vulkan/vulkan_core.h"
 
 namespace GameEngine {
@@ -112,6 +112,11 @@ void EngineUI::renderLightUI(glm::vec3& color, float& intensity)
     ImGui::SliderFloat("Intensity", &intensity, 0.f, 10.f);
     ImGui::End();
   }
+}
+
+void EngineUI::addText(const std::string& message)
+{
+  ImGui::Text(message.c_str());
 }
 
 void EngineUI::beginSideBar(float width)
