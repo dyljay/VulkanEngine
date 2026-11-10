@@ -25,7 +25,7 @@ location, rotation, and scale controls, which is how objects are moved in the
 clip below. A screen-space outline around the selection *(in progress)* is drawn
 by a full-screen pass that reads the same ID image.
 
-![Scene rendered with Object Selection](images/selection_and_movement.gif)
+![Scene rendered with Object Selection](images/move_select.gif)
 
 ## Bounding volumes
 
@@ -34,7 +34,8 @@ scene as a white wireframe, from the same buffer the acceleration structure is
 built out of. The nested boxes are the individual meshes making up the model —
 hair, glasses, the suitcase, each accessory — wrapped by the bounds of the whole.
 
-![The same scene with per-mesh AABBs drawn](images/bbox.gif)
+![The same scene with per-mesh AABBs drawn](images/aabb.gif)
+![Movement of AABB to show adjusting](images/bbox_rotation.gif)
 
 This is the debug view for the GPU bounding volume hierarchy that's currently
 being built out. Being able to see the boxes is what makes it possible to tell
