@@ -36,6 +36,7 @@ void main() {
       vec4 uv = texelFetch(textureID, ivec2(x_coord, y_coord), 0);
       if (uv.x != push.selectedID && uv_center.x == push.selectedID) {
         shouldBeColored = true;
+        // leaving out break to prevent branch divergence
       }
     }
   }

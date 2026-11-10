@@ -3,7 +3,7 @@
 A hobby real-time renderer written in C++20 on top of Vulkan, running on macOS
 through MoltenVK. Something fun I've been working on for almost a year now.
 
-![Scene rendered without bounding volumes](images/withoutBbox.png)
+![Scene rendered with Object Selection](images/selection_and_movement.png)
 
 glTF scene with PBR shading, a point light, cubemap reflections, and a skybox.
 
@@ -14,7 +14,7 @@ scene as a white wireframe, from the same buffer the acceleration structure is
 built out of. The nested boxes are the individual meshes making up the model —
 hair, glasses, the suitcase, each accessory — wrapped by the bounds of the whole.
 
-![The same scene with per-mesh AABBs drawn](images/withBbox.png)
+![The same scene with per-mesh AABBs drawn](images/bbox.mp4)
 
 This is the debug view for the GPU bounding volume hierarchy that's currently
 being built out. Being able to see the boxes is what makes it possible to tell
