@@ -25,7 +25,7 @@ location, rotation, and scale controls, which is how objects are moved in the
 clip below. A screen-space outline around the selection *(in progress)* is drawn
 by a full-screen pass that reads the same ID image.
 
-![Scene rendered with Object Selection](images/move_select.avif)
+https://github.com/user-attachments/assets/edf6cc40-fa31-469b-888a-cf0ffc83a49b
 
 ## Bounding volumes
 
@@ -34,9 +34,9 @@ scene as a white wireframe, from the same buffer the acceleration structure is
 built out of. The nested boxes are the individual meshes making up the model —
 hair, glasses, the suitcase, each accessory — wrapped by the bounds of the whole.
 
-![The same scene with per-mesh AABBs drawn](images/aabb.avif)
+https://github.com/user-attachments/assets/a16a5283-f290-4a36-b3cf-7bc4859dfc6a
 
-![Movement of AABB to show adjusting](images/bbox_rotation.avif)
+https://github.com/user-attachments/assets/4b475388-3950-4ce8-8dae-c9e661c5bec6
 
 This is the debug view for the GPU bounding volume hierarchy that's currently
 being built out. Being able to see the boxes is what makes it possible to tell
@@ -119,14 +119,6 @@ Models used:
 - [Just a girl](https://sketchfab.com/3d-models/just-a-girlb2359160a4f54e76b5ae427a55d9594d)
 - [Shiba](https://sketchfab.com/3d-models/shiba-faef9fe5ace445e7b2989d1c1ece361c)
 - [Kasumizawa Miyu](https://sketchfab.com/3d-models/blue-archivekasumizawa-miyu-108d81dfd5a44dab92e4dccf0cc51a02)
-
-## Original Videos of Engine
-
-https://github.com/user-attachments/assets/edf6cc40-fa31-469b-888a-cf0ffc83a49b
-
-https://github.com/user-attachments/assets/a16a5283-f290-4a36-b3cf-7bc4859dfc6a
-
-https://github.com/user-attachments/assets/4b475388-3950-4ce8-8dae-c9e661c5bec6
 
 
 ## AI Usage in Project
