@@ -72,7 +72,7 @@ class BVHAccel {
   std::vector<VkDescriptorSet> treeDS;
   std::vector<VkDescriptorSet> mergeAABBDS;
 
-  uint32_t primitiveCount;
+  uint32_t primitiveCount = 0;
   glm::vec3 sceneMinBound{std::numeric_limits<float>::max()};
   glm::vec3 sceneDiffBound{std::numeric_limits<float>::lowest()};
 

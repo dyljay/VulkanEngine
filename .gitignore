@@ -4,6 +4,8 @@ TODO.md
 tasks.md
 .DS_Store
 build/
+build-release/
+build-debug/
 .cache
 CMakeCache.txt
 __cmake_systeminformation/

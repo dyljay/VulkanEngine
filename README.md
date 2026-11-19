@@ -23,7 +23,7 @@ read on the CPU, so the hit comes from the rasterized scene, not a ray cast.
 Each selected object gets a **Model Transform** panel in the sidebar with
 location, rotation, and scale controls, which is how objects are moved in the
 clip below. A screen-space outline around the selection *(in progress)* is drawn
-by a full-screen pass that reads the same ID image.
+by a full-screen pass that reads the same ID image. Haven't done a ton of performance analysis; this is a project I took on to explore my passions and do something far, far outside my comfort zone as a challenge.
 
 ![Selecting and Moving Objects](images/move_select.avif)
 

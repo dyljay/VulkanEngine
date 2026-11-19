@@ -22,7 +22,24 @@ debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
               const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
               void* pUserData)
 {
-  std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+  const char* severityType =
+      (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+          ? "Error"
+          : "Warn";
+
+  const char* perfType =
+      (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
+          ? "Performance"
+          : "Validation";
+
+  // have to pass this to check for the null case
+  const char* name =
+      pCallbackData->pMessageIdName ? pCallbackData->pMessageIdName : "";
+
+  std::cerr << "[" << severityType << "][" << perfType << "]" << "(" << name
+            << " - " << pCallbackData->messageIdNumber << "): \n"
+            << pCallbackData->pMessage << "\n"
+            << std::endl;
 
   return VK_FALSE;
 }
@@ -111,16 +128,45 @@ void EngineDevice::createInstance()
   createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 #endif
 
+  VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
+
+  VkLayerSettingsCreateInfoEXT layerSettingsInfo{};
+
+  if (enableValidationLayers) {
+    extensions.emplace_back(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME);
+  }
+
   createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
   createInfo.ppEnabledExtensionNames = extensions.data();
 
-  VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
+  const VkBool32 settingOn = VK_TRUE;
+
+  const VkLayerSettingEXT layerSettings[] = {
+      {"VK_LAYER_KHRONOS_validation",
+       "validate_sync",
+       VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+       1,
+       &settingOn},
+      {"VK_LAYER_KHRONOS_validation",
+       "validate_best_practices",
+       VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+       1,
+       &settingOn},
+  };
+
+  VkLayerSettingsCreateInfoEXT layerSettingInfo{};
+  layerSettingsInfo.sType = VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT;
+  layerSettingsInfo.settingCount =
+      static_cast<uint32_t>(std::size(layerSettings));
+  layerSettingsInfo.pSettings = layerSettings;
+
   if (enableValidationLayers) {
     createInfo.enabledLayerCount =
         static_cast<uint32_t>(validationLayers.size());
     createInfo.ppEnabledLayerNames = validationLayers.data();
 
     populateDebugMessengerCreateInfo(debugCreateInfo);
+    debugCreateInfo.pNext = &layerSettingsInfo;
     createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
   }
   else {

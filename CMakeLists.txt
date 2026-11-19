@@ -26,8 +26,6 @@ add_subdirectory(src)
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 
-set(CMAKE_BUILD_TYPE Debug)
-
 set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY
 "${CMAKE_SOURCE_DIR}/build")
 
